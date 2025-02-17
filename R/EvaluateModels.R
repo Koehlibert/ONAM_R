@@ -1,3 +1,4 @@
+#' @importFrom rlang .data
 evaluateSingleModel <- function(PHOModel, data, modelInfoList,
                                 categorical_features)
 {
@@ -69,7 +70,7 @@ evaluateModel <- function(PHOModelList,
            function(effect)
            {
              predictionsData %>%
-               dplyr::filter(PHO == "After", .data$Effect == effect) %>%
+               dplyr::filter(.data$PHO == "After", .data$Effect == effect) %>%
                dplyr::group_by(.data$Observation) %>%
                dplyr::summarise(totalEffect = mean(.data$y)) %>%
                dplyr::select(.data$totalEffect) %>% unlist()
@@ -121,7 +122,7 @@ evaluateModelGenericPre <- function(PHOModelList)
            function(effect)
            {
              predictionsData %>%
-               dplyr::filter(PHO == "After", Effect == effect) %>%
+               dplyr::filter(.data$PHO == "After", .data$Effect == effect) %>%
                dplyr::group_by(.data$Observation) %>%
                dplyr::summarise(totalEffect = mean(.data$y)) %>%
                dplyr::select(.data$totalEffect) %>% unlist()
@@ -139,7 +140,7 @@ evaluateModelGenericPre <- function(PHOModelList)
            function(effect)
            {
              predictionsData %>%
-               dplyr::filter(PHO == "Pre", Effect == effect) %>%
+               dplyr::filter(.data$PHO == "Pre", .data$Effect == effect) %>%
                dplyr::group_by(.data$Observation) %>%
                dplyr::summarise(totalEffect = mean(.data$y)) %>%
                dplyr::select(.data$totalEffect) %>% unlist()
@@ -210,7 +211,7 @@ evaluateModelSimulation <- function(PHOModelList, X_Big, Y)
            })
   names(totalFeaturePredsPre) <-
     effectNames
-  Var <- var(PHOModelList$finalOutputs)
+  Var <- stats::var(PHOModelList$finalOutputs)
   totalVar <- sum(Var)
   resVar <- Var[1,1]
   interVar <- sum(Var[2:4, 2:4])
@@ -288,7 +289,7 @@ evaluateModelNewData <- function(PHOModelList, X_Big)
            })
   names(totalFeaturePredsPre) <-
     effectNames
-  Var <- var(PHOModelList$finalOutputs)
+  Var <- stats::var(PHOModelList$finalOutputs)
   totalVar <- sum(Var)
   resVar <- Var[1,1]
   interVar <- sum(Var[2:4, 2:4])

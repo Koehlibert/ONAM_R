@@ -15,7 +15,7 @@ solveSingularMatrix <- function(tmpU, Pivot)
            {
              Pivot <<-
                solveSingularMatrix(tmpU,
-                                          Pivot[1:(length(Pivot) - 1)])
+                                   Pivot[1:(length(Pivot) - 1)])
            })
   return(Pivot)
 }
@@ -40,8 +40,8 @@ getU <- function(modelList, modelIdxList, modelInfoList, data)
            {
              input <- modelList[[modelIdxList[[idx]]]] %>%
                getIntermediateModel() %>%
-               predict(data[[dataDictionary[[modelIdxList[[idx]]]]]],
-                       verbose = 0)
+               stats::predict(data[[dataDictionary[[modelIdxList[[idx]]]]]],
+                              verbose = 0)
              if(modelList[[modelIdxList[[1]]]]$output$node$layer$get_config()$use_bias)
                input <- cbind(input, 1)
              return(input)
@@ -96,7 +96,7 @@ PHO <- function(modelList, modelInfoList, data)
     getU(modelList, modelIdxList, modelInfoList, data)
   W_List <-
     getW_List(modelList, modelIdxList, modelInfoList,
-                     U_Object$U_IndicesList)
+              U_Object$U_IndicesList)
   W_List_old <- W_List
   modelOrder <-
     lapply(modelIdxList,
@@ -214,7 +214,7 @@ PHO <- function(modelList, modelInfoList, data)
 #' mod <- fitPHOModel(model_formula, list_of_deep_models,
 #'                    trainDat, nEnsemble = 2,
 #'                    callback = callback,
-#'                    progresstext = T, verbose = 1)
+#'                    progresstext = TRUE, verbose = 1)
 #' }
 #' @export fitPHOModel
 fitPHOModel <- function(modelFormula, list_of_deep_models,
@@ -229,7 +229,7 @@ fitPHOModel <- function(modelFormula, list_of_deep_models,
   fitData <-
     prepareData(data, modelInfoList, categorical_features)
   cat_counts <- get_category_counts(categorical_features,
-                                           data)
+                                    data)
   Y <- data[,which(colnames(data) == as.character(modelInfoList$outcome))]
   PHOEnsemble <- list()
   for(i in 1:nEnsemble)
@@ -237,11 +237,11 @@ fitPHOModel <- function(modelFormula, list_of_deep_models,
     if(progresstext)
     {
       cat('\r',paste0("Fitting model ", i, " of ", nEnsemble))
-      flush.console()
+      utils::flush.console()
     }
     modelObject <-
       createModel(modelInfoList, list_of_deep_models,
-                         categorical_features, cat_counts)
+                  categorical_features, cat_counts)
     wholeModel <- modelObject$model
     modelList <- modelObject$modelList
     #Fit model####

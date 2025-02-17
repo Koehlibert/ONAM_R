@@ -35,7 +35,7 @@ list_of_deep_models <- list(mod1 = ONAM:::getSubModel)
 # Fit model
 mod <- fitPHOModel(model_formula, list_of_deep_models,
                    trainDat, nEnsemble = 2,
-                   progresstext = T, verbose = 1)
+                   progresstext = TRUE, verbose = 1)
 evalData <- evaluateModel(mod)
 plotMainEffect(evalData, "x1")
 }

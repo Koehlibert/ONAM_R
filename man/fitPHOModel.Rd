@@ -63,6 +63,6 @@ keras::keras$callbacks$EarlyStopping(monitor = "loss",
 mod <- fitPHOModel(model_formula, list_of_deep_models,
                    trainDat, nEnsemble = 2,
                    callback = callback,
-                   progresstext = T, verbose = 1)
+                   progresstext = TRUE, verbose = 1)
 }
 }

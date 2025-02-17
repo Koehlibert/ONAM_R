@@ -2,7 +2,7 @@
 % Please edit documentation in R/Visualization.R
 \name{plotInterEffect}
 \alias{plotInterEffect}
-\title{Plot Main Effect}
+\title{Plot Interaction Effect}
 \usage{
 plotInterEffect(
   evalData,
@@ -30,7 +30,7 @@ plotInterEffect(
 Returns a 'ggplot2' object of the specified effect interaction
 }
 \description{
-Plot Main Effect
+Plot Interaction Effect
 }
 \examples{
 \donttest{
@@ -50,7 +50,7 @@ list_of_deep_models <- list(mod1 = ONAM:::getSubModel)
 # Fit model
 mod <- fitPHOModel(model_formula, list_of_deep_models,
                    trainDat, nEnsemble = 2,
-                   progresstext = T, verbose = 1)
+                   progresstext = TRUE, verbose = 1)
 evalData <- evaluateModel(mod)
 plotInterEffect(evalData, "x1", "x2", interpolate = TRUE)
 }

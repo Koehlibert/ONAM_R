@@ -18,7 +18,8 @@ BugReports: https://github.com/Koehlibert/ONAM
 Imports:
     dplyr,
     keras,
-    scales
+    scales,
+    rlang
 Suggests:
     ggplot2,
     akima,
