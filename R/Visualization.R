@@ -1,3 +1,4 @@
+utils::globalVariables(c("x", "y")) #this is objectively bad and making my code more prone to errors and less easy to debug just to remove stupid check warnings/notes
 #' Plot Main Effect
 #' @param evalData Model output as obtained from ONAM::evaluateModel
 #' @param effect Effect to be plotted, must be present in the model formula. For interaction terms, use plotInteractionEffect
@@ -20,7 +21,7 @@
 #' # Fit model
 #' mod <- fitPHOModel(model_formula, list_of_deep_models,
 #'                    trainDat, nEnsemble = 2,
-#'                    progresstext = T, verbose = 1)
+#'                    progresstext = TRUE, verbose = 1)
 #' evalData <- evaluateModel(mod)
 #' plotMainEffect(evalData, "x1")
 #' }
@@ -36,12 +37,12 @@ plotMainEffect <- function(evalData, effect)
   plotData <-
     data.frame(x = evalData$data[,effect],
                y = evalData$finalTotalPredictions[,effect])
-  out_plot <- ggplot2::ggplot(plotData, aes(x = x, y = y)) +
+  out_plot <- ggplot2::ggplot(plotData, ggplot2::aes(x = x, y = y)) +
     ggplot2::geom_point() + ggplot2::ylab("Effect") +
     ggplot2::xlab(effect)
   return(out_plot)
 }
-#' Plot Main Effect
+#' Plot Interaction Effect
 #' @param evalData Model output as obtained from ONAM::evaluateModel
 #' @param effect1 First effect to be plotted
 #' @param effect2 Second effect to be plotted
@@ -67,7 +68,7 @@ plotMainEffect <- function(evalData, effect)
 #' # Fit model
 #' mod <- fitPHOModel(model_formula, list_of_deep_models,
 #'                    trainDat, nEnsemble = 2,
-#'                    progresstext = T, verbose = 1)
+#'                    progresstext = TRUE, verbose = 1)
 #' evalData <- evaluateModel(mod)
 #' plotInterEffect(evalData, "x1", "x2", interpolate = TRUE)
 #' }
@@ -123,6 +124,7 @@ plotInterEffect <- function(evalData, effect1, effect2,
                                     limits = c(min(plotData$Prediction),
                                                max(plotData$Prediction)))
     geom_param <- ggplot2::geom_tile()
+    Prediction <- NULL#this is objectively bad and making my code more prone to errors and less easy to debug just to remove stupid check warnings/notes
     aes_param <- ggplot2::aes(x = x, y = y, fill = Prediction)
   }else
   {
@@ -142,13 +144,14 @@ plotInterEffect <- function(evalData, effect1, effect2,
                             limits = c(min(plotData$Prediction),
                                        max(plotData$Prediction)))
     geom_param <- ggplot2::geom_point()
+    Prediction <- NULL#this is objectively bad and making my code more prone to errors and less easy to debug just to remove stupid check warnings/notes
     aes_param <- ggplot2::aes(x = x, y = y, color = Prediction)
   }
   inter_theme <- ggplot2::theme(plot.title.position = "plot",
                        plot.caption.position =  "plot",
                        # plot.margin = grid::unit(c(0,0,0,0), "mm"),
-                       panel.grid = element_blank(),
-                       panel.background = element_blank(),
+                       panel.grid = ggplot2::element_blank(),
+                       panel.background = ggplot2::element_blank(),
                        legend.position = "right")
   out_plot <-
     ggplot2::ggplot(plotData, aes_param) +

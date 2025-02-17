@@ -114,7 +114,8 @@ getThetaFromFormula <- function(modelFormula, list_of_deep_models)
                if(as.character(thetaDeepWithName[[itemIdx]][[innerItemIdx]][[innerInnerItemIdx]]) %in%
                   names(list_of_deep_models))
                  return(c(itemIdx, innerItemIdx, innerInnerItemIdx))))) %>%
-    unlist() %>% split(rep(1:(length(.)/3), each = 3))
+    unlist()
+  namesIdx <- namesIdx %>% split(rep(1:(length(namesIdx)/3), each = 3))
   thetaDeep <- thetaDeepWithName
   modelList <- list()
   for(item in namesIdx)
