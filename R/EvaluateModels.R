@@ -1,313 +1,144 @@
 #' @importFrom rlang .data
-evaluateSingleModel <- function(PHOModel, data, modelInfoList,
-                                categorical_features)
+evaluate_model_single <- function(model, data, model_info,
+                                  categorical_features)
 {
-  fitData <- prepareData(data, modelInfoList,
-                                categorical_features)
-  modelIdxList <- getModelIdxList(modelInfoList)
-  U_Object <-
-    getU(PHOModel$modelList, modelIdxList, modelInfoList, fitData)
-  subModelPredictions <-
-    lapply(PHOModel$W_List,
-           function(W)
-             U_Object$U %*% W)
-  subModelPredictionsOld <-
-    lapply(PHOModel$W_List_old,
-           function(W)
-             U_Object$U %*% W)
-  modelNames <- list()
-  for(orderIdx in seq_along(modelInfoList$theta))
+  data_fit <- prepare_data(data, model_info,
+                           categorical_features)
+  model_idx_list <- get_model_idx_list(model_info)
+  u_object <-
+    get_u(model$model_list, model_idx_list, model_info, data_fit)
+  predictions_submodel <-
+    lapply(model$w_list,
+           function(w)
+             u_object$u %*% w)
+  predictions_submodel_old <-
+    lapply(model$w_list_old,
+           function(w)
+             u_object$u %*% w)
+  model_names <- list()
+  for(idx_order in seq_along(model_info$theta))
   {
-    for(modelIdx in seq_along(modelInfoList$theta[[orderIdx]]))
+    for(idx_model in seq_along(model_info$theta[[idx_order]]))
     {
-      tmpName <-
-        paste(unlist(modelInfoList$theta[[orderIdx]][[modelIdx]]),
+      tmp_name <-
+        paste(unlist(model_info$theta[[idx_order]][[idx_model]]),
               collapse = "_")
-      if(names(modelInfoList$theta)[orderIdx] == "Linear")
+      if(names(model_info$theta)[idx_order] == "Linear")
       {
-        tmpName <- paste(tmpName, "_Linear", sep = "")
+        tmp_name <- paste(tmp_name, "_Linear", sep = "")
       }
-      modelNames <- c(modelNames, tmpName)
+      model_names <- c(model_names, tmp_name)
     }
   }
-  names(subModelPredictions) <- modelNames
-  names(subModelPredictionsOld) <- modelNames
-  return(list(subModelPredictions = subModelPredictions,
-              subModelPredictionsOld = subModelPredictionsOld))
+  names(predictions_submodel) <- model_names
+  names(predictions_submodel_old) <- model_names
+  return(list(predictions_submodel = predictions_submodel,
+              predictions_submodel_old = predictions_submodel_old))
 }
 #' Evaluate orthogonal neural additive model
-#' @param PHOModelList Orthogonal neural additive model ensemble object to be evaluated
+#' @param model_list Orthogonal neural additive model ensemble object to be evaluated
 #' @param data Data for which the model is to be evaluated
 #' @returns Returns a list containing data, model output for each observation in `data` and main and interaction effects obtained by the model
-#' @export evaluateModel
-evaluateModel <- function(PHOModelList,
-                          data = PHOModelList$data)
+#' @export evaluate_model
+evaluate_model <- function(model_list,
+                           data = model_list$data)
 {
-  data <- PHOModelList$data
-  modelInfoList <- PHOModelList$modelInfoList
+  if(is.null(data)) data <- model_list$data
+  model_info <- model_list$model_info
   n <- nrow(data)
-  nEnsemble <- length(PHOModelList$PHOEnsemble)
-  categorical_features <- PHOModelList$categorical_features
-  separatePredictions <-
-    lapply(PHOModelList$PHOEnsemble, evaluateSingleModel,
-           data = data, modelInfoList = modelInfoList,
+  n_ensemble <- length(model_list$ensemble)
+  categorical_features <- model_list$categorical_features
+  predictions_separate <-
+    lapply(model_list$ensemble, evaluate_model_single,
+           data = data, model_info = model_info,
            categorical_features = categorical_features)
-  effectNames <- names(separatePredictions[[1]][[1]])
-  nEffects <- length(effectNames)
-  predictionsData <-
-    data.frame(y = unlist(separatePredictions),
-               Effect =
-                 rep(rep(effectNames,
+  effect_names <- names(predictions_separate[[1]][[1]])
+  n_effects <- length(effect_names)
+  data_predictions <-
+    data.frame(y = unlist(predictions_separate),
+               effect =
+                 rep(rep(effect_names,
                          each = n),
-                     2 * nEnsemble),
-               PHO = rep(rep(c("After", "Before"),
-                             each = n * nEffects),
-                         nEnsemble),
-               Observation = rep(1:n, nEffects * 2 * nEnsemble),
-               Model = rep(1:nEnsemble, each = n * 2 * nEffects))
-  totalFeaturePredsPost <-
-    lapply(effectNames,
-           function(effect)
+                     2 * n_ensemble),
+               onam = rep(rep(c("after", "before"),
+                              each = n * n_effects),
+                          n_ensemble),
+               observation = rep(1:n, n_effects * 2 * n_ensemble),
+               model = rep(1:n_ensemble, each = n * 2 * n_effects))
+  predictions_features_ensemble <-
+    lapply(effect_names,
+           function(effect_name)
            {
-             predictionsData %>%
-               dplyr::filter(.data$PHO == "After", .data$Effect == effect) %>%
-               dplyr::group_by(.data$Observation) %>%
-               dplyr::summarise(totalEffect = mean(.data$y)) %>%
-               dplyr::select(.data$totalEffect) %>% unlist()
+             data_predictions %>%
+               dplyr::filter(.data$onam == "after",
+                             .data$effect == effect_name) %>%
+               dplyr::group_by(.data$observation) %>%
+               dplyr::summarise(totaleffect = mean(.data$y)) %>%
+               dplyr::select(.data$totaleffect) %>% unlist()
            })
-  names(totalFeaturePredsPost) <-
-    effectNames
-  finalTotalPredictions <-
-    unlist(totalFeaturePredsPost) %>%
+  names(predictions_features_ensemble) <-
+    effect_names
+  predictions_features <-
+    unlist(predictions_features_ensemble) %>%
     matrix(nrow = n) %*%
-    PHOModelList$finalW
-  colnames(finalTotalPredictions) <-
-    effectNames
-  totalPredictions <-
-    predictionsData %>%
-    dplyr::filter(PHO == "After") %>%
-    dplyr::group_by(.data$Observation) %>%
-    dplyr::summarise(Prediction = sum(.data$y)/nEnsemble) %>%
-    dplyr::select(.data$Prediction) %>% unlist()
+    model_list$w_post_ensemble
+  colnames(predictions_features) <-
+    effect_names
+  predictions_total <-
+    data_predictions %>%
+    dplyr::filter(.data$onam == "after") %>%
+    dplyr::group_by(.data$observation) %>%
+    dplyr::summarise(prediction = sum(.data$y)/n_ensemble) %>%
+    dplyr::select(.data$prediction) %>% unlist()
   return(list(data = data,
-              totalPredictions = totalPredictions,
-              finalTotalPredictions = finalTotalPredictions))
+              predictions_total = predictions_total,
+              predictions_features = predictions_features))
 }
-evaluateModelGenericPre <- function(PHOModelList)
+evaluate_model_pre <- function(model_list)
 {
-  data <- PHOModelList$data
-  modelInfoList <- PHOModelList$modelInfoList
-  categorical_features <- PHOModelList$categorical_features
+  data <- model_list$data
+  model_info <- model_list$model_info
+  categorical_features <- model_list$categorical_features
   n <- nrow(data)
-  nEnsemble <- length(PHOModelList$PHOEnsemble)
-  separatePredictions <-
-    lapply(PHOModelList$PHOEnsemble, evaluateSingleModel,
-           data = data, modelInfoList = modelInfoList,
+  n_ensemble <- length(model_list$ensemble)
+  predictions_separate <-
+    lapply(model_list$ensemble, evaluate_model_single,
+           data = data, model_info = model_info,
            categorical_features = categorical_features)
-  effectNames <- names(separatePredictions[[1]][[1]])
-  nEffects <- length(effectNames)
-  predictionsData <-
-    data.frame(y = unlist(separatePredictions),
-               Effect =
-                 rep(rep(effectNames,
+  effect_names <- names(predictions_separate[[1]][[1]])
+  n_effects <- length(effect_names)
+  data_predictions <-
+    data.frame(y = unlist(predictions_separate),
+               effect =
+                 rep(rep(effect_names,
                          each = n),
-                     2 * nEnsemble),
-               PHO = rep(rep(c("After", "Before"),
-                             each = n * nEffects),
-                         nEnsemble),
-               Observation = rep(1:n, nEffects * 2 * nEnsemble),
-               Model = rep(1:nEnsemble, each = n * 2 * nEffects))
-  totalFeaturePredsPost <-
-    lapply(effectNames,
-           function(effect)
+                     2 * n_ensemble),
+               onam = rep(rep(c("after", "before"),
+                              each = n * n_effects),
+                          n_ensemble),
+               observation = rep(1:n, n_effects * 2 * n_ensemble),
+               model = rep(1:n_ensemble, each = n * 2 * n_effects))
+  predictions_features_ensemble <-
+    lapply(effect_names,
+           function(effect_name)
            {
-             predictionsData %>%
-               dplyr::filter(.data$PHO == "After", .data$Effect == effect) %>%
-               dplyr::group_by(.data$Observation) %>%
-               dplyr::summarise(totalEffect = mean(.data$y)) %>%
-               dplyr::select(.data$totalEffect) %>% unlist()
+             data_predictions %>%
+               dplyr::filter(.data$onam == "after",
+                             .data$effect == effect_name) %>%
+               dplyr::group_by(.data$observation) %>%
+               dplyr::summarise(totaleffect = mean(.data$y)) %>%
+               dplyr::select(.data$totaleffect) %>% unlist()
            })
-  names(totalFeaturePredsPost) <-
-    effectNames
-  totalPredictions <-
-    predictionsData %>%
-    dplyr::filter(PHO == "After") %>%
-    dplyr::group_by(.data$Observation) %>%
-    dplyr::summarise(Prediction = sum(.data$y)/nEnsemble) %>%
-    dplyr::select(.data$Prediction) %>% unlist()
-  totalFeaturePredsPre <-
-    lapply(effectNames,
-           function(effect)
-           {
-             predictionsData %>%
-               dplyr::filter(.data$PHO == "Pre", .data$Effect == effect) %>%
-               dplyr::group_by(.data$Observation) %>%
-               dplyr::summarise(totalEffect = mean(.data$y)) %>%
-               dplyr::select(.data$totalEffect) %>% unlist()
-           })
-  names(totalFeaturePredsPre) <-
-    effectNames
+  names(predictions_features_ensemble) <-
+    effect_names
+  predictions_total <-
+    data_predictions %>%
+    dplyr::filter(.data$onam == "after") %>%
+    dplyr::group_by(.data$observation) %>%
+    dplyr::summarise(prediction = sum(.data$y)/n_ensemble) %>%
+    dplyr::select(.data$prediction) %>% unlist()
   return(list(data = data,
-              totalPredictions = totalPredictions,
-              predictionsData = predictionsData,
-              totalFeaturePredsPost = totalFeaturePredsPost,
-              totalFeaturePredsPre = totalFeaturePredsPre))
+              predictions_total = predictions_total,
+              data_predictions = data_predictions,
+              predictions_features_ensemble = predictions_features_ensemble))
 }
-<<<<<<< HEAD
-=======
-evaluateModelSimulation <- function(PHOModelList, X_Big, Y)
-{
-  modelInfoList <- PHOModelList$modelInfoList
-  n <- nrow(X_Big)
-  nEnsemble <- length(PHOModelList$PHOEnsemble)
-  separatePredictions <-
-    lapply(PHOModelList$PHOEnsemble, evaluateSingleModel,
-           data = X_Big, modelInfoList = modelInfoList)
-  effectNames <- names(separatePredictions[[1]][[1]])
-  nEffects <- length(effectNames)
-  predictionsData <-
-    data.frame(y = unlist(separatePredictions),
-               Effect =
-                 rep(rep(effectNames,
-                         each = n),
-                     2 * nEnsemble),
-               PHO = rep(rep(c("After", "Before"),
-                             each = n * nEffects),
-                         nEnsemble),
-               Observation = rep(1:n, nEffects * 2 * nEnsemble),
-               Model = rep(1:nEnsemble, each = n * 2 * nEffects))
-  totalFeaturePredsPost <-
-    lapply(effectNames,
-           function(effect)
-           {
-             predictionsData %>%
-               dplyr::filter(.data$PHO == "After",
-                             .data$Effect == effect) %>%
-               dplyr::group_by(.data$Observation) %>%
-               dplyr::summarise(totalEffect = mean(.data$y)) %>%
-               dplyr::select(.data$totalEffect) %>% unlist()
-           })
-  names(totalFeaturePredsPost) <-
-    effectNames
-  finalTotalPredictions <-
-    unlist(totalFeaturePredsPost) %>%
-    matrix(nrow = n) %*%
-    PHOModelList$finalW
-  colnames(finalTotalPredictions) <-
-    effectNames
-  totalPredictions <-
-    predictionsData %>%
-    dplyr::filter(.data$PHO == "After") %>%
-    dplyr::group_by(.data$Observation) %>%
-    dplyr::summarise(Prediction = sum(.data$y)/nEnsemble) %>%
-    dplyr::select(.data$Prediction) %>% unlist()
-  totalFeaturePredsPre <-
-    lapply(effectNames,
-           function(effect)
-           {
-             predictionsData %>%
-               dplyr::filter(.data$PHO == "Pre", .data$Effect == effect) %>%
-               dplyr::group_by(.data$Observation) %>%
-               dplyr::summarise(totalEffect = mean(.data$y)) %>%
-               dplyr::select(.data$totalEffect) %>% unlist()
-           })
-  names(totalFeaturePredsPre) <-
-    effectNames
-  Var <- stats::var(PHOModelList$finalOutputs)
-  totalVar <- sum(Var)
-  resVar <- Var[1,1]
-  interVar <- sum(Var[2:4, 2:4])
-  mainVar <- sum(Var[5:7,5:7])
-  interVarPercent <- interVar/totalVar
-  mainVarPercent <- mainVar/totalVar
-  interpretPercent <- mainVarPercent + interVarPercent
-  interpretMeasureList <- list(mainVarPercent,
-                               interVarPercent,
-                               interpretPercent)
-  return(list(data = cbind(X_Big, Y),
-              totalPredictions = totalPredictions,
-              predictionsData = predictionsData,
-              totalFeaturePredsPost = totalFeaturePredsPost,
-              totalFeaturePredsPre = totalFeaturePredsPre,
-              finalTotalPredictions = finalTotalPredictions,
-              interpretMeasures = interpretMeasureList))
-}
-evaluateModelNewData <- function(PHOModelList, X_Big)
-{
-  modelInfoList <- PHOModelList$modelInfoList
-  n <- nrow(X_Big)
-  nEnsemble <- length(PHOModelList$PHOEnsemble)
-  separatePredictions <-
-    lapply(PHOModelList$PHOEnsemble, evaluateSingleModel,
-           data = X_Big, modelInfoList = modelInfoList)
-  effectNames <- names(separatePredictions[[1]][[1]])
-  nEffects <- length(effectNames)
-  predictionsData <-
-    data.frame(y = unlist(separatePredictions),
-               Effect =
-                 rep(rep(effectNames,
-                         each = n),
-                     2 * nEnsemble),
-               PHO = rep(rep(c("After", "Before"),
-                             each = n * nEffects),
-                         nEnsemble),
-               Observation = rep(1:n, nEffects * 2 * nEnsemble),
-               Model = rep(1:nEnsemble, each = n * 2 * nEffects))
-  totalFeaturePredsPost <-
-    lapply(effectNames,
-           function(effect)
-           {
-             predictionsData %>%
-               dplyr::filter(.data$PHO == "After",
-                             .data$Effect == effect) %>%
-               dplyr::group_by(.data$Observation) %>%
-               dplyr::summarise(totalEffect = mean(.data$y)) %>%
-               dplyr::select(.data$totalEffect) %>% unlist()
-           })
-  names(totalFeaturePredsPost) <-
-    effectNames
-  finalTotalPredictions <-
-    unlist(totalFeaturePredsPost) %>%
-    matrix(nrow = n) %*%
-    PHOModelList$finalW
-  colnames(finalTotalPredictions) <-
-    effectNames
-  totalPredictions <-
-    predictionsData %>%
-    dplyr::filter(.data$PHO == "After") %>%
-    dplyr::group_by(.data$Observation) %>%
-    dplyr::summarise(Prediction = sum(.data$y)/nEnsemble) %>%
-    dplyr::select(.data$Prediction) %>% unlist()
-  totalFeaturePredsPre <-
-    lapply(effectNames,
-           function(effect)
-           {
-             predictionsData %>%
-               dplyr::filter(.data$PHO == "Pre",
-                             .data$Effect == effect) %>%
-               dplyr::group_by(.data$Observation) %>%
-               dplyr::summarise(totalEffect = mean(.data$y)) %>%
-               dplyr::select(.data$totalEffect) %>% unlist()
-           })
-  names(totalFeaturePredsPre) <-
-    effectNames
-  Var <- stats::var(PHOModelList$finalOutputs)
-  totalVar <- sum(Var)
-  resVar <- Var[1,1]
-  interVar <- sum(Var[2:4, 2:4])
-  mainVar <- sum(Var[5:7,5:7])
-  interVarPercent <- interVar/totalVar
-  mainVarPercent <- mainVar/totalVar
-  interpretPercent <- mainVarPercent + interVarPercent
-  interpretMeasureList <- list(mainVarPercent,
-                               interVarPercent,
-                               interpretPercent)
-  return(list(data = cbind(X_Big),
-              totalPredictions = totalPredictions,
-              predictionsData = predictionsData,
-              totalFeaturePredsPost = totalFeaturePredsPost,
-              totalFeaturePredsPre = totalFeaturePredsPre,
-              finalTotalPredictions = finalTotalPredictions,
-              interpretMeasures = interpretMeasureList))
-}
->>>>>>> 4a493a705f77fb823919ba3c476b166c2127d842
