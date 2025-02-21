@@ -43,7 +43,7 @@ get_u <- function(model_list, model_idx_list, model_info, data)
                get_intermediate_model() %>%
                stats::predict(data[[data_dictionary[[model_idx_list[[idx]]]]]],
                               verbose = 0)
-             if(model_list[[model_idx_list[[1]]]]$output$node$layer$get_config()$use_bias)
+             if (model_list[[model_idx_list[[1]]]]$output$node$layer$get_config()$use_bias)
                input <- cbind(input, 1)
              return(input)
            })
@@ -173,7 +173,7 @@ pho <- function(model_list, model_info, data)
            function(w_Idx)
            {
              tmp_w <- w_list[[w_Idx]]
-             tmp_w[length(tmp_w)] <- if(w_Idx == 1)
+             tmp_w[length(tmp_w)] <- if (w_Idx == 1)
                sum(unlist(allOutputMeans)[-1]) else
                  -allOutputMeans[[w_Idx]]
              return(tmp_w)
@@ -239,7 +239,7 @@ fit_onam <- function(formula, list_of_deep_models,
   ensemble <- list()
   for(i in 1:n_ensemble)
   {
-    if(progresstext)
+    if (progresstext)
     {
       cat('\r',paste0("Fitting model ", i, " of ", n_ensemble))
       utils::flush.console()
