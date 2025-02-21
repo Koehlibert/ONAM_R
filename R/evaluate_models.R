@@ -1,7 +1,6 @@
 #' @importFrom rlang .data
 evaluate_model_single <- function(model, data, model_info,
-                                  categorical_features)
-{
+                                  categorical_features) {
   data_fit <- prepare_data(data, model_info,
                            categorical_features)
   model_idx_list <- get_model_idx_list(model_info)
@@ -16,15 +15,12 @@ evaluate_model_single <- function(model, data, model_info,
            function(w)
              u_object$u %*% w)
   model_names <- list()
-  for(idx_order in seq_along(model_info$theta))
-  {
-    for(idx_model in seq_along(model_info$theta[[idx_order]]))
-    {
+  for(idx_order in seq_along(model_info$theta)) {
+    for(idx_model in seq_along(model_info$theta[[idx_order]])) {
       tmp_name <-
         paste(unlist(model_info$theta[[idx_order]][[idx_model]]),
               collapse = "_")
-      if(names(model_info$theta)[idx_order] == "Linear")
-      {
+      if(names(model_info$theta)[idx_order] == "Linear") {
         tmp_name <- paste(tmp_name, "_Linear", sep = "")
       }
       model_names <- c(model_names, tmp_name)
@@ -36,13 +32,14 @@ evaluate_model_single <- function(model, data, model_info,
               predictions_submodel_old = predictions_submodel_old))
 }
 #' Evaluate orthogonal neural additive model
-#' @param model_list Orthogonal neural additive model ensemble object to be evaluated
+#' @param model_list Orthogonal neural additive model ensemble object to be
+#' evaluated
 #' @param data Data for which the model is to be evaluated
-#' @returns Returns a list containing data, model output for each observation in `data` and main and interaction effects obtained by the model
+#' @returns Returns a list containing data, model output for each observation in
+#' `data` and main and interaction effects obtained by the model
 #' @export evaluate_model
 evaluate_model <- function(model_list,
-                           data = model_list$data)
-{
+                           data = model_list$data) {
   if(is.null(data)) data <- model_list$data
   model_info <- model_list$model_info
   n <- nrow(data)
@@ -67,8 +64,7 @@ evaluate_model <- function(model_list,
                model = rep(1:n_ensemble, each = n * 2 * n_effects))
   predictions_features_ensemble <-
     lapply(effect_names,
-           function(effect_name)
-           {
+           function(effect_name) {
              data_predictions %>%
                dplyr::filter(.data$onam == "after",
                              .data$effect == effect_name) %>%
@@ -94,8 +90,7 @@ evaluate_model <- function(model_list,
               predictions_total = predictions_total,
               predictions_features = predictions_features))
 }
-evaluate_model_pre <- function(model_list)
-{
+evaluate_model_pre <- function(model_list) {
   data <- model_list$data
   model_info <- model_list$model_info
   categorical_features <- model_list$categorical_features
@@ -120,8 +115,7 @@ evaluate_model_pre <- function(model_list)
                model = rep(1:n_ensemble, each = n * 2 * n_effects))
   predictions_features_ensemble <-
     lapply(effect_names,
-           function(effect_name)
-           {
+           function(effect_name) {
              data_predictions %>%
                dplyr::filter(.data$onam == "after",
                              .data$effect == effect_name) %>%

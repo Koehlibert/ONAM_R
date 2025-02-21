@@ -20,11 +20,14 @@ plot_inter_effect(
 
 \item{effect2}{Second effect to be plotted}
 
-\item{interpolate}{If TRUE, values will be interpolated for a smooth plot. If FALSE (default), only observations in the data will be plotted.}
+\item{interpolate}{If TRUE, values will be interpolated for a smooth plot.
+If FALSE (default), only observations in the data will be plotted.}
 
-\item{custom_colors}{color palette object for the interaction plot. Default is "spectral", returning a color palette based on the spectral theme.}
+\item{custom_colors}{color palette object for the interaction plot. Default
+is "spectral", returning a color palette based on the spectral theme.}
 
-\item{n_interpolate}{number of values per coordinate axis to interpolate. Ignored if 'interpolate = FALSE'.}
+\item{n_interpolate}{number of values per coordinate axis to interpolate.
+Ignored if 'interpolate = FALSE'.}
 }
 \value{
 Returns a 'ggplot2' object of the specified effect interaction
@@ -49,7 +52,7 @@ model_formula <- y ~ mod1(x1) + mod1(x2) +
 list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
 # Fit model
 mod <- fit_onam(model_formula, list_of_deep_models,
-                   data_train, n_ensemble = 2,
+                   data_train, n_ensemble = 2, epochs = 50,
                    progresstext = TRUE, verbose = 1)
 data_eval <- evaluate_model(mod)
 plot_inter_effect(data_eval, "x1", "x2", interpolate = TRUE)

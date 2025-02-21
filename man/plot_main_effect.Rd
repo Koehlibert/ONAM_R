@@ -9,7 +9,8 @@ plot_main_effect(data_eval, effect)
 \arguments{
 \item{data_eval}{Model output as obtained from ONAM::evaluate_model}
 
-\item{effect}{Effect to be plotted, must be present in the model formula. For interaction terms, use plotInteractionEffect}
+\item{effect}{Effect to be plotted, must be present in the model formula.
+For interaction terms, use plotInteractionEffect}
 }
 \value{
 Returns a ggplot2 object of the specified effect
@@ -34,7 +35,7 @@ model_formula <- y ~ mod1(x1) + mod1(x2) +
 list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
 # Fit model
 mod <- fit_onam(model_formula, list_of_deep_models,
-                   data_train, n_ensemble = 2,
+                   data_train, n_ensemble = 2, epochs = 50,
                    progresstext = TRUE, verbose = 1)
 data_eval <- evaluate_model(mod)
 plot_main_effect(data_eval, "x1")

@@ -17,7 +17,8 @@ fit_onam(
 )
 }
 \arguments{
-\item{formula}{Formula for model fitting. Specify deep parts with the same name as \code{list_of_deep_models}.}
+\item{formula}{Formula for model fitting. Specify deep parts with the same
+name as \code{list_of_deep_models}.}
 
 \item{list_of_deep_models}{List of named models used in \code{model_formula}.}
 
@@ -31,12 +32,15 @@ fit_onam(
 
 \item{callback}{Callback to be called during training.}
 
-\item{progresstext}{Show model fitting progress. If \code{TRUE}, shows current number of ensemble being fitted}
+\item{progresstext}{Show model fitting progress. If \code{TRUE}, shows current
+number of ensemble being fitted}
 
-\item{verbose}{Verbose argument for internal model fitting. used for debugging.}
+\item{verbose}{Verbose argument for internal model fitting. used for
+debugging.}
 }
 \value{
-Returns a pho model object, containing all ensemble members, ensemble weights, and main and interaction effect outputs.
+Returns a pho model object, containing all ensemble members,
+ensemble weights, and main and interaction effect outputs.
 }
 \description{
 Fit orthogonal neural additive model
@@ -61,7 +65,7 @@ callback <-
 keras::keras$callbacks$EarlyStopping(monitor = "loss",
                                      patience = 10)
 mod <- fit_onam(model_formula, list_of_deep_models,
-                   data_train, n_ensemble = 2,
+                   data_train, n_ensemble = 2, epochs = 50,
                    callback = callback,
                    progresstext = TRUE, verbose = 1)
 }

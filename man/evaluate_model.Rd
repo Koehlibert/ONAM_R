@@ -7,12 +7,14 @@
 evaluate_model(model_list, data = model_list$data)
 }
 \arguments{
-\item{model_list}{Orthogonal neural additive model ensemble object to be evaluated}
+\item{model_list}{Orthogonal neural additive model ensemble object to be
+evaluated}
 
 \item{data}{Data for which the model is to be evaluated}
 }
 \value{
-Returns a list containing data, model output for each observation in \code{data} and main and interaction effects obtained by the model
+Returns a list containing data, model output for each observation in
+\code{data} and main and interaction effects obtained by the model
 }
 \description{
 Evaluate orthogonal neural additive model
