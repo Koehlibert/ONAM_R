@@ -28,8 +28,8 @@ evaluate_model_single <- function(model, data, model_info,
   }
   names(predictions_submodel) <- model_names
   names(predictions_submodel_old) <- model_names
-  return(list(predictions_submodel = predictions_submodel,
-              predictions_submodel_old = predictions_submodel_old))
+  list(predictions_submodel = predictions_submodel,
+       predictions_submodel_old = predictions_submodel_old)
 }
 #' Evaluate orthogonal neural additive model
 #' @param model_list Orthogonal neural additive model ensemble object to be
@@ -86,9 +86,9 @@ evaluate_model <- function(model_list,
     dplyr::group_by(.data$observation) %>%
     dplyr::summarise(prediction = sum(.data$y)/n_ensemble) %>%
     dplyr::select(.data$prediction) %>% unlist()
-  return(list(data = data,
-              predictions_total = predictions_total,
-              predictions_features = predictions_features))
+  list(data = data,
+       predictions_total = predictions_total,
+       predictions_features = predictions_features)
 }
 evaluate_model_pre <- function(model_list) {
   data <- model_list$data
@@ -131,8 +131,8 @@ evaluate_model_pre <- function(model_list) {
     dplyr::group_by(.data$observation) %>%
     dplyr::summarise(prediction = sum(.data$y)/n_ensemble) %>%
     dplyr::select(.data$prediction) %>% unlist()
-  return(list(data = data,
-              predictions_total = predictions_total,
-              data_predictions = data_predictions,
-              predictions_features_ensemble = predictions_features_ensemble))
+  list(data = data,
+       predictions_total = predictions_total,
+       data_predictions = data_predictions,
+       predictions_features_ensemble = predictions_features_ensemble)
 }

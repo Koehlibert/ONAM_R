@@ -28,7 +28,7 @@ utils::globalVariables(c("x", "y", "prediction")) #remove cmd check note
 #' }
 #' @export plot_main_effect
 plot_main_effect <- function(data_eval, effect) {
-  if(!effect %in% colnames(data_eval$predictions_features)) {
+  if (!effect %in% colnames(data_eval$predictions_features)) {
     stop(paste(effect,
                " is not present in the fitted model effects.",
                sep = ""))
@@ -36,10 +36,9 @@ plot_main_effect <- function(data_eval, effect) {
   data_plot <-
     data.frame(x = data_eval$data[,effect],
                y = data_eval$predictions_features[,effect])
-  out_plot <- ggplot2::ggplot(data_plot, ggplot2::aes(x = x, y = y)) +
+  ggplot2::ggplot(data_plot, ggplot2::aes(x = x, y = y)) +
     ggplot2::geom_point() + ggplot2::ylab("Effect") +
     ggplot2::xlab(effect)
-  return(out_plot)
 }
 #' Plot Interaction Effect
 #' @param data_eval Model output as obtained from ONAM::evaluate_model
@@ -150,12 +149,10 @@ plot_inter_effect <- function(data_eval, effect1, effect2,
                                 panel.grid = ggplot2::element_blank(),
                                 panel.background = ggplot2::element_blank(),
                                 legend.position = "right")
-  out_plot <-
-    ggplot2::ggplot(data_plot, aes_param) +
+  ggplot2::ggplot(data_plot, aes_param) +
     # geom_point(size = 0.75) +
     geom_param +
     aes_gradient +
     inter_theme +
     ggplot2::ylab(effect1) + ggplot2::xlab(effect2)
-  return(out_plot)
 }

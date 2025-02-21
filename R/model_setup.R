@@ -32,8 +32,7 @@ get_submodel <- function(inputs, regularizer = NULL) {
                        dtype = "float64") %>%
     keras::layer_dense(units = 1, activation = "linear",
                        use_bias = TRUE)
-  submodel <- keras::keras_model(inputs, outputs)
-  return(submodel)
+  keras::keras_model(inputs, outputs)
 }
 #Define linear Model DNN structure
 get_linear_submodel <- function(inputs) {
@@ -41,7 +40,7 @@ get_linear_submodel <- function(inputs) {
     keras::layer_dense(units = 1, activation = "linear",
                        use_bias = FALSE,
                        dtype = "float64")
-  submodel <- keras::keras_model(inputs, outputs)
+  keras::keras_model(inputs, outputs)
 }
 #Define model architecture for categorical variable
 get_categorical_submodel <- function(inputs) {
@@ -49,7 +48,7 @@ get_categorical_submodel <- function(inputs) {
     keras::layer_dense(units = 1, activation = "linear",
                        use_bias = TRUE,
                        dtype = "float64")
-  submodel <- keras::keras_model(inputs, outputs)
+  keras::keras_model(inputs, outputs)
 }
 #Derive Theta from model Formula
 get_theta <- function(model_formula, list_of_deep_models) {
@@ -85,16 +84,15 @@ get_theta <- function(model_formula, list_of_deep_models) {
   parts_list[idx_additive_comps] <- NULL
   additive_comps <- lapply(additive_comps_long, function(item) {
     if (length(item) == 1) {
-      return(item)
+      item
     } else {
-      return(item[which(lapply(item,
-                               function(sub_item) sub_item != as.name("+")) %>%
-                          unlist())])
+      item[which(lapply(item,
+                        function(sub_item) sub_item != as.name("+")) %>%
+                   unlist())]
     }
   }) %>% unlist() %>% unique()
-  order_inter <- lapply(parts_list, function(item) {
-    length(item) - 1
-  }) %>% unlist()
+  order_inter <- lapply(parts_list, function(item) length(item) - 1) %>%
+    unlist()
   order_highest <- max(order_inter)
   ordered_parts_list <-
     parts_list[(1:length(parts_list))[order(order_inter,
@@ -150,20 +148,19 @@ get_theta <- function(model_formula, list_of_deep_models) {
   names(theta_deep) <- orders_unique
   names(model_list) <- orders_unique
   theta <- c(theta_deep, linear = list(additive_comps))
-  model_info <- list(theta = theta,
-                     name_models = model_list,
-                     outcome = outcome_var)
-  return(model_info)
+  list(theta = theta,
+       name_models = model_list,
+       outcome = outcome_var)
 }
 #help function to detect symbols
 find_symbol <- function(list_current) {
-  return(lapply(list_current, function(item) {
+  lapply(list_current, function(item) {
     if (is.symbol(item)) {
       item
     } else {
       find_symbol(item)
     }
-  }))
+  })
 }
 #create ONAM model based on model info and deep model list
 create_model <- function(model_info, list_of_deep_models,
@@ -172,8 +169,8 @@ create_model <- function(model_info, list_of_deep_models,
                                categorical_features, cat_counts)
   model_list <- create_models(model_info, inputs_list, list_of_deep_models)
   model_whole <- compile_model(inputs_list, model_list)
-  return(list(model = model_whole,
-              model_list = model_list))
+  list(model = model_whole,
+       model_list = model_list)
 }
 #create inputs for each submodel
 create_inputs <- function(model_info, categorical_features,
@@ -202,8 +199,8 @@ create_inputs <- function(model_info, categorical_features,
   names(inputs_deep) <-
     names(model_info$theta[setdiff(names(model_info$theta),
                                    "linear")])
-  return(list(deep = inputs_deep,
-              additive = inputs_linear))
+  list(deep = inputs_deep,
+       additive = inputs_linear)
 }
 #create all submodels
 create_models <- function(model_info, inputs_list, list_of_deep_models) {
@@ -223,9 +220,9 @@ create_models <- function(model_info, inputs_list, list_of_deep_models) {
               inputs_list$deep[[idx_p]][[idx_model]]))
         })
   }
-  all_models <- c(models_deep,
-                  additive = list(models_linear))
-  return(all_models)
+  c(models_deep,
+    additive = list(models_linear))
+
 }
 #concatenate models in model_list
 concatenate_model_list <- function(model_list, bias = FALSE) {
@@ -240,7 +237,7 @@ concatenate_model_list <- function(model_list, bias = FALSE) {
     tmp_weights[[2]] <- tmp_weights[[2]] - tmp_weights[[2]]
   }
   tmp_output$node$layer %>% keras::set_weights(tmp_weights)
-  return(tmp_output)
+  tmp_output
 }
 #compile created pho ensemble member
 compile_model <- function(inputs_list, model_list) {
@@ -249,10 +246,10 @@ compile_model <- function(inputs_list, model_list) {
   model_whole <- submodels %>%
     concatenate_model_list(bias = TRUE)
   model_whole <- keras::keras_model(all_inputs, model_whole)
-  model_whole <- model_whole %>%
+  model_whole %>%
     keras::compile(loss = keras::loss_mean_squared_error(),
                    optimizer = keras::optimizer_adam())
-  return(model_whole)
+
 }
 #prepare data for model fitting by bringing it into the right input dimensions
 prepare_data <- function(data_original, model_info,
@@ -283,8 +280,7 @@ prepare_data <- function(data_original, model_info,
              return(ret_mat)
            })
   newData <- c(deep_data, data_additive)
-  newData <- unname(newData)
-  return(newData)
+  unname(newData)
 }
 #Create "dictionary" yielding data indices for nested model list
 get_data_dictionary <- function(model_info) {
@@ -297,7 +293,7 @@ get_data_dictionary <- function(model_info) {
       dictionary_list[[i1]][[i2]] <- idx_tmp
     }
   }
-  return(dictionary_list)
+  dictionary_list
 }
 #create dummy variables for categorical data
 encode_dummy <- function(x, name) {
@@ -308,7 +304,7 @@ encode_dummy <- function(x, name) {
                            }),
                     nrow = length(x))
   colnames(ret_mat) <- paste(name, uq_vals[-1], sep = "_")
-  return(ret_mat)
+  ret_mat
 }
 #get number of unique categories per categorical feature - 1 (because of dummy
 #encoding)
@@ -320,5 +316,5 @@ get_category_counts <- function(categorical_features,
              length(unique(data[,feature])) - 1
            })
   names(ret_list) <- categorical_features
-  return(ret_list)
+  ret_list
 }

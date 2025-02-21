@@ -3,9 +3,8 @@ get_intermediate_model <-
   function(model,
            idx_layer = length(model$layers) - 1) {
     deep_part_in <- keras::get_layer(model, index = as.integer(idx_layer))
-    intermediate_mod <- keras::keras_model(model$input,
-                                           deep_part_in$output)
-    return(intermediate_mod)
+    keras::keras_model(model$input,
+                       deep_part_in$output)
   }
 #Solve linear system after removing linear dependencies
 solve_singular_matrix <- function(tmp_u, pivot) {
@@ -21,19 +20,17 @@ solve_singular_matrix <- function(tmp_u, pivot) {
 }
 #get list of all submodel indices in model_info$theta
 get_model_idx_list <- function(model_info) {
-  model_idx_list <-
-    lapply(seq_along(model_info$theta),
-           function(idx_order_inter)
-             lapply(seq_along(model_info$theta[[idx_order_inter]]),
-                    function(x) c(idx_order_inter, x))) %>%
+  lapply(seq_along(model_info$theta),
+         function(idx_order_inter)
+           lapply(seq_along(model_info$theta[[idx_order_inter]]),
+                  function(x) c(idx_order_inter, x))) %>%
     unlist(recursive = FALSE)
-  return(model_idx_list)
 }
 #get penultimate output for all submodels
 get_u <- function(model_list, model_idx_list, model_info, data) {
   data_dictionary <- get_data_dictionary(model_info)
   get_bias_helper <- function(model){
-    return(model$output$node$layer$get_config()$use_bias)
+    model$output$node$layer$get_config()$use_bias
   }
   u_list <-
     lapply(
@@ -61,32 +58,35 @@ get_u <- function(model_list, model_idx_list, model_info, data) {
     idx_last <- u_idx_list[[idx - 1]][u_dims[[idx - 1]]]
     u_idx_list[[idx]] <- (idx_last + 1):(idx_last + u_dims[[idx]])
   }
-  ret_list <- list(u = u,
-                   u_dims = u_dims,
-                   u_idx_list = u_idx_list)
-  return(ret_list)
+  list(u = u,
+       u_dims = u_dims,
+       u_idx_list = u_idx_list)
+
 }
 #get list of weights in last layer of each subfunction
-get_w_list <-
-  function(model_list, model_idx_list, model_info, u_idx_list) {
-    w_list_sep <- lapply(seq_along(model_idx_list),
-                         function(idx) {
-                           weights <- model_list[[model_idx_list[[idx]]]] %>%
-                             keras::get_layer(index = -1) %>%
-                             keras::get_weights()
-                           return(unlist(weights))
-                         })
-    w <- c(unlist(w_list_sep), 0)
-    w_list <-
-      lapply(seq_along(w_list_sep),
-             function(idx_model) {
-               tmp_w <- w
-               tmp_w[-u_idx_list[[idx_model]]] <- 0
-               return(tmp_w)
-             }
-      )
-    return(w_list)
-  }
+get_w_list <- function(model_list, model_idx_list,
+                       model_info, u_idx_list) {
+  w_list_sep <- lapply(seq_along(model_idx_list),
+                       function(idx) {
+                         weights <- model_list[[model_idx_list[[idx]]]] %>%
+                           keras::get_layer(index = -1) %>%
+                           keras::get_weights()
+                         return(unlist(weights))
+                       })
+  w <- c(unlist(w_list_sep), 0)
+  lapply(seq_along(w_list_sep),
+         function(idx_model) {
+           tmp_w <- w
+           tmp_w[-u_idx_list[[idx_model]]] <- 0
+           return(tmp_w)
+         })
+}
+#get model orders based on model index list
+get_model_order <- function(model_idx_list) {
+  lapply(model_idx_list,
+         function(idx_model)
+           idx_model[1]) %>% unlist()
+}
 #post hoc orthogonalization of fitted submodels
 pho <- function(model_list, model_info, data) {
   model_idx_list <- get_model_idx_list(model_info)
@@ -96,10 +96,7 @@ pho <- function(model_list, model_info, data) {
     get_w_list(model_list, model_idx_list, model_info,
                u_object$u_idx_list)
   w_list_old <- w_list
-  model_order <-
-    lapply(model_idx_list,
-           function(idx_model)
-             idx_model[1]) %>% unlist()
+  model_order <- get_model_order(model_idx_list)
   #Iterate over interaction depth
   for(idx_ortho in 2:(length(model_info$theta) -
                       is.null(model_info$theta$Linear))) {
@@ -129,7 +126,7 @@ pho <- function(model_list, model_info, data) {
                  outputs
                z <- rep(0, ncol(tmp_u))
                z[pivot] <- tmp_z
-               return(z)
+               z
              })
     for(idx_order_higher in seq_along(list_idx_order_higher)) {
       idx_model <- list_idx_order_higher[[idx_order_higher]]
@@ -154,8 +151,8 @@ pho <- function(model_list, model_info, data) {
   allOutputMeans <-
     lapply(seq_along(model_idx_list),
            function(idx_model) {
-             return(u_object$u %*%
-                      w_list[[idx_model]] %>% mean())
+             u_object$u %*%
+               w_list[[idx_model]] %>% mean()
            })
   w_list <-
     lapply(seq_along(w_list),
@@ -164,13 +161,12 @@ pho <- function(model_list, model_info, data) {
              tmp_w[length(tmp_w)] <- if (w_Idx == 1)
                sum(unlist(allOutputMeans)[-1]) else
                  -allOutputMeans[[w_Idx]]
-             return(tmp_w)
+             tmp_w
            })
-  ret_list <- list(model_list = model_list,
-                   w_list = w_list,
-                   u_dims = u_object$u_dims,
-                   w_list_old = w_list_old)
-  return(ret_list)
+  list(model_list = model_list,
+       w_list = w_list,
+       u_dims = u_object$u_dims,
+       w_list_old = w_list_old)
 }
 #' Fit orthogonal neural additive model
 #'
@@ -258,9 +254,8 @@ fit_onam <- function(formula, list_of_deep_models,
   pho_ensemble_list <- pho_ensemble(data_model_eval, model_info)
   w_post_ensemble <- pho_ensemble_list[[1]]
   outputs_post_ensemble <- pho_ensemble_list[[2]]
-  returnList <- c(model_list_pho, w_post_ensemble = list(w_post_ensemble),
-                  outputs_post_ensemble = list(outputs_post_ensemble))
-  return(returnList)
+  c(model_list_pho, w_post_ensemble = list(w_post_ensemble),
+    outputs_post_ensemble = list(outputs_post_ensemble))
 }
 #post hoc orthogonalization of fitted (and  separately orthogonalized) ensemble
 #members
@@ -269,10 +264,7 @@ pho_ensemble <- function(data_model_eval, model_info) {
   data <- data_model_eval$data
   n <- nrow(data)
   model_idx_list <- get_model_idx_list(model_info)
-  model_order <-
-    lapply(model_idx_list,
-           function(idx_model)
-             idx_model[1]) %>% unlist()
+  model_order <- get_model_order(model_idx_list)
   n_models <- length(model_order)
   u <- unlist(data_model_eval$predictions_features_ensemble) %>%
     matrix(nrow = n)
@@ -324,7 +316,7 @@ pho_ensemble <- function(data_model_eval, model_info) {
     u %*% w
   colnames(outputs_post_ensemble) <-
     names(data_model_eval$totalFeaturePredsPost)
-  return(list(w, outputs_post_ensemble))
+  list(w, outputs_post_ensemble)
 }
 #' @importFrom dplyr %>%
 #' @export
