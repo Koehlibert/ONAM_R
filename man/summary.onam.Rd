@@ -10,12 +10,14 @@
 \method{print}{summary.onam}(x, ...)
 }
 \arguments{
-\item{object}{onam object fitted with \code{fit_onam} to be summarized}
+\item{object}{onam object of class \code{onam} as returned from \code{\link{fit_onam}} to be summarized}
 
 \item{...}{further arguments passed to or from other methods.}
+
+\item{x}{object of class \code{\link{summary.onam}}.}
 }
 \value{
-Gives summary of onam object, including model inputs, number of
+Gives summary of the \code{onam} object, including model inputs, number of
 ensembles, correlation of model output and original outcome variable, and
 interpretability metrics i_1 and i_2
 }

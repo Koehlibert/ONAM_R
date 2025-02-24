@@ -39,11 +39,12 @@ number of ensemble being fitted}
 debugging.}
 }
 \value{
-Returns a pho model object, containing all ensemble members,
-ensemble weights, and main and interaction effect outputs.
+Returns a model object of class \code{onam}, containing all ensemble
+members, ensemble weights, and main and interaction effect outputs.
 }
 \description{
-Fit orthogonal neural additive model
+Fits an interpretable neural additive model with post hoc orthogonalization
+for a given network architecture and user-specified feature sets.
 }
 \examples{
 \donttest{

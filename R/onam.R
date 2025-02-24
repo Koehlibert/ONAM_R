@@ -1,5 +1,9 @@
 #' Fit orthogonal neural additive model
 #'
+#' @description
+#' Fits an interpretable neural additive model with post hoc orthogonalization
+#' for a given network architecture and user-specified feature sets.
+#'
 #' @param formula Formula for model fitting. Specify deep parts with the same
 #' name as `list_of_deep_models`.
 #' @param list_of_deep_models List of named models used in `model_formula`.
@@ -12,8 +16,8 @@
 #' number of ensemble being fitted
 #' @param verbose Verbose argument for internal model fitting. used for
 #' debugging.
-#' @returns Returns a pho model object, containing all ensemble members,
-#' ensemble weights, and main and interaction effect outputs.
+#' @returns Returns a model object of class \code{onam}, containing all ensemble
+#' members, ensemble weights, and main and interaction effect outputs.
 #' @examples
 #' \donttest{
 #' # Basic example for a simple ONAM-model
@@ -39,28 +43,33 @@
 #'                    progresstext = TRUE, verbose = 1)
 #' }
 #' @export fit_onam
-fit_onam <- function(formula, list_of_deep_models,
-                     data, categorical_features = NULL,
+fit_onam <- function(formula,
+                     list_of_deep_models,
+                     data,
+                     categorical_features = NULL,
                      n_ensemble = 20,
                      epochs = 500,
                      callback = NULL,
-                     progresstext = FALSE, verbose = 0) {
+                     progresstext = FALSE,
+                     verbose = 0) {
   model_info <-
     get_theta(formula, list_of_deep_models)
   data_fit <-
     prepare_data(data, model_info, categorical_features)
   cat_counts <- get_category_counts(categorical_features,
                                     data)
-  y <- data[,which(colnames(data) ==
-                     as.character(model_info$outcome))]
+  y <- data[, which(colnames(data) ==
+                      as.character(model_info$outcome))]
   ensemble <- list()
-  for(i in 1:n_ensemble) {
+  for (i in 1:n_ensemble) {
     if (progresstext) {
       show_progress(i, n_ensemble)
     }
     model_object <-
-      create_model(model_info, list_of_deep_models,
-                   categorical_features, cat_counts)
+      create_model(model_info,
+                   list_of_deep_models,
+                   categorical_features,
+                   cat_counts)
     model_whole <- model_object$model
     model_list <- model_object$model_list
     #Fit model####
@@ -68,26 +77,35 @@ fit_onam <- function(formula, list_of_deep_models,
     #   keras::keras$callbacks$EarlyStopping(monitor = "loss",
     #                                        patience = 10)
     history <- model_whole %>%
-      keras::fit(data_fit, y, epochs = epochs, callbacks = callback,
-                 verbose = verbose)
+      keras::fit(
+        data_fit,
+        y,
+        epochs = epochs,
+        callbacks = callback,
+        verbose = verbose
+      )
     #Orthogonalize####
     ensemble[[i]] <-
       pho(model_list, model_info, data_fit)
   }
-  model_list_pho <- list(ensemble = ensemble,
-                         model_info = model_info,
-                         data = data,
-                         categorical_features = categorical_features,
-                         input = model_whole$input)
+  model_list_pho <- list(
+    ensemble = ensemble,
+    model_info = model_info,
+    data = data,
+    categorical_features = categorical_features,
+    input = model_whole$input
+  )
   data_model_eval <-
     evaluate_model_pre(model_list_pho)
   pho_ensemble_list <- pho_ensemble(data_model_eval, model_info)
   w_post_ensemble <- pho_ensemble_list[[1]]
   outputs_post_ensemble <- pho_ensemble_list[[2]]
-  out <- c(model_list_pho,
-           call = match.call(),
-           w_post_ensemble = list(w_post_ensemble),
-           outputs_post_ensemble = list(outputs_post_ensemble))
+  out <- c(
+    model_list_pho,
+    call = match.call(),
+    w_post_ensemble = list(w_post_ensemble),
+    outputs_post_ensemble = list(outputs_post_ensemble)
+  )
   class(out) <- "onam"
   out
 }
@@ -98,9 +116,10 @@ fit_onam <- function(formula, list_of_deep_models,
 #' information on ensembling strategy and performance metrics such as
 #' correlation and degree of interpretabiltity
 #'
-#' @param object onam object fitted with `fit_onam` to be summarized
+#' @param object onam object of class `onam` as returned from \code{\link{fit_onam}} to be summarized
+#' @param x object of class \code{\link{summary.onam}}.
 #' @param ... further arguments passed to or from other methods.
-#' @returns Gives summary of onam object, including model inputs, number of
+#' @returns Gives summary of the `onam` object, including model inputs, number of
 #' ensembles, correlation of model output and original outcome variable, and
 #' interpretability metrics i_1 and i_2
 #' @examples
@@ -132,17 +151,18 @@ fit_onam <- function(formula, list_of_deep_models,
 #' @export
 summary.onam <- function(object, ...) {
   prediction <- rowSums(object$outputs_post_ensemble)
-  var_decomp <- diag(var(object$outputs_post_ensemble)) /
-    var(prediction)
+  var_decomp <- diag(stats::var(object$outputs_post_ensemble)) /
+    stats::var(prediction)
   res <- list(
     call = object$call,
     input = object$input,
     n_ensemble = length(object$ensemble),
-    cor = cor(rowSums(object$outputs_post_ensemble),
-              object$data[,as.character(object$model_info$outcome)]),
+    cor = stats::cor(rowSums(object$outputs_post_ensemble),
+              object$data[, as.character(object$model_info$outcome)]),
     i_1 = var_decomp[1],
     i_2 = var_decomp[2],
-    degree_expl = sum(var_decomp[1:2])/sum(var_decomp))
+    degree_expl = sum(var_decomp[1:2]) / sum(var_decomp)
+  )
   class(res) <- "summary.onam"
   res
 }
@@ -155,10 +175,14 @@ print.summary.onam <- function(x, ...) {
   print(x$call)
   cat("\nInputs: \n", x$inputs, sep = "")
   cat("\nCorrelation of model prediction with outcome variable: ",
-      round(x$cor, 4), sep = "")
+      round(x$cor, 4),
+      sep = "")
   cat("\nNumber of ensemble members: ", x$n_ensemble)
-  cat("\nI_1: ", round(x$i_1, digits = 4), "; I_2:  ",
-      round(x$i_2, digits = 4), sep = "")
+  cat("\nI_1: ",
+      round(x$i_1, digits = 4),
+      "; I_2:  ",
+      round(x$i_2, digits = 4),
+      sep = "")
   cat("\nDegree of interpretability: ",
       round(x$degree_expl, digits = 4),
       sep = "")
