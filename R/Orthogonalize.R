@@ -168,6 +168,10 @@ pho <- function(model_list, model_info, data) {
        u_dims = u_object$u_dims,
        w_list_old = w_list_old)
 }
+show_progress <- function(i, n_ensemble) {
+  cat('\r',paste0("Fitting model ", i, " of ", n_ensemble))
+  utils::flush.console()
+}
 #' Fit orthogonal neural additive model
 #'
 #' @param formula Formula for model fitting. Specify deep parts with the same
@@ -211,8 +215,8 @@ pho <- function(model_list, model_info, data) {
 #' @export fit_onam
 fit_onam <- function(formula, list_of_deep_models,
                      data, categorical_features = NULL,
-                     epochs = 500,
                      n_ensemble = 20,
+                     epochs = 500,
                      callback = NULL,
                      progresstext = FALSE, verbose = 0) {
   model_info <-
@@ -226,8 +230,7 @@ fit_onam <- function(formula, list_of_deep_models,
   ensemble <- list()
   for(i in 1:n_ensemble) {
     if (progresstext) {
-      cat('\r',paste0("Fitting model ", i, " of ", n_ensemble))
-      utils::flush.console()
+      show_progress(i, n_ensemble)
     }
     model_object <-
       create_model(model_info, list_of_deep_models,

@@ -14,13 +14,14 @@ Description: An algorithm for fitting interpretable additive neural
     functional decomposition of the prediction function.
 License: MIT + file LICENSE
 BugReports: https://github.com/Koehlibert/ONAM
+Depends:
+    keras
 Imports:
     dplyr,
-    keras,
     scales,
-    rlang
+    rlang,
+    ggplot2
 Suggests:
-    ggplot2,
     akima,
     RColorBrewer,
     testthat (>= 3.0.0)

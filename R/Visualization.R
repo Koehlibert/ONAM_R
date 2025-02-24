@@ -78,6 +78,13 @@ plot_inter_effect <- function(data_eval, effect1, effect2,
                               interpolate = FALSE,
                               custom_colors = "spectral",
                               n_interpolate = 200) {
+  if (interpolate & !requireNamespace("akima", quietly = TRUE)) {
+    stop(
+      "Package \"akima\" must be installed to interpolate data for smooth
+      interaction plots.",
+      call. = FALSE
+    )
+  }
   inter <- paste(effect1, effect2, sep = "_")
   if (!inter %in% colnames(data_eval$predictions_features)) {
     inter <- paste(effect2, effect1, sep = "_")
