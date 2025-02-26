@@ -9,13 +9,16 @@
 #' @param list_of_deep_models List of named models used in `model_formula`.
 #' @param data Data to be fitted
 #' @param categorical_features Vector of which features are categorical.
-#' @param epochs Number of epochs to train the model.
+#' @param epochs Number of epochs to train the model. See
+#' \code{\link[keras]{fit.keras.engine.training.Model}} for details.
 #' @param n_ensemble Number of orthogonal neural additive model ensembles
-#' @param callback Callback to be called during training.
+#' @param callback Callback to be called during training. See
+#' \code{\link[keras]{fit.keras.engine.training.Model}} for details.
 #' @param progresstext Show model fitting progress. If `TRUE`, shows current
 #' number of ensemble being fitted
 #' @param verbose Verbose argument for internal model fitting. used for
-#' debugging.
+#' debugging. See \code{\link[keras]{fit.keras.engine.training.Model}} for
+#' details.
 #' @returns Returns a model object of class \code{onam}, containing all ensemble
 #' members, ensemble weights, and main and interaction effect outputs.
 #' @examples
@@ -37,13 +40,13 @@
 #' callback <-
 #' keras::keras$callbacks$EarlyStopping(monitor = "loss",
 #'                                      patience = 10)
-#' mod <- fit_onam(model_formula, list_of_deep_models,
+#' mod <- onam(model_formula, list_of_deep_models,
 #'                    data_train, n_ensemble = 2, epochs = 50,
 #'                    callback = callback,
 #'                    progresstext = TRUE, verbose = 1)
 #' }
-#' @export fit_onam
-fit_onam <- function(formula,
+#' @export onam
+onam <- function(formula,
                      list_of_deep_models,
                      data,
                      categorical_features = NULL,
@@ -96,7 +99,7 @@ fit_onam <- function(formula,
     input = model_whole$input
   )
   data_model_eval <-
-    evaluate_model_pre(model_list_pho)
+    evaluate_onam_pre(model_list_pho)
   pho_ensemble_list <- pho_ensemble(data_model_eval, model_info)
   w_post_ensemble <- pho_ensemble_list[[1]]
   outputs_post_ensemble <- pho_ensemble_list[[2]]
@@ -116,11 +119,12 @@ fit_onam <- function(formula,
 #' information on ensembling strategy and performance metrics such as
 #' correlation and degree of interpretabiltity
 #'
-#' @param object onam object of class `onam` as returned from \code{\link{fit_onam}} to be summarized
+#' @param object onam object of class `onam` as returned from
+#' \code{\link{onam}} to be summarized
 #' @param x object of class \code{\link{summary.onam}}.
 #' @param ... further arguments passed to or from other methods.
-#' @returns Gives summary of the `onam` object, including model inputs, number of
-#' ensembles, correlation of model output and original outcome variable, and
+#' @returns Gives summary of the `onam` object, including model inputs, number
+#' of ensembles, correlation of model output and original outcome variable, and
 #' interpretability metrics i_1 and i_2
 #' @examples
 #' \donttest{
@@ -141,7 +145,7 @@ fit_onam <- function(formula,
 #' callback <-
 #' keras::keras$callbacks$EarlyStopping(monitor = "loss",
 #'                                      patience = 10)
-#' mod <- fit_onam(model_formula, list_of_deep_models,
+#' mod <- onam(model_formula, list_of_deep_models,
 #'                    data_train, n_ensemble = 2, epochs = 50,
 #'                    callback = callback,
 #'                    progresstext = TRUE, verbose = 1)
@@ -151,17 +155,16 @@ fit_onam <- function(formula,
 #' @export
 summary.onam <- function(object, ...) {
   prediction <- rowSums(object$outputs_post_ensemble)
-  var_decomp <- diag(stats::var(object$outputs_post_ensemble)) /
-    stats::var(prediction)
+  var_decomp <- var_decomp_onam(object)
   res <- list(
     call = object$call,
     input = object$input,
     n_ensemble = length(object$ensemble),
     cor = stats::cor(rowSums(object$outputs_post_ensemble),
-              object$data[, as.character(object$model_info$outcome)]),
-    i_1 = var_decomp[1],
-    i_2 = var_decomp[2],
-    degree_expl = sum(var_decomp[1:2]) / sum(var_decomp)
+                     object$data[, as.character(object$model_info$outcome)]),
+    i_1 = var_decomp["1"],
+    i_2 = var_decomp["2"],
+    degree_expl = sum(var_decomp[c("1", "2")])
   )
   class(res) <- "summary.onam"
   res
@@ -173,7 +176,15 @@ summary.onam <- function(object, ...) {
 print.summary.onam <- function(x, ...) {
   cat("\nCall:\n")
   print(x$call)
-  cat("\nInputs: \n", x$inputs, sep = "")
+  cat("\nInputs:")
+  input_string_1 <- as.character(x$input[[1]])
+  if (input_string_1 == "<pointer: 0x0>") {
+    cat(
+      "\nModel fitted in previous R session; Input information only available in
+      session in which model was built.\n")
+  } else {
+    lapply(x$input, function(input) cat("\n", as.character(input)))
+  }
   cat("\nCorrelation of model prediction with outcome variable: ",
       round(x$cor, 4),
       sep = "")

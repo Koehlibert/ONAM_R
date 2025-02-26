@@ -1,6 +1,6 @@
 utils::globalVariables(c("x", "y", "prediction")) #remove cmd check note
 #' Plot Main Effect
-#' @param data_eval Model output as obtained from ONAM::evaluate_model
+#' @param data_eval Model output as obtained from ONAM::evaluate_onam
 #' @param effect Effect to be plotted, must be present in the model formula.
 #' For interaction terms, use plotInteractionEffect
 #' @returns Returns a ggplot2 object of the specified effect
@@ -20,10 +20,10 @@ utils::globalVariables(c("x", "y", "prediction")) #remove cmd check note
 #'   mod1(x1, x2)
 #' list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
 #' # Fit model
-#' mod <- fit_onam(model_formula, list_of_deep_models,
-#'                    data_train, n_ensemble = 2, epochs = 50,
-#'                    progresstext = TRUE, verbose = 1)
-#' data_eval <- evaluate_model(mod)
+#' mod <- onam(model_formula, list_of_deep_models,
+#'             data_train, n_ensemble = 2, epochs = 50,
+#'             progresstext = TRUE, verbose = 1)
+#' data_eval <- predict(mod)
 #' plot_main_effect(data_eval, "x1")
 #' }
 #' @export plot_main_effect
@@ -41,9 +41,9 @@ plot_main_effect <- function(data_eval, effect) {
     ggplot2::xlab(effect)
 }
 #' Plot Interaction Effect
-#' @param data_eval Model output as obtained from [evaluate_model]
-#' @param effect1 First effect to be plotted
-#' @param effect2 Second effect to be plotted
+#' @param data_eval Model output as obtained from [predict.onam].
+#' @param effect1 First effect to be plotted.
+#' @param effect2 Second effect to be plotted.
 #' @param interpolate If TRUE, values will be interpolated for a smooth plot.
 #' If FALSE (default), only observations in the data will be plotted.
 #' @param custom_colors color palette object for the interaction plot. Default
@@ -67,10 +67,10 @@ plot_main_effect <- function(data_eval, effect) {
 #'   mod1(x1, x2)
 #' list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
 #' # Fit model
-#' mod <- fit_onam(model_formula, list_of_deep_models,
-#'                    data_train, n_ensemble = 2, epochs = 50,
-#'                    progresstext = TRUE, verbose = 1)
-#' data_eval <- evaluate_model(mod)
+#' mod <- onam(model_formula, list_of_deep_models,
+#'             data_train, n_ensemble = 2, epochs = 50,
+#'             progresstext = TRUE, verbose = 1)
+#' data_eval <- predict(mod)
 #' plot_inter_effect(data_eval, "x1", "x2", interpolate = TRUE)
 #' }
 #' @export plot_inter_effect

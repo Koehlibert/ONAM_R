@@ -10,15 +10,16 @@
 \method{print}{summary.onam}(x, ...)
 }
 \arguments{
-\item{object}{onam object of class \code{onam} as returned from \code{\link{fit_onam}} to be summarized}
+\item{object}{onam object of class \code{onam} as returned from
+\code{\link{onam}} to be summarized}
 
 \item{...}{further arguments passed to or from other methods.}
 
 \item{x}{object of class \code{\link{summary.onam}}.}
 }
 \value{
-Gives summary of the \code{onam} object, including model inputs, number of
-ensembles, correlation of model output and original outcome variable, and
+Gives summary of the \code{onam} object, including model inputs, number
+of ensembles, correlation of model output and original outcome variable, and
 interpretability metrics i_1 and i_2
 }
 \description{
@@ -45,7 +46,7 @@ list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
 callback <-
 keras::keras$callbacks$EarlyStopping(monitor = "loss",
                                      patience = 10)
-mod <- fit_onam(model_formula, list_of_deep_models,
+mod <- onam(model_formula, list_of_deep_models,
                    data_train, n_ensemble = 2, epochs = 50,
                    callback = callback,
                    progresstext = TRUE, verbose = 1)

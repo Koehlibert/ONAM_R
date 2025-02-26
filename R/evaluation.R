@@ -1,8 +1,8 @@
 #' @importFrom rlang .data
-evaluate_model_single <- function(model,
-                                  data,
-                                  model_info,
-                                  categorical_features) {
+evaluate_onam_single <- function(model,
+                                 data,
+                                 model_info,
+                                 categorical_features) {
   data_fit <- prepare_data(data, model_info,
                            categorical_features)
   model_idx_list <- get_model_idx_list(model_info)
@@ -34,24 +34,26 @@ evaluate_model_single <- function(model,
        predictions_submodel_old = predictions_submodel_old)
 }
 #' Evaluate orthogonal neural additive model
-#' @param model_list model of class `onam` as returned from [fit_onam] to be
+#' @param model model of class `onam` as returned from [fit_onam] to be
 #' evaluated
-#' @param data Data for which the model is to be evaluated
+#' @param data Data for which the model is to be evaluated. Default is the data
+#' with which \code{model} was fitted.
 #' @returns Returns a list containing data, model output for each observation in
 #' `data` and main and interaction effects obtained by the model
-#' @export evaluate_model
-evaluate_model <- function(model_list,
-                           data = model_list$data) {
+#' @method predict onam
+#' @export
+predict.onam <- function(model,
+                         data = model$data) {
   if (is.null(data))
-    data <- model_list$data
-  model_info <- model_list$model_info
+    data <- model$data
+  model_info <- model$model_info
   n <- nrow(data)
-  n_ensemble <- length(model_list$ensemble)
-  categorical_features <- model_list$categorical_features
+  n_ensemble <- length(model$ensemble)
+  categorical_features <- model$categorical_features
   predictions_separate <-
     lapply(
-      model_list$ensemble,
-      evaluate_model_single,
+      model$ensemble,
+      evaluate_onam_single,
       data = data,
       model_info = model_info,
       categorical_features = categorical_features
@@ -86,7 +88,7 @@ evaluate_model <- function(model_list,
   predictions_features <-
     unlist(predictions_features_ensemble) %>%
     matrix(nrow = n) %*%
-    model_list$w_post_ensemble
+    model$w_post_ensemble
   colnames(predictions_features) <-
     effect_names
   predictions_total <-
@@ -95,13 +97,16 @@ evaluate_model <- function(model_list,
     dplyr::group_by(.data$observation) %>%
     dplyr::summarise(prediction = sum(.data$y) / n_ensemble) %>%
     dplyr::select(.data$prediction) %>% unlist()
-  list(
+  out <- list(
     data = data,
     predictions_total = predictions_total,
-    predictions_features = predictions_features
+    predictions_features = predictions_features,
+    model_info = model_info
   )
+  class(out) <- "onam_prediction"
+  out
 }
-evaluate_model_pre <- function(model_list) {
+evaluate_onam_pre <- function(model_list) {
   data <- model_list$data
   model_info <- model_list$model_info
   categorical_features <- model_list$categorical_features
@@ -110,7 +115,7 @@ evaluate_model_pre <- function(model_list) {
   predictions_separate <-
     lapply(
       model_list$ensemble,
-      evaluate_model_single,
+      evaluate_onam_single,
       data = data,
       model_info = model_info,
       categorical_features = categorical_features
@@ -154,4 +159,67 @@ evaluate_model_pre <- function(model_list) {
     data_predictions = data_predictions,
     predictions_features_ensemble = predictions_features_ensemble
   )
+}
+#' Get variance decomposition of orthogonal neural additive model
+#' @param object Either model of class `onam` as returned from [fit_onam] or
+#' model evaluation outcome as returned from [evaluate_onam]
+#' @param data Data for which the model is to be evaluated. Default is the data
+#' with which \code{model} was fitted.
+#' @returns Returns a named vector of percentage of variance explained by each
+#' interaction order.
+#' @examples
+#' \donttest{
+#' # Basic example for a simple ONAM-model
+#' # Create training data
+#' n <- 1000
+#' x1 <- runif(n, -2, 2)
+#' x2 <- runif(n, -2, 2)
+#' y <- sin(x1) + ifelse(x2 > 0, pweibull(x2, shape = 3),
+#'   pweibull(-x2, shape = 0.5)) +
+#'   x1 * x2
+#' data_train <- cbind(x1, x2, y)
+#' # Define model
+#' model_formula <- y ~ mod1(x1) + mod1(x2) +
+#'   mod1(x1, x2)
+#' list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
+#' # Fit model
+#' mod <- onam(model_formula, list_of_deep_models,
+#'             data_train, n_ensemble = 2, epochs = 50,
+#'             progresstext = TRUE, verbose = 1)
+#' var_decomp_onam(mod)
+#' }
+#' @export var_decomp_onam
+var_decomp_onam <- function(object, data = object$data) {
+  if (is.null(data))
+    data <- object$data
+  if (class(object) == "onam") {
+    effects <- evaluate_onam(object, data)$predictions_features
+  } else {
+    effects <- object$predictions_features
+  }
+  theta_deep <-
+    object$model_info$theta[setdiff(names(object$model_info$theta),
+                                    "linear")]
+  orders <- names(theta_deep)
+  effect_order_matrix <- matrix(nrow = nrow(effects),
+                                ncol = length(orders))
+  for (idx_order in seq_along(orders)) {
+    tmp_name <-
+      lapply(theta_deep[[orders[idx_order]]],
+             function(effect) {
+               paste(effect, collapse = "_")
+             }) %>%
+      unlist()
+    tmp_effects <- effects[, tmp_name]
+    if (!is.null(dim(tmp_effects))) {
+      tmp_effects <- rowSums(tmp_effects)
+    }
+    effect_order_matrix[, idx_order] <-
+      tmp_effects
+  }
+  colnames(effect_order_matrix) <- orders
+  effect_order_matrix <-
+    effect_order_matrix[, ncol(effect_order_matrix):1]
+  tmp_var <- stats::var(effect_order_matrix)
+  diag(tmp_var) / sum(diag(tmp_var))
 }
