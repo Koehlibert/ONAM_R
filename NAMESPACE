@@ -3,7 +3,6 @@
 S3method(predict,onam)
 S3method(print,summary.onam)
 S3method(summary,onam)
-export(evaluate_onam)
 export(onam)
 export(plot_inter_effect)
 export(plot_main_effect)

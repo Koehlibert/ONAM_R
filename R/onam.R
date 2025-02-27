@@ -47,14 +47,14 @@
 #' }
 #' @export onam
 onam <- function(formula,
-                     list_of_deep_models,
-                     data,
-                     categorical_features = NULL,
-                     n_ensemble = 20,
-                     epochs = 500,
-                     callback = NULL,
-                     progresstext = FALSE,
-                     verbose = 0) {
+                 list_of_deep_models,
+                 data,
+                 categorical_features = NULL,
+                 n_ensemble = 20,
+                 epochs = 500,
+                 callback = NULL,
+                 progresstext = FALSE,
+                 verbose = 0) {
   model_info <-
     get_theta(formula, list_of_deep_models)
   data_fit <-
@@ -155,7 +155,7 @@ onam <- function(formula,
 #' @export
 summary.onam <- function(object, ...) {
   prediction <- rowSums(object$outputs_post_ensemble)
-  var_decomp <- var_decomp_onam(object)
+  var_decomp <- var_decomp_onam(object)$var_decomp
   res <- list(
     call = object$call,
     input = object$input,

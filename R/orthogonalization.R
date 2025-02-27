@@ -241,7 +241,7 @@ pho_ensemble <- function(data_model_eval, model_info) {
   outputs_post_ensemble <-
     u %*% w
   colnames(outputs_post_ensemble) <-
-    names(data_model_eval$totalFeaturePredsPost)
+    names(data_model_eval$predictions_features_ensemble)
   list(w, outputs_post_ensemble)
 }
 #' @importFrom dplyr %>%

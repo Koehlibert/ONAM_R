@@ -163,7 +163,8 @@ evaluate_onam_pre <- function(model_list) {
 #' Get variance decomposition of orthogonal neural additive model
 #' @param object Either model of class `onam` as returned from [fit_onam] or
 #' model evaluation outcome as returned from [evaluate_onam]
-#' @param data Data for which the model is to be evaluated. Default is the data
+#' @param data Data for which the model is to be evaluated. If \code{NULL}
+#' (DEFAULT), the data from model fitting is used.
 #' with which \code{model} was fitted.
 #' @returns Returns a named vector of percentage of variance explained by each
 #' interaction order.
@@ -189,13 +190,22 @@ evaluate_onam_pre <- function(model_list) {
 #' var_decomp_onam(mod)
 #' }
 #' @export var_decomp_onam
-var_decomp_onam <- function(object, data = object$data) {
-  if (is.null(data))
-    data <- object$data
-  if (class(object) == "onam") {
-    effects <- evaluate_onam(object, data)$predictions_features
+var_decomp_onam <- function(object, data = NULL) {
+  if (is.null(data)) {
+    if (class(object) == "onam") {
+      effects <- object$outputs_post_ensemble
+    } else {
+      effects <- object$predictions_features
+    }
   } else {
-    effects <- object$predictions_features
+    if (class(object) == "onam") {
+      effects <- evaluate_onam(object, data)$predictions_features
+    } else {
+      stop(
+        "When calling \`var_decomp_onam\` with a non-default \`data\`
+      argument, \`object\` has to be the \`onam\`-model."
+      )
+    }
   }
   theta_deep <-
     object$model_info$theta[setdiff(names(object$model_info$theta),
@@ -221,5 +231,9 @@ var_decomp_onam <- function(object, data = object$data) {
   effect_order_matrix <-
     effect_order_matrix[, ncol(effect_order_matrix):1]
   tmp_var <- stats::var(effect_order_matrix)
-  diag(tmp_var) / sum(diag(tmp_var))
+  sobol_indices <- colSums(var(effects)) / sum(var(effects))
+  sobol_indices <-
+    sobol_indices[length(sobol_indices):1]
+  out <- list(var_decomp = diag(tmp_var) / sum(diag(tmp_var)),
+              sobol_indices = sobol_indices)
 }
