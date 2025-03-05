@@ -213,6 +213,8 @@ var_decomp_onam <- function(object, data = NULL) {
   orders <- names(theta_deep)
   effect_order_matrix <- matrix(nrow = nrow(effects),
                                 ncol = length(orders))
+  sens_info = rep(0, length(orders))
+  names(sens_info) <- orders
   for (idx_order in seq_along(orders)) {
     tmp_name <-
       lapply(theta_deep[[orders[idx_order]]],
@@ -220,6 +222,7 @@ var_decomp_onam <- function(object, data = NULL) {
                paste(effect, collapse = "_")
              }) %>%
       unlist()
+    sens_info[idx_order] <- length(tmp_name)
     tmp_effects <- effects[, tmp_name]
     if (!is.null(dim(tmp_effects))) {
       tmp_effects <- rowSums(tmp_effects)
@@ -231,9 +234,12 @@ var_decomp_onam <- function(object, data = NULL) {
   effect_order_matrix <-
     effect_order_matrix[, ncol(effect_order_matrix):1]
   tmp_var <- stats::var(effect_order_matrix)
-  sobol_indices <- colSums(var(effects)) / sum(var(effects))
-  sobol_indices <-
-    sobol_indices[length(sobol_indices):1]
+  sens_index <-
+    colSums(stats::var(effects)) / sum(stats::var(effects))
+  sens_index <-
+    sens_index[length(sens_index):1]
+  sens_info <- sens_info[length(sens_info):1]
   out <- list(var_decomp = diag(tmp_var) / sum(diag(tmp_var)),
-              sobol_indices = sobol_indices)
+              sens_index = sens_index,
+              sens_info = sens_info)
 }
