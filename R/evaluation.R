@@ -242,4 +242,5 @@ var_decomp_onam <- function(object, data = NULL) {
   out <- list(var_decomp = diag(tmp_var) / sum(diag(tmp_var)),
               sens_index = sens_index,
               sens_info = sens_info)
+  out
 }
