@@ -8,7 +8,7 @@
 #' name as `list_of_deep_models`.
 #' @param list_of_deep_models List of named models used in `model_formula`.
 #' @param data Data to be fitted
-#' @param categorical_features Vector of which features are categorical.
+#' @param categorical_features Vector of feature names of categorical features.
 #' @param epochs Number of epochs to train the model. See
 #' \code{\link[keras]{fit.keras.engine.training.Model}} for details.
 #' @param n_ensemble Number of orthogonal neural additive model ensembles

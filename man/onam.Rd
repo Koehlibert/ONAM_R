@@ -24,7 +24,7 @@ name as \code{list_of_deep_models}.}
 
 \item{data}{Data to be fitted}
 
-\item{categorical_features}{Vector of which features are categorical.}
+\item{categorical_features}{Vector of feature names of categorical features.}
 
 \item{n_ensemble}{Number of orthogonal neural additive model ensembles}
 
