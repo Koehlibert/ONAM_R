@@ -5,7 +5,7 @@
 \title{Plot Interaction Effect}
 \usage{
 plot_inter_effect(
-  data_eval,
+  object,
   effect1,
   effect2,
   interpolate = FALSE,
@@ -14,7 +14,8 @@ plot_inter_effect(
 )
 }
 \arguments{
-\item{data_eval}{Model output as obtained from \link{predict.onam}.}
+\item{object}{Either model of class \code{onam} as returned from \link{onam} or
+model evaluation outcome as returned from \link{predict.onam}}
 
 \item{effect1}{First effect to be plotted.}
 

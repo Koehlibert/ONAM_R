@@ -1,6 +1,7 @@
 utils::globalVariables(c("x", "y", "prediction")) #remove cmd check note
 #' Plot Main Effect
-#' @param data_eval Model output as obtained from ONAM::evaluate_onam
+#' @param object Either model of class `onam` as returned from [onam] or
+#' model evaluation outcome as returned from [predict.onam]
 #' @param effect Effect to be plotted, must be present in the model formula.
 #' For interaction terms, use plotInteractionEffect
 #' @returns Returns a ggplot2 object of the specified effect
@@ -27,21 +28,25 @@ utils::globalVariables(c("x", "y", "prediction")) #remove cmd check note
 #' plot_main_effect(data_eval, "x1")
 #' }
 #' @export plot_main_effect
-plot_main_effect <- function(data_eval, effect) {
-  if (!effect %in% colnames(data_eval$predictions_features)) {
-    stop(paste(effect,
-               " is not present in the fitted model effects.",
-               sep = ""))
+plot_main_effect <- function(object, effect) {
+  check_inputs(object, effect)
+  if (inherits(object, "onam_prediction")) {
+    data_plot <-
+      data.frame(x = object$data[, effect],
+                 y = object$predictions_features[, effect])
+  } else if (inherits(object, "onam")) {
+    data_plot <-
+      data.frame(x = object$data[, effect],
+                 y = object$outputs_post_ensemble[, effect])
   }
-  data_plot <-
-    data.frame(x = data_eval$data[, effect],
-               y = data_eval$predictions_features[, effect])
+
   ggplot2::ggplot(data_plot, ggplot2::aes(x = x, y = y)) +
     ggplot2::geom_point() + ggplot2::ylab("Effect") +
     ggplot2::xlab(effect)
 }
 #' Plot Interaction Effect
-#' @param data_eval Model output as obtained from [predict.onam].
+#' @param object Either model of class `onam` as returned from [onam] or
+#' model evaluation outcome as returned from [predict.onam]
 #' @param effect1 First effect to be plotted.
 #' @param effect2 Second effect to be plotted.
 #' @param interpolate If TRUE, values will be interpolated for a smooth plot.
@@ -74,26 +79,16 @@ plot_main_effect <- function(data_eval, effect) {
 #' plot_inter_effect(data_eval, "x1", "x2", interpolate = TRUE)
 #' }
 #' @export plot_inter_effect
-plot_inter_effect <- function(data_eval,
+plot_inter_effect <- function(object,
                               effect1,
                               effect2,
                               interpolate = FALSE,
                               custom_colors = "spectral",
                               n_interpolate = 200) {
-  if (interpolate & !requireNamespace("akima", quietly = TRUE)) {
-    stop(
-      "Package \"akima\" must be installed to interpolate data for smooth
-      interaction plots.",
-      call. = FALSE
-    )
-  }
   inter <- paste(effect1, effect2, sep = "_")
-  if (!inter %in% colnames(data_eval$predictions_features)) {
+  if (!is.null(check_inputs(object, inter, interaction = 1))) {
     inter <- paste(effect2, effect1, sep = "_")
-    tmp <- effect1
-    effect1 <- effect2
-    effect2 <- tmp
-    if (!inter %in% colnames(data_eval$predictions_features)) {
+    if(check_inputs(object, inter, interaction = 2) == 2) {
       stop(paste(
         "No interaction effect fitted for ",
         effect1,
@@ -103,20 +98,28 @@ plot_inter_effect <- function(data_eval,
         sep = ""
       ))
     }
+    tmp <- effect1
+    effect1 <- effect2
+    effect2 <- tmp
   }
   if (typeof(custom_colors) != "closure") {
     if (custom_colors == "spectral") {
       custom_colors <-
-        grDevices::colorRampPalette(colors = (x = RColorBrewer::brewer.pal(n = 11, name = "Spectral")))
+        grDevices::colorRampPalette(
+          colors = (x = RColorBrewer::brewer.pal(n = 11, name = "Spectral")))
     }
+  }
+  if (inherits(object, "onam_prediction")) {
+    eff <- object$predictions_features[, inter]
+  } else if (inherits(object, "onam")) {
+    eff <- object$outputs_post_ensemble[, inter]
   }
   if (interpolate) {
     tmp_interp <-
       akima::interp(
-        x = data_eval$data[, effect1],
-        y = data_eval$data[, effect2],
-        z =
-          data_eval$predictions_features[, inter],
+        x = object$data[, effect1],
+        y = object$data[, effect2],
+        z = eff,
         nx = n_interpolate,
         ny = n_interpolate,
         duplicate = "mean"
@@ -147,10 +150,9 @@ plot_inter_effect <- function(data_eval,
   } else {
     data_plot <-
       data.frame(
-        x = data_eval$data[, effect1],
-        y = data_eval$data[, effect2],
-        prediction =
-          data_eval$predictions_features[, inter]
+        x = object$data[, effect1],
+        y = object$data[, effect2],
+        prediction = eff
       )
     aes_gradient <-
       ggplot2::scale_color_gradientn(
@@ -184,4 +186,26 @@ plot_inter_effect <- function(data_eval,
     aes_gradient +
     inter_theme +
     ggplot2::ylab(effect1) + ggplot2::xlab(effect2)
+}
+#' @keywords internal
+check_inputs <- function(object, effect, interaction = 0) {
+  if (inherits(object, "onam_prediction")) {
+    names <- colnames(object$predictions_features)
+  } else if (inherits(object, "onam")) {
+    names <- colnames(object$outputs_post_ensemble)
+  } else {
+    stop(
+      "Visualization functions can only be called for objects of type 'onam'
+         or 'onam_prediction'."
+    )
+  }
+  if (!effect %in% names) {
+    if (interaction == 1) {
+      return(interaction)
+    } else {
+      stop(paste(effect,
+                 " is not present in the fitted model effects.",
+                 sep = ""))
+    }
+  }
 }
