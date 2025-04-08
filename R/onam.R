@@ -155,7 +155,7 @@ onam <- function(formula,
 #' @export
 summary.onam <- function(object, ...) {
   prediction <- rowSums(object$outputs_post_ensemble)
-  var_decomp <- var_decomp_onam(object)$var_decomp
+  var_decomp <- decompose(object)$var_decomp
   res <- list(
     call = object$call,
     input = object$input,

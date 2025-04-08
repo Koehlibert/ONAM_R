@@ -1,4 +1,5 @@
 #' @importFrom rlang .data
+#' @importFrom stats predict
 evaluate_onam_single <- function(model,
                                  data,
                                  model_info,
@@ -34,25 +35,28 @@ evaluate_onam_single <- function(model,
        predictions_submodel_old = predictions_submodel_old)
 }
 #' Evaluate orthogonal neural additive model
-#' @param model model of class `onam` as returned from [fit_onam] to be
+#' @docType methods
+#' @param object model of class `onam` as returned from [onam] to be
 #' evaluated
 #' @param data Data for which the model is to be evaluated. Default is the data
 #' with which \code{model} was fitted.
 #' @returns Returns a list containing data, model output for each observation in
 #' `data` and main and interaction effects obtained by the model
+#' @param ... graphical parameters to plot
+#' @aliases predict
 #' @method predict onam
 #' @export
-predict.onam <- function(model,
-                         data = model$data) {
+predict.onam <- function(object, ...,
+                         data = object$data) {
   if (is.null(data))
-    data <- model$data
-  model_info <- model$model_info
+    data <- object$data
+  model_info <- object$model_info
   n <- nrow(data)
-  n_ensemble <- length(model$ensemble)
-  categorical_features <- model$categorical_features
+  n_ensemble <- length(object$ensemble)
+  categorical_features <- object$categorical_features
   predictions_separate <-
     lapply(
-      model$ensemble,
+      object$ensemble,
       evaluate_onam_single,
       data = data,
       model_info = model_info,
@@ -88,7 +92,7 @@ predict.onam <- function(model,
   predictions_features <-
     unlist(predictions_features_ensemble) %>%
     matrix(nrow = n) %*%
-    model$w_post_ensemble
+    object$w_post_ensemble
   colnames(predictions_features) <-
     effect_names
   predictions_total <-
@@ -159,88 +163,4 @@ evaluate_onam_pre <- function(model_list) {
     data_predictions = data_predictions,
     predictions_features_ensemble = predictions_features_ensemble
   )
-}
-#' Get variance decomposition of orthogonal neural additive model
-#' @param object Either model of class `onam` as returned from [fit_onam] or
-#' model evaluation outcome as returned from [evaluate_onam]
-#' @param data Data for which the model is to be evaluated. If \code{NULL}
-#' (DEFAULT), the data from model fitting is used.
-#' with which \code{model} was fitted.
-#' @returns Returns a named vector of percentage of variance explained by each
-#' interaction order.
-#' @examples
-#' \donttest{
-#' # Basic example for a simple ONAM-model
-#' # Create training data
-#' n <- 1000
-#' x1 <- runif(n, -2, 2)
-#' x2 <- runif(n, -2, 2)
-#' y <- sin(x1) + ifelse(x2 > 0, pweibull(x2, shape = 3),
-#'   pweibull(-x2, shape = 0.5)) +
-#'   x1 * x2
-#' data_train <- cbind(x1, x2, y)
-#' # Define model
-#' model_formula <- y ~ mod1(x1) + mod1(x2) +
-#'   mod1(x1, x2)
-#' list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
-#' # Fit model
-#' mod <- onam(model_formula, list_of_deep_models,
-#'             data_train, n_ensemble = 2, epochs = 50,
-#'             progresstext = TRUE, verbose = 1)
-#' var_decomp_onam(mod)
-#' }
-#' @export var_decomp_onam
-var_decomp_onam <- function(object, data = NULL) {
-  if (is.null(data)) {
-    if (class(object) == "onam") {
-      effects <- object$outputs_post_ensemble
-    } else {
-      effects <- object$predictions_features
-    }
-  } else {
-    if (class(object) == "onam") {
-      effects <- evaluate_onam(object, data)$predictions_features
-    } else {
-      stop(
-        "When calling \`var_decomp_onam\` with a non-default \`data\`
-      argument, \`object\` has to be the \`onam\`-model."
-      )
-    }
-  }
-  theta_deep <-
-    object$model_info$theta[setdiff(names(object$model_info$theta),
-                                    "linear")]
-  orders <- names(theta_deep)
-  effect_order_matrix <- matrix(nrow = nrow(effects),
-                                ncol = length(orders))
-  sens_info = rep(0, length(orders))
-  names(sens_info) <- orders
-  for (idx_order in seq_along(orders)) {
-    tmp_name <-
-      lapply(theta_deep[[orders[idx_order]]],
-             function(effect) {
-               paste(effect, collapse = "_")
-             }) %>%
-      unlist()
-    sens_info[idx_order] <- length(tmp_name)
-    tmp_effects <- effects[, tmp_name]
-    if (!is.null(dim(tmp_effects))) {
-      tmp_effects <- rowSums(tmp_effects)
-    }
-    effect_order_matrix[, idx_order] <-
-      tmp_effects
-  }
-  colnames(effect_order_matrix) <- orders
-  effect_order_matrix <-
-    effect_order_matrix[, ncol(effect_order_matrix):1]
-  tmp_var <- stats::var(effect_order_matrix)
-  sens_index <-
-    colSums(stats::var(effects)) / sum(stats::var(effects))
-  sens_index <-
-    sens_index[length(sens_index):1]
-  sens_info <- sens_info[length(sens_info):1]
-  out <- list(var_decomp = diag(tmp_var) / sum(diag(tmp_var)),
-              sens_index = sens_index,
-              sens_info = sens_info)
-  out
 }

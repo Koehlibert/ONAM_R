@@ -1,6 +1,7 @@
 utils::globalVariables(c("x", "y", "prediction")) #remove cmd check note
 #' Plot Main Effect
-#' @param object Model output as obtained from ONAM::evaluate_onam
+#' @param object Either model of class `onam` as returned from [onam] or
+#' model evaluation outcome as returned from [predict.onam]
 #' @param effect Effect to be plotted, must be present in the model formula.
 #' For interaction terms, use plotInteractionEffect
 #' @returns Returns a ggplot2 object of the specified effect
@@ -29,11 +30,11 @@ utils::globalVariables(c("x", "y", "prediction")) #remove cmd check note
 #' @export plot_main_effect
 plot_main_effect <- function(object, effect) {
   check_inputs(object, effect)
-  if (class(object) == "onam_prediction") {
+  if (inherits(object, "onam_prediction")) {
     data_plot <-
       data.frame(x = object$data[, effect],
                  y = object$predictions_features[, effect])
-  } else if (class(object) == "onam") {
+  } else if (inherits(object, "onam")) {
     data_plot <-
       data.frame(x = object$data[, effect],
                  y = object$outputs_post_ensemble[, effect])
@@ -44,7 +45,8 @@ plot_main_effect <- function(object, effect) {
     ggplot2::xlab(effect)
 }
 #' Plot Interaction Effect
-#' @param data_eval Model output as obtained from [predict.onam].
+#' @param object Either model of class `onam` as returned from [onam] or
+#' model evaluation outcome as returned from [predict.onam]
 #' @param effect1 First effect to be plotted.
 #' @param effect2 Second effect to be plotted.
 #' @param interpolate If TRUE, values will be interpolated for a smooth plot.
@@ -86,7 +88,16 @@ plot_inter_effect <- function(object,
   inter <- paste(effect1, effect2, sep = "_")
   if (!is.null(check_inputs(object, inter, interaction = 1))) {
     inter <- paste(effect2, effect1, sep = "_")
-    check_inputs(object, inter, interaction = 2)
+    if(check_inputs(object, inter, interaction = 2) == 2) {
+      stop(paste(
+        "No interaction effect fitted for ",
+        effect1,
+        " and ",
+        effect2,
+        ".",
+        sep = ""
+      ))
+    }
     tmp <- effect1
     effect1 <- effect2
     effect2 <- tmp
@@ -98,9 +109,9 @@ plot_inter_effect <- function(object,
           colors = (x = RColorBrewer::brewer.pal(n = 11, name = "Spectral")))
     }
   }
-  if (class(object) == "onam_prediction") {
+  if (inherits(object, "onam_prediction")) {
     eff <- object$predictions_features[, inter]
-  } else if (class(object) == "onam") {
+  } else if (inherits(object, "onam")) {
     eff <- object$outputs_post_ensemble[, inter]
   }
   if (interpolate) {
@@ -176,10 +187,11 @@ plot_inter_effect <- function(object,
     inter_theme +
     ggplot2::ylab(effect1) + ggplot2::xlab(effect2)
 }
+#' @keywords internal
 check_inputs <- function(object, effect, interaction = 0) {
-  if (class(object) == "onam_prediction") {
+  if (inherits(object, "onam_prediction")) {
     names <- colnames(object$predictions_features)
-  } else if (class(object) == "onam") {
+  } else if (inherits(object, "onam")) {
     names <- colnames(object$outputs_post_ensemble)
   } else {
     stop(
@@ -189,16 +201,7 @@ check_inputs <- function(object, effect, interaction = 0) {
   }
   if (!effect %in% names) {
     if (interaction == 1) {
-      return(1)
-    } else if (interaction == 2) {
-      stop(paste(
-        "No interaction effect fitted for ",
-        effect1,
-        " and ",
-        effect2,
-        ".",
-        sep = ""
-      ))
+      return(interaction)
     } else {
       stop(paste(effect,
                  " is not present in the fitted model effects.",

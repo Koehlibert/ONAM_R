@@ -4,10 +4,11 @@
 \alias{plot_main_effect}
 \title{Plot Main Effect}
 \usage{
-plot_main_effect(data_eval, effect)
+plot_main_effect(object, effect)
 }
 \arguments{
-\item{data_eval}{Model output as obtained from ONAM::evaluate_onam}
+\item{object}{Either model of class \code{onam} as returned from \link{onam} or
+model evaluation outcome as returned from \link{predict.onam}}
 
 \item{effect}{Effect to be plotted, must be present in the model formula.
 For interaction terms, use plotInteractionEffect}
