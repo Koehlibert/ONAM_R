@@ -88,7 +88,7 @@ plot_inter_effect <- function(object,
   inter <- paste(effect1, effect2, sep = "_")
   if (!is.null(check_inputs(object, inter, interaction = 1))) {
     inter <- paste(effect2, effect1, sep = "_")
-    if(check_inputs(object, inter, interaction = 2) == 2) {
+    if (check_inputs(object, inter, interaction = 2) == 2) {
       stop(paste(
         "No interaction effect fitted for ",
         effect1,
@@ -105,8 +105,7 @@ plot_inter_effect <- function(object,
   if (typeof(custom_colors) != "closure") {
     if (custom_colors == "spectral") {
       custom_colors <-
-        grDevices::colorRampPalette(
-          colors = (x = RColorBrewer::brewer.pal(n = 11, name = "Spectral")))
+        grDevices::colorRampPalette(colors = (x = RColorBrewer::brewer.pal(n = 11, name = "Spectral")))
     }
   }
   if (inherits(object, "onam_prediction")) {
@@ -143,17 +142,16 @@ plot_inter_effect <- function(object,
           )),
         guide = "colorbar",
         limits = c(min(data_plot$prediction),
-                   max(data_plot$prediction))
+                   max(data_plot$prediction)),
+        name = "Effect"
       )
     geom_param <- ggplot2::geom_tile()
     aes_param <- ggplot2::aes(x = x, y = y, fill = prediction)
   } else {
     data_plot <-
-      data.frame(
-        x = object$data[, effect1],
-        y = object$data[, effect2],
-        prediction = eff
-      )
+      data.frame(x = object$data[, effect1],
+                 y = object$data[, effect2],
+                 prediction = eff)
     aes_gradient <-
       ggplot2::scale_color_gradientn(
         colors =
@@ -166,7 +164,8 @@ plot_inter_effect <- function(object,
           )),
         guide = "colorbar",
         limits = c(min(data_plot$prediction),
-                   max(data_plot$prediction))
+                   max(data_plot$prediction)),
+        name = "Effect"
       )
     geom_param <- ggplot2::geom_point()
     prediction <- NULL #remove cmd check note
