@@ -40,7 +40,7 @@ decompose <- function(object, data = NULL) {
       effects <- predict(object, data)$predictions_features
     } else {
       stop(
-        "When calling \`var_decomp_onam\` with a non-default \`data\`
+        "When calling \`decompose\` with a non-default \`data\`
       argument, \`object\` has to be the \`onam\`-model."
       )
     }

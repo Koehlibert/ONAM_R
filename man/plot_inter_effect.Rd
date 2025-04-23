@@ -55,7 +55,6 @@ list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
 mod <- onam(model_formula, list_of_deep_models,
             data_train, n_ensemble = 2, epochs = 50,
             progresstext = TRUE, verbose = 1)
-data_eval <- predict(mod)
-plot_inter_effect(data_eval, "x1", "x2", interpolate = TRUE)
+plot_inter_effect(mod, "x1", "x2", interpolate = TRUE)
 }
 }
