@@ -1,4 +1,4 @@
-utils::globalVariables(c("x", "y", "prediction")) #remove cmd check note
+utils::globalVariables(c("x", "y", "prediction", "x1", "x2", "y1", "y2"))
 #' Plot Main Effect
 #' @param object Either model of class `onam` as returned from [onam] or
 #' model evaluation outcome as returned from [predict.onam]
@@ -24,8 +24,7 @@ utils::globalVariables(c("x", "y", "prediction")) #remove cmd check note
 #' mod <- onam(model_formula, list_of_deep_models,
 #'             data_train, n_ensemble = 2, epochs = 50,
 #'             progresstext = TRUE, verbose = 1)
-#' data_eval <- predict(mod)
-#' plot_main_effect(data_eval, "x1")
+#' plot_main_effect(mod, "x1")
 #' }
 #' @export plot_main_effect
 plot_main_effect <- function(object, effect) {
@@ -75,8 +74,7 @@ plot_main_effect <- function(object, effect) {
 #' mod <- onam(model_formula, list_of_deep_models,
 #'             data_train, n_ensemble = 2, epochs = 50,
 #'             progresstext = TRUE, verbose = 1)
-#' data_eval <- predict(mod)
-#' plot_inter_effect(data_eval, "x1", "x2", interpolate = TRUE)
+#' plot_inter_effect(mod, "x1", "x2", interpolate = TRUE)
 #' }
 #' @export plot_inter_effect
 plot_inter_effect <- function(object,
@@ -129,7 +127,7 @@ plot_inter_effect <- function(object,
         y = rep(tmp_interp$y, each = length(tmp_interp$x)),
         prediction = tmp_interp$z %>% c()
       )
-    data_plot <- data_plot[which(!is.na(data_plot$prediction)),]
+    data_plot <- data_plot[which(!is.na(data_plot$prediction)), ]
     aes_gradient <-
       ggplot2::scale_fill_gradientn(
         colors =
@@ -185,6 +183,76 @@ plot_inter_effect <- function(object,
     aes_gradient +
     inter_theme +
     ggplot2::ylab(effect1) + ggplot2::xlab(effect2)
+}
+#' Visualize variance decomposition
+#' @param model Model of class `onam` as returned from [onam]
+#' @returns Returns a 'ggplot2' object showing the variance decomposition into
+#' effects of interaction orders along with generalized sensitivity indices
+#' @examples
+#' \donttest{
+#' # Basic example for a simple ONAM-model
+#' # Create training data
+#' n <- 1000
+#' x1 <- runif(n, -2, 2)
+#' x2 <- runif(n, -2, 2)
+#' y <- sin(x1) + ifelse(x2 > 0, pweibull(x2, shape = 3),
+#'   pweibull(-x2, shape = 0.5)) +
+#'   x1 * x2
+#' data_train <- cbind(x1, x2, y)
+#' # Define model
+#' model_formula <- y ~ mod1(x1) + mod1(x2) +
+#'   mod1(x1, x2)
+#' list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
+#' # Fit model
+#' mod <- onam(model_formula, list_of_deep_models,
+#'             data_train, n_ensemble = 2, epochs = 50,
+#'             progresstext = TRUE, verbose = 1)
+#' plot_decomp(mod)
+#' }
+#' @export plot_decomp
+plot_decomp <- function(model) {
+  tmp_var_decomp <- decompose(model)
+  sens <- tmp_var_decomp$sens_index
+  sens_info <- attr(tmp_var_decomp, "sens_info")
+  plot_data_sens <-
+    data.frame(x = 0:(length(sens) - 1),
+               y1 = sens,
+               y2 = cumsum(sens))
+  plot_data_var_decomp <-
+    data.frame(
+      x1 = c(-0.5, cumsum(sens_info)[1:(length(sens_info) - 1)] - 0.5),
+      x2 = c(cumsum(sens_info)[1:(length(sens_info) - 1)] - 0.5, sum(sens_info) - 0.5),
+      y1 = rep(0, length(sens_info)),
+      y2 = tmp_var_decomp$var_decomp,
+      order = names(sens_info)
+    )
+  ggplot2::ggplot(plot_data_sens,
+                  ggplot2::aes(x = x, y = y1)) +
+    ggplot2::geom_point() +
+    ggplot2::geom_line(ggplot2::aes(x = x, y = y2), color = "blue") +
+    ggplot2::geom_rect(
+      mapping = ggplot2::aes(
+        xmin = x1,
+        xmax = x2,
+        ymin = y1,
+        ymax = y2,
+        fill = order
+      ),
+      data = plot_data_var_decomp,
+      alpha = 0.5,
+      inherit.aes = FALSE,
+    ) +
+    ggplot2::ylab("Generalized Sensitivity Index") +
+    ggplot2::scale_fill_discrete(name = "Order") +
+    ggplot2::scale_x_continuous(breaks = plot_data_sens$x,
+                                labels = names(sens)) +
+    ggplot2::xlab("") +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(
+      angle = 90,
+      vjust = 0.5,
+      hjust = 1
+    ))
 }
 #' @keywords internal
 check_inputs <- function(object, effect, interaction = 0) {

@@ -158,7 +158,7 @@ summary.onam <- function(object, ...) {
   var_decomp <- decompose(object)$var_decomp
   res <- list(
     call = object$call,
-    input = object$input,
+    # input = object$input,
     n_ensemble = length(object$ensemble),
     cor = stats::cor(rowSums(object$outputs_post_ensemble),
                      object$data[, as.character(object$model_info$outcome)]),
@@ -176,15 +176,15 @@ summary.onam <- function(object, ...) {
 print.summary.onam <- function(x, ...) {
   cat("\nCall:\n")
   print(x$call)
-  cat("\nInputs:")
-  input_string_1 <- as.character(x$input[[1]])
-  if (input_string_1 == "<pointer: 0x0>") {
-    cat(
-      "\nModel fitted in previous R session; Input information only available in
-      session in which model was built.\n")
-  } else {
-    lapply(x$input, function(input) cat("\n", as.character(input)))
-  }
+  # cat("\nInputs:")
+  # input_string_1 <- as.character(x$input[[1]])
+  # if (input_string_1 == "<pointer: 0x0>") {
+  #   cat(
+  #     "\nModel fitted in previous R session; Input information only available in
+  #     session in which model was built.\n")
+  # } else {
+  #   lapply(x$input, function(input) cat("\n", as.character(input)))
+  # }
   cat("\nCorrelation of model prediction with outcome variable: ",
       round(x$cor, 4),
       sep = "")
