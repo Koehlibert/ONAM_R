@@ -28,7 +28,7 @@ utils::globalVariables(c("x", "y", "prediction", "x1", "x2", "y1", "y2"))
 #' }
 #' @export plot_main_effect
 plot_main_effect <- function(object, effect) {
-  check_inputs(object, effect)
+  check_inputs_plot(object, effect)
   if (inherits(object, "onam_prediction")) {
     data_plot <-
       data.frame(x = object$data[, effect],
@@ -84,9 +84,9 @@ plot_inter_effect <- function(object,
                               custom_colors = "spectral",
                               n_interpolate = 200) {
   inter <- paste(effect1, effect2, sep = "_")
-  if (!is.null(check_inputs(object, inter, interaction = 1))) {
+  if (!is.null(check_inputs_plot(object, inter, interaction = 1))) {
     inter <- paste(effect2, effect1, sep = "_")
-    if (check_inputs(object, inter, interaction = 2) == 2) {
+    if (check_inputs_plot(object, inter, interaction = 2) == 2) {
       stop(paste(
         "No interaction effect fitted for ",
         effect1,
@@ -255,7 +255,7 @@ plot_decomp <- function(model) {
     ))
 }
 #' @keywords internal
-check_inputs <- function(object, effect, interaction = 0) {
+check_inputs_plot <- function(object, effect, interaction = 0) {
   if (inherits(object, "onam_prediction")) {
     names <- colnames(object$predictions_features)
   } else if (inherits(object, "onam")) {

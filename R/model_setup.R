@@ -74,110 +74,122 @@ get_categorical_submodel <- function(inputs) {
   keras::keras_model(inputs, outputs)
 }
 #Derive Theta from model Formula
-get_theta <- function(model_formula, list_of_deep_models) {
-  #Separate Symbols
-  theta_list <- lapply(model_formula, find_symbol)
-  outcome_var <- theta_list[[2]][[1]]
-  parts_list <- list()
-  while (length(theta_list) > 0) {
-    tmp_item <- theta_list[[length(theta_list)]]
-    idx_to_remove <- c(length(theta_list))
-    while (length(tmp_item) > 1 &
-           any(unlist(lapply(tmp_item, is.list)))) {
-      idx_to_remove <- c(idx_to_remove, length(tmp_item))
-      tmp_item <- tmp_item[[length(tmp_item)]]
+get_theta <-
+  function(model_formula,
+           list_of_deep_models,
+           feature_names,
+           categorical_features) {
+    #Separate Symbols
+    theta_list <- lapply(model_formula, find_symbol)
+    outcome_var <- theta_list[[2]][[1]]
+    parts_list <- list()
+    while (length(theta_list) > 0) {
+      tmp_item <- theta_list[[length(theta_list)]]
+      idx_to_remove <- c(length(theta_list))
+      while (length(tmp_item) > 1 &
+             any(unlist(lapply(tmp_item, is.list)))) {
+        idx_to_remove <- c(idx_to_remove, length(tmp_item))
+        tmp_item <- tmp_item[[length(tmp_item)]]
+      }
+      parts_list <- c(parts_list, list(tmp_item))
+      theta_list[[idx_to_remove]] <- NULL
     }
-    parts_list <- c(parts_list, list(tmp_item))
-    theta_list[[idx_to_remove]] <- NULL
+    idx_sign <- which(lapply(parts_list, function(item) {
+      all(lapply(item, function(sub_item) {
+        sub_item == as.name("+") |
+          sub_item == as.name("~") |
+          sub_item == as.name(outcome_var)
+      }) %>%
+        unlist())
+    }) %>% unlist())
+    parts_list[idx_sign] <- NULL
+    idx_additive_comps <- which(lapply(parts_list, function(item) {
+      any(lapply(item, function(sub_item) {
+        sub_item == as.name("+")
+      }) %>%
+        unlist()) | length(item) == 1
+    }) %>% unlist())
+    additive_comps_long <- parts_list[idx_additive_comps]
+    parts_list[idx_additive_comps] <- NULL
+    check_inputs_formula(
+      parts_list,
+      list_of_deep_models,
+      feature_names,
+      categorical_features,
+      outcome_var
+    )
+    additive_comps <- lapply(additive_comps_long, function(item) {
+      if (length(item) == 1) {
+        item
+      } else {
+        item[which(lapply(item,
+                          function(sub_item)
+                            sub_item != as.name("+")) %>%
+                     unlist())]
+      }
+    }) %>% unlist() %>% unique()
+    order_inter <-
+      lapply(parts_list, function(item)
+        length(item) - 1) %>%
+      unlist()
+    order_highest <- max(order_inter)
+    ordered_parts_list <-
+      parts_list[(1:length(parts_list))[order(order_inter,
+                                              decreasing = TRUE)]]
+    order_counts <- table(order_inter)
+    order_counts <-
+      order_counts[order(as.numeric(names(order_counts)),
+                         decreasing = TRUE)]
+    idx_counts <- list()
+    start_index <- 1
+    for (i in seq_along(order_counts)) {
+      end_index <- start_index + order_counts[i] - 1
+      seq_list <- start_index:end_index
+      idx_counts[[i]] <- seq_list
+      start_index <- end_index + 1
+    }
+    orders_unique <- as.numeric(names(order_counts))
+    theta_deep_name <-
+      lapply(seq_along(orders_unique), function(countIdx)
+        ordered_parts_list[idx_counts[[countIdx]]])
+    idx_names <-
+      lapply(seq_along(theta_deep_name),
+             function(idx_item) {
+               lapply(seq_along(theta_deep_name[[idx_item]]),
+                      function(idx_item_in) {
+                        lapply(seq_along(theta_deep_name[[idx_item]][[idx_item_in]]),
+                               function(idx_item_in_2) {
+                                 if (as.character(theta_deep_name[[idx_item]][[idx_item_in]][[idx_item_in_2]])
+                                     %in% names(list_of_deep_models)) {
+                                   return(c(idx_item, idx_item_in, idx_item_in_2))
+                                 }
+                               })
+                      })
+             }) %>%
+      unlist()
+    idx_names <-
+      idx_names %>% split(rep(1:(length(idx_names) / 3), each = 3))
+    theta_deep <- theta_deep_name
+    model_list <- list()
+    for (item in idx_names) {
+      name = as.character(theta_deep[[item]])
+      theta_deep[[item]] <- NULL
+      if (length(model_list) < item[1]) {
+        model_list[[item[1]]] <- list()
+      }
+      if (length(model_list[[item[1]]]) < item[2]) {
+        model_list[[item[1]]][[item[2]]] <- name
+      } else {
+        model_list[[item[1]]][[item[2]]] <- c(model_list[[item[2]]], name)
+      }
+    }
+    names(theta_deep) <- orders_unique
+    names(model_list) <- orders_unique
+    theta <- c(theta_deep, linear = list(additive_comps))
+    list(theta = theta,
+         name_models = model_list,
+         outcome = outcome_var)
   }
-  idx_sign <- which(lapply(parts_list, function(item) {
-    all(lapply(item, function(sub_item) {
-      sub_item == as.name("+") |
-        sub_item == as.name("~") | sub_item == as.name(outcome_var)
-    }) %>%
-      unlist())
-  }) %>% unlist())
-  parts_list[idx_sign] <- NULL
-  idx_additive_comps <- which(lapply(parts_list, function(item) {
-    any(lapply(item, function(sub_item) {
-      sub_item == as.name("+")
-    }) %>%
-      unlist()) | length(item) == 1
-  }) %>% unlist())
-  additive_comps_long <- parts_list[idx_additive_comps]
-  parts_list[idx_additive_comps] <- NULL
-  additive_comps <- lapply(additive_comps_long, function(item) {
-    if (length(item) == 1) {
-      item
-    } else {
-      item[which(lapply(item,
-                        function(sub_item)
-                          sub_item != as.name("+")) %>%
-                   unlist())]
-    }
-  }) %>% unlist() %>% unique()
-  order_inter <-
-    lapply(parts_list, function(item)
-      length(item) - 1) %>%
-    unlist()
-  order_highest <- max(order_inter)
-  ordered_parts_list <-
-    parts_list[(1:length(parts_list))[order(order_inter,
-                                            decreasing = TRUE)]]
-  order_counts <- table(order_inter)
-  order_counts <-
-    order_counts[order(as.numeric(names(order_counts)),
-                       decreasing = TRUE)]
-  idx_counts <- list()
-  start_index <- 1
-  for (i in seq_along(order_counts)) {
-    end_index <- start_index + order_counts[i] - 1
-    seq_list <- start_index:end_index
-    idx_counts[[i]] <- seq_list
-    start_index <- end_index + 1
-  }
-  orders_unique <- as.numeric(names(order_counts))
-  theta_deep_name <-
-    lapply(seq_along(orders_unique), function(countIdx)
-      ordered_parts_list[idx_counts[[countIdx]]])
-  idx_names <-
-    lapply(seq_along(theta_deep_name),
-           function(idx_item) {
-             lapply(seq_along(theta_deep_name[[idx_item]]),
-                    function(idx_item_in) {
-                      lapply(seq_along(theta_deep_name[[idx_item]][[idx_item_in]]),
-                             function(idx_item_in_2) {
-                               if (as.character(theta_deep_name[[idx_item]][[idx_item_in]][[idx_item_in_2]])
-                                   %in% names(list_of_deep_models)) {
-                                 return(c(idx_item, idx_item_in, idx_item_in_2))
-                               }
-                             })
-                    })
-           }) %>%
-    unlist()
-  idx_names <-
-    idx_names %>% split(rep(1:(length(idx_names) / 3), each = 3))
-  theta_deep <- theta_deep_name
-  model_list <- list()
-  for (item in idx_names) {
-    name = as.character(theta_deep[[item]])
-    theta_deep[[item]] <- NULL
-    if (length(model_list) < item[1]) {
-      model_list[[item[1]]] <- list()
-    }
-    if (length(model_list[[item[1]]]) < item[2]) {
-      model_list[[item[1]]][[item[2]]] <- name
-    } else {
-      model_list[[item[1]]][[item[2]]] <- c(model_list[[item[2]]], name)
-    }
-  }
-  names(theta_deep) <- orders_unique
-  names(model_list) <- orders_unique
-  theta <- c(theta_deep, linear = list(additive_comps))
-  list(theta = theta,
-       name_models = model_list,
-       outcome = outcome_var)
-}
 #help function to detect symbols
 find_symbol <- function(list_current) {
   lapply(list_current, function(item) {
@@ -354,3 +366,67 @@ get_category_counts <- function(categorical_features,
   names(ret_list) <- categorical_features
   ret_list
 }
+#check inputs for mismatch between formula and features/models
+#' @keywords internal
+check_inputs_formula <-
+  function(parts_list,
+           list_of_deep_models,
+           feature_names,
+           categorical_features,
+           outcome_var) {
+    tmp <- unlist(lapply(parts_list, function(x) {
+      if (!as.character(x[[1]]) %in% names(list_of_deep_models)) {
+        stop(
+          paste(
+            "Model formula contains model ",
+            x[[1]],
+            ", but ",
+            x[[1]],
+            " is not supplied in 'list_of_deep_models'.",
+            sep = ""
+          ),
+          call. = FALSE
+        )
+      }
+      return(as.character(x[-1]))
+    }))
+    all_symbols <- c(outcome_var, tmp)
+    missing_features <-
+      all_symbols[which(!all_symbols %in% feature_names)]
+    if (length(missing_features)) {
+      stop(
+        paste(
+          "Feature(s) ",
+          paste(missing_features, sep = ", "),
+          " in formula, but not present in data. Make sure the features align with colnames(data).",
+          sep = ""
+        ),
+        call. = FALSE
+      )
+    }
+    if (any(!categorical_features %in% feature_names)) {
+      missing_features <-
+        categorical_features[which(!categorical_features %in% feature_names)]
+      stop(
+        paste(
+          paste(missing_features, sep = ", "),
+          " provided in categorical_features, but not present in data. Make sure the features align with colnames(data)."
+        ),
+        call. = FALSE
+      )
+    }
+    cat_not_in_formula <-
+      categorical_features[which(!categorical_features %in% all_symbols)]
+    if (length(cat_not_in_formula)) {
+      warning(
+        paste(
+          "Feature(s) ",
+          paste(cat_not_in_formula, sep = ", "),
+          " stated as categorical, but not present in model formula.",
+          sep = ""
+        ),
+        call. = FALSE
+      )
+    }
+    rm(tmp)
+  }

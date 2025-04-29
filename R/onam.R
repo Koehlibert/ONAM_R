@@ -55,8 +55,12 @@ onam <- function(formula,
                  callback = NULL,
                  progresstext = FALSE,
                  verbose = 0) {
+  feature_names <- colnames(data)
   model_info <-
-    get_theta(formula, list_of_deep_models)
+    get_theta(formula,
+              list_of_deep_models,
+              feature_names,
+              categorical_features)
   data_fit <-
     prepare_data(data, model_info, categorical_features)
   cat_counts <- get_category_counts(categorical_features,
