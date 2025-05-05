@@ -72,14 +72,8 @@ decompose <- function(object, data = NULL) {
   effect_order_matrix <-
     effect_order_matrix[, ncol(effect_order_matrix):1]
   tmp_var <- stats::var(effect_order_matrix)
-  tmp_var_effs <- stats::var(effects)
-  sens_index <-
-    colSums(tmp_var_effs) / sum(tmp_var_effs)
-  sens_index <-
-    sens_index[length(sens_index):1]
   sens_info <- sens_info[length(sens_info):1]
-  out <- list(var_decomp = diag(tmp_var) / sum(diag(tmp_var)),
-              sens_index = sens_index)
+  out <- list(var_decomp = diag(tmp_var) / sum(diag(tmp_var)))
   attr(out, "sens_info") <- sens_info
   class(out) <- "var_decomp"
   out
@@ -98,10 +92,10 @@ print.var_decomp <- function(x, ...) {
           round(x$var_decomp[i], 4))
     }
   }
-  cat("\nGeneralized sensitivity indices for each effect:")
-  for (i in seq_along(x$sens_index)) {
-    cat("\n", names(x$sens_index)[i],
-        ": ", round(x$sens_index[i], 5))
-  }
+  # cat("\nGeneralized sensitivity indices for each effect:")
+  # for (i in seq_along(x$sens_index)) {
+  #   cat("\n", names(x$sens_index)[i],
+  #       ": ", round(x$sens_index[i], 5))
+  # }
   invisible(x)
 }
