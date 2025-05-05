@@ -72,8 +72,9 @@ decompose <- function(object, data = NULL) {
   effect_order_matrix <-
     effect_order_matrix[, ncol(effect_order_matrix):1]
   tmp_var <- stats::var(effect_order_matrix)
+  tmp_var_effs <- stats::var(effects)
   sens_index <-
-    colSums(stats::var(effects)) / sum(stats::var(effects))
+    colSums(tmp_var_effs) / sum(tmp_var_effs)
   sens_index <-
     sens_index[length(sens_index):1]
   sens_info <- sens_info[length(sens_info):1]
