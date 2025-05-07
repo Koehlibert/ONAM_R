@@ -2,7 +2,7 @@
 
 ## Install package:
 ``` r
-install.packages(devtools)  
+install.packages("devtools")  
 library(devtools)  
 devtools::install_github("Koehlibert/ONAM_R")
 ```
