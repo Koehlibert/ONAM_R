@@ -61,7 +61,7 @@ list_of_deep_models =
        complex = complex_model)
 ```
 
-##Specify effects of interest
+## Specify effects of interest
 The effects to be fitted are supplied in a `formula`-object. The names of the functions for each feature have to correspond to the names in the `list_of_deep_models`-argument.
 
 ``` r
@@ -76,7 +76,7 @@ mod <- onam(formula = model_formula, list_of_deep_models = list_of_deep_models,
             verbose = 1)
 ```
 
-##Model evaluation
+## Model evaluation
 The fitted model can be investigated regarding goodness of fit and degree of interpretability through the `summary()`-function.
 ``` r
 summary(mod)
