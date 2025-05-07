@@ -65,7 +65,7 @@ list_of_deep_models =
 The effects to be fitted are supplied in a `formula`-object. The names of the functions for each feature have to correspond to the names in the `list_of_deep_models`-argument.
 
 ``` r
-model_formula = y ~ simple(x1) + simple(x2) + linear(x3) + complex(x1, x2)
+model_formula = y ~ simple(x1) + simple(x2) + linear(x3) + complex(x1, x2) + complex(x1, x2, x3)
 ```
 
 ##Fit onam model
