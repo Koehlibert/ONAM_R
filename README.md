@@ -1,4 +1,4 @@
-# Orthogonal additive models for interpretable machine learning by functional decomposition of black-box models into explainable predictor effects
+# Orthogonal neural additive models for interpretable machine learning by functional decomposition of black-box models into explainable predictor effects
 
 ## Install package:
 ``` r
