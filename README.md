@@ -78,6 +78,6 @@ summary(mod)
 
 Fitted feature effects can be visualized in `ggplot`-figures:
 ``` r
-plot_main_effect(mod, "X1")
-plot_inter_effect(mod, "X1", "X2", interpolate = TRUE)
+plot_main_effect(mod, "x1")
+plot_inter_effect(mod, "x1", "x2", interpolate = TRUE)
 ```
