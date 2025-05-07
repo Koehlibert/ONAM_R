@@ -42,7 +42,8 @@ evaluate_onam_single <- function(model,
 #' with which \code{model} was fitted.
 #' @returns Returns a list containing data, model output for each observation in
 #' `data` and main and interaction effects obtained by the model
-#' @param ... graphical parameters to plot
+#' @param ... some methods for this generic require additional arguments. None
+#' are used in this method.
 #' @aliases predict
 #' @method predict onam
 #' @export

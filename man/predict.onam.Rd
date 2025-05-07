@@ -12,7 +12,8 @@
 \item{object}{model of class \code{onam} as returned from \link{onam} to be
 evaluated}
 
-\item{...}{graphical parameters to plot}
+\item{...}{some methods for this generic require additional arguments. None
+are used in this method.}
 
 \item{data}{Data for which the model is to be evaluated. Default is the data
 with which \code{model} was fitted.}
