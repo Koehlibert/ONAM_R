@@ -26,11 +26,6 @@ train <- cbind(x1, x2, x3, y)
 Different feature (interaction) effects can have different model architectures, varying in type and complexity. These architectures are to be specified in the `list_of_deep_models`-argument.
 
 ``` r
-linear_model <- function(inputs) {
-    outputs <- inputs %>%
-        keras::layer_dense(units = 1, activation = "linear", use_bias = FALSE)
-    keras::keras_model(inputs, outputs)
-}
 simple_model <- function(inputs) {
   outputs <- inputs %>%
     keras::layer_dense(units = 128, activation = "relu", use_bias = TRUE) %>%
@@ -56,8 +51,7 @@ complex_model <- function(inputs) {
   keras::keras_model(inputs, outputs)
 }
 list_of_deep_models = 
-  list(linear = linear_model,
-       simple = simple_model,
+  list(simple = simple_model,
        complex = complex_model)
 ```
 
@@ -65,7 +59,7 @@ list_of_deep_models =
 The effects to be fitted are supplied in a `formula`-object. The names of the functions for each feature have to correspond to the names in the `list_of_deep_models`-argument.
 
 ``` r
-model_formula = y ~ simple(x1) + simple(x2) + linear(x3) + complex(x1, x2) + complex(x1, x2, x3)
+model_formula = y ~ simple(x1) + simple(x2) + simple(x3) + complex(x1, x2) + complex(x1, x2, x3)
 ```
 
 ##Fit onam model
