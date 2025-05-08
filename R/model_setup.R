@@ -90,6 +90,15 @@ get_theta <-
              any(unlist(lapply(tmp_item, is.list)))) {
         idx_to_remove <- c(idx_to_remove, length(tmp_item))
         tmp_item <- tmp_item[[length(tmp_item)]]
+        if (length(tmp_item) > 1) {
+          if (!is.list(tmp_item[[2]])) {
+            if (as.character(tmp_item[[2]]) == ".") {
+              tmp_item[[2]] <- NULL
+              tmp_item <-
+                c(tmp_item, feature_names[-which(feature_names == outcome_var)])
+            }
+          }
+        }
       }
       parts_list <- c(parts_list, list(tmp_item))
       theta_list[[idx_to_remove]] <- NULL
@@ -374,32 +383,31 @@ check_inputs_formula <-
            feature_names,
            categorical_features,
            outcome_var) {
-    tmp <- unlist(lapply(parts_list, function(x) {
+    features_ls <- lapply(parts_list, function(x) {
       if (!as.character(x[[1]]) %in% names(list_of_deep_models)) {
         stop(
-          paste(
+          paste0(
             "Model formula contains model ",
             x[[1]],
             ", but ",
             x[[1]],
-            " is not supplied in 'list_of_deep_models'.",
-            sep = ""
+            " is not supplied in 'list_of_deep_models'."
           ),
           call. = FALSE
         )
       }
       return(as.character(x[-1]))
-    }))
-    all_symbols <- c(outcome_var, tmp)
+    })
+    features <- unlist(features_ls)
+    all_symbols <- c(outcome_var, features)
     missing_features <-
       all_symbols[which(!all_symbols %in% feature_names)]
     if (length(missing_features)) {
       stop(
-        paste(
+        paste0(
           "Feature(s) ",
           paste(missing_features, sep = ", "),
-          " in formula, but not present in data. Make sure the features align with colnames(data).",
-          sep = ""
+          " in formula, but not present in data. Make sure the features align with colnames(data)."
         ),
         call. = FALSE
       )
@@ -408,7 +416,7 @@ check_inputs_formula <-
       missing_features <-
         categorical_features[which(!categorical_features %in% feature_names)]
       stop(
-        paste(
+        paste0(
           paste(missing_features, sep = ", "),
           " provided in categorical_features, but not present in data. Make sure the features align with colnames(data)."
         ),
@@ -419,14 +427,22 @@ check_inputs_formula <-
       categorical_features[which(!categorical_features %in% all_symbols)]
     if (length(cat_not_in_formula)) {
       warning(
-        paste(
+        paste0(
           "Feature(s) ",
           paste(cat_not_in_formula, sep = ", "),
-          " stated as categorical, but not present in model formula.",
-          sep = ""
+          " stated as categorical, but not present in model formula."
         ),
         call. = FALSE
       )
     }
-    rm(tmp)
+    highest_term_idx <- which.max(length(features_ls))
+    highest_term_features <- features_ls[[highest_term_idx]]
+    if (any(unlist(lapply(features_ls[-highest_term_idx], function(terms) {
+      any(!terms %in% highest_term_features)
+    })))) {
+      warning(
+        "Features in lower order effects do not appear in higher order effects. We recommend fitting a residual term that includes all lower order terms.",
+        call. = FALSE
+      )
+    }
   }

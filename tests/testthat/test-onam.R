@@ -16,6 +16,8 @@ test_that("Input checks work", {
     mod1(x1, x2) + mod1(x1, x2, x3) + mod1(x5)
   f3 <- y ~ mod1(x1) + mod1(x2) + mod1(x3) +
     mod1(x1, x2) + mod1(x1, x2, x3) + mod4(x2)
+  f4 <- y ~ mod1(x1) + mod1(x2) + mod1(x3) +
+    mod1(x1, x2)
   list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
   # Fit model
   expect_error(
@@ -53,7 +55,32 @@ test_that("Input checks work", {
       progresstext = FALSE,
       verbose = 0
     ),
-    regexp = "x5  provided in categorical_features, but not present in data. Make sure the features align with colnames\\(data\\).",
+    regexp = "x5 provided in categorical_features, but not present in data. Make sure the features align with colnames\\(data\\).",
+  )
+  expect_warning(
+    onam(
+      f4,
+      list_of_deep_models,
+      data_train,
+      n_ensemble = 1,
+      epochs = 2,
+      progresstext = FALSE,
+      verbose = 0
+    ),
+    regexp = "Features in lower order effects do not appear in higher order effects. We recommend fitting a residual term that includes all lower order terms.",
+  )
+  expect_warning(
+    onam(
+      f1,
+      list_of_deep_models,
+      data_train,
+      categorical_features = c("x4"),
+      n_ensemble = 1,
+      epochs = 2,
+      progresstext = FALSE,
+      verbose = 0
+    ),
+    regexp = "Feature\\(s\\) x4 stated as categorical, but not present in model formula.",
   )
   mod <- onam(
     f1,
@@ -63,19 +90,6 @@ test_that("Input checks work", {
     epochs = 5,
     progresstext = FALSE,
     verbose = 0
-  )
-  expect_warning(
-    onam(
-      f1,
-      list_of_deep_models,
-      data_train,
-      categorical_features = c("x4"),
-      n_ensemble = 2,
-      epochs = 2,
-      progresstext = FALSE,
-      verbose = 0
-    ),
-    regexp = "Feature\\(s\\) x4 stated as categorical, but not present in model formula.",
   )
   expect_error(plot_main_effect(mod, "x4"),
                "x4 is not present in the fitted model effects.")

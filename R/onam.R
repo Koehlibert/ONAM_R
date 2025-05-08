@@ -41,7 +41,7 @@
 #' keras::keras$callbacks$EarlyStopping(monitor = "loss",
 #'                                      patience = 10)
 #' mod <- onam(model_formula, list_of_deep_models,
-#'                    data_train, n_ensemble = 2, epochs = 50,
+#'                    data_train, n_ensemble = 2, epochs = 10,
 #'                    callback = callback,
 #'                    progresstext = TRUE, verbose = 1)
 #' }
