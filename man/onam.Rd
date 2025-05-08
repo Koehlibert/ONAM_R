@@ -8,6 +8,8 @@ onam(
   formula,
   list_of_deep_models,
   data,
+  model = NULL,
+  prediction_function = NULL,
   categorical_features = NULL,
   n_ensemble = 20,
   epochs = 500,
@@ -23,6 +25,14 @@ name as \code{list_of_deep_models}.}
 \item{list_of_deep_models}{List of named models used in \code{model_formula}.}
 
 \item{data}{Data to be fitted}
+
+\item{model}{Prediction model that is to be explained. Output of the model as
+returned from \code{prediction_function(model)} will be used as model output. If
+\code{NULL}(default), the outcome has to be present in \code{data}.}
+
+\item{prediction_function}{Prediction function to be used to generate the
+outcome. Only used if \code{model} is specified. If \code{NULL}(default), S3-method
+based on the \code{model}argument is used.}
 
 \item{categorical_features}{Vector of feature names of categorical features.}
 
@@ -69,7 +79,7 @@ callback <-
 keras::keras$callbacks$EarlyStopping(monitor = "loss",
                                      patience = 10)
 mod <- onam(model_formula, list_of_deep_models,
-                   data_train, n_ensemble = 2, epochs = 50,
+                   data_train, n_ensemble = 2, epochs = 10,
                    callback = callback,
                    progresstext = TRUE, verbose = 1)
 }

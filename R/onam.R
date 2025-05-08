@@ -8,6 +8,12 @@
 #' name as `list_of_deep_models`.
 #' @param list_of_deep_models List of named models used in `model_formula`.
 #' @param data Data to be fitted
+#' @param model Prediction model that is to be explained. Output of the model as
+#' returned from `prediction_function(model)` will be used as model output. If
+#' `NULL`(default), the outcome has to be present in `data`.
+#' @param prediction_function Prediction function to be used to generate the
+#' outcome. Only used if `model` is specified. If `NULL`(default), S3-method
+#' based on the `model`argument is used.
 #' @param categorical_features Vector of feature names of categorical features.
 #' @param epochs Number of epochs to train the model. See
 #' \code{\link[keras]{fit.keras.engine.training.Model}} for details.
@@ -49,6 +55,8 @@
 onam <- function(formula,
                  list_of_deep_models,
                  data,
+                 model = NULL,
+                 prediction_function = NULL,
                  categorical_features = NULL,
                  n_ensemble = 20,
                  epochs = 500,
@@ -61,12 +69,28 @@ onam <- function(formula,
               list_of_deep_models,
               feature_names,
               categorical_features)
+  if (!is.matrix(data)) {
+    data <- as.matrix(data)
+  }
   data_fit <-
     prepare_data(data, model_info, categorical_features)
   cat_counts <- get_category_counts(categorical_features,
                                     data)
-  y <- data[, which(colnames(data) ==
-                      as.character(model_info$outcome))]
+  if (!is.null(model)) {
+    if (is.null(prediction_function)) {
+      y <- predict(model, data = data)
+    } else {
+      y <- prediction_function(model, data)
+    }
+    if (!is.vector(y)) {
+      stop(
+        "Prediction function does not return an appropriate outcome. Please specify a prediction function that returns a vector of predictions."
+      )
+    }
+  } else {
+    y <- data[, which(colnames(data) ==
+                        as.character(model_info$outcome))]
+  }
   ensemble <- list()
   for (i in 1:n_ensemble) {
     if (progresstext) {
