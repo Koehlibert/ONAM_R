@@ -22,7 +22,7 @@ utils::globalVariables(c("x", "y", "prediction", "x1", "x2", "y1", "y2"))
 #' list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
 #' # Fit model
 #' mod <- onam(model_formula, list_of_deep_models,
-#'             data_train, n_ensemble = 2, epochs = 50,
+#'             data_train, n_ensemble = 2, epochs = 10,
 #'             progresstext = TRUE, verbose = 1)
 #' plot_main_effect(mod, "x1")
 #' }
@@ -72,7 +72,7 @@ plot_main_effect <- function(object, effect) {
 #' list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
 #' # Fit model
 #' mod <- onam(model_formula, list_of_deep_models,
-#'             data_train, n_ensemble = 2, epochs = 50,
+#'             data_train, n_ensemble = 2, epochs = 10,
 #'             progresstext = TRUE, verbose = 1)
 #' plot_inter_effect(mod, "x1", "x2", interpolate = TRUE)
 #' }
