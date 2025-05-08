@@ -78,10 +78,23 @@ onam <- function(formula,
                                     data)
   if (!is.null(model)) {
     if (is.null(prediction_function)) {
+      prediction_function <-
+        utils::getS3method("predict", class(model), optional = TRUE)
+      if (is.null(prediction_function)) {
+        stop(
+          paste0(
+            "Model of class ",
+            class(model),
+            " supplied without `prediction_function`, but no S3 method for class ",
+            class(model),
+            "exists. Please specify a prediction function that returns a vector of predictions."
+          ),
+          call. = FALSE
+        )
+      }
       y <- predict(model, data = data)
-    } else {
-      y <- prediction_function(model, data)
     }
+    y <- prediction_function(model, data)
     if (!is.vector(y)) {
       stop(
         "Prediction function does not return an appropriate outcome. Please specify a prediction function that returns a vector of predictions."
