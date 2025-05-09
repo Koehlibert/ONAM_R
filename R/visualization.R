@@ -188,25 +188,3 @@ plot_inter_effect <- function(object,
     inter_theme +
     ggplot2::ylab(effect1) + ggplot2::xlab(effect2)
 }
-#' @keywords internal
-check_inputs_plot <- function(object, effect, interaction = 0) {
-  if (inherits(object, "onam_prediction")) {
-    names <- colnames(object$predictions_features)
-  } else if (inherits(object, "onam")) {
-    names <- colnames(object$outputs_post_ensemble)
-  } else {
-    stop(
-      "Visualization functions can only be called for objects of type 'onam'
-         or 'onam_prediction'."
-    )
-  }
-  if (!effect %in% names) {
-    if (interaction == 1) {
-      return(interaction)
-    } else {
-      stop(paste(effect,
-                 " is not present in the fitted model effects.",
-                 sep = ""))
-    }
-  }
-}

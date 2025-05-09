@@ -68,6 +68,8 @@ onam <- function(formula,
                  callback = NULL,
                  progresstext = FALSE,
                  verbose = 0) {
+  inputs <- as.list(environment())
+  check_inputs_onam(inputs)
   feature_names <- colnames(data)
   model_info <-
     get_theta(formula,
