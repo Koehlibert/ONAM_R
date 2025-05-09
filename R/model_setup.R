@@ -94,8 +94,13 @@ get_theta <-
           if (!is.list(tmp_item[[2]])) {
             if (as.character(tmp_item[[2]]) == ".") {
               tmp_item[[2]] <- NULL
+              outcome_idx <- which(feature_names == outcome_var)
               tmp_item <-
-                c(tmp_item, feature_names[-which(feature_names == outcome_var)])
+                if (length(outcome_idx) > 0) {
+                  c(tmp_item, feature_names[-outcome_idx])
+                } else {
+                  feature_names
+                }
             }
           }
         }
@@ -406,7 +411,7 @@ check_inputs_formula <-
       stop(
         paste0(
           "Feature(s) ",
-          paste(missing_features, sep = ", "),
+          paste(missing_features, collapse = ", "),
           " in formula, but not present in data. Make sure the features align with colnames(data)."
         ),
         call. = FALSE
@@ -417,7 +422,7 @@ check_inputs_formula <-
         categorical_features[which(!categorical_features %in% feature_names)]
       stop(
         paste0(
-          paste(missing_features, sep = ", "),
+          paste(missing_features, collapse = ", "),
           " provided in categorical_features, but not present in data. Make sure the features align with colnames(data)."
         ),
         call. = FALSE
@@ -429,7 +434,7 @@ check_inputs_formula <-
       warning(
         paste0(
           "Feature(s) ",
-          paste(cat_not_in_formula, sep = ", "),
+          paste(cat_not_in_formula, collapse = ", "),
           " stated as categorical, but not present in model formula."
         ),
         call. = FALSE
