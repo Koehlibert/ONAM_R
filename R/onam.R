@@ -15,6 +15,10 @@
 #' outcome. Only used if `model` is specified. If `NULL`(default), S3-method
 #' based on the `model`argument is used.
 #' @param categorical_features Vector of feature names of categorical features.
+#' @param target Target of prediction task. Can be either "continuous" or
+#' "binary". For "continuous"(default), an additive model for the prediction of
+#' a continuous outcome is fitted. For "binary", a binary classification with
+#' sigmoid activation in the last layer is fitted.
 #' @param epochs Number of epochs to train the model. See
 #' \code{\link[keras]{fit.keras.engine.training.Model}} for details.
 #' @param n_ensemble Number of orthogonal neural additive model ensembles
