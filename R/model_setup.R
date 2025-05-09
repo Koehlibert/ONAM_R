@@ -218,12 +218,14 @@ find_symbol <- function(list_current) {
 create_model <- function(model_info,
                          list_of_deep_models,
                          categorical_features,
-                         cat_counts) {
+                         cat_counts,
+                         target = "continuous") {
   inputs_list <- create_inputs(model_info,
                                categorical_features, cat_counts)
   model_list <-
     create_models(model_info, inputs_list, list_of_deep_models)
-  model_whole <- compile_model(inputs_list, model_list)
+  model_whole <-
+    compile_model(inputs_list, model_list, target = target)
   list(model = model_whole,
        model_list = model_list)
 }
@@ -282,36 +284,54 @@ create_models <-
 
   }
 #concatenate models in model_list
-concatenate_model_list <- function(model_list, bias = FALSE) {
-  tmp_output <-
-    keras::layer_concatenate(lapply(model_list,
-                                    function(model)
-                                      model$output)) %>%
-    keras::layer_dense(1, use_bias = bias, trainable = FALSE)
-  tmp_weights <- tmp_output$node$layer$get_weights()
-  tmp_weights[[1]] <- matrix(rep(1, length(model_list)),
-                             ncol = 1)
-  if (bias) {
-    tmp_weights[[2]] <- tmp_weights[[2]] - tmp_weights[[2]]
+concatenate_model_list <-
+  function(model_list,
+           bias = FALSE,
+           activation = "linear") {
+    tmp_output <-
+      keras::layer_concatenate(lapply(model_list,
+                                      function(model)
+                                        model$output)) %>%
+      keras::layer_dense(1,
+                         use_bias = bias,
+                         trainable = FALSE,
+                         activation = activation)
+    tmp_weights <- tmp_output$node$layer$get_weights()
+    tmp_weights[[1]] <- matrix(rep(1, length(model_list)),
+                               ncol = 1)
+    if (bias) {
+      tmp_weights[[2]] <- tmp_weights[[2]] - tmp_weights[[2]]
+    }
+    tmp_output$node$layer %>% keras::set_weights(tmp_weights)
+    tmp_output
   }
-  tmp_output$node$layer %>% keras::set_weights(tmp_weights)
-  tmp_output
-}
 #compile created pho ensemble member
-compile_model <- function(inputs_list, model_list) {
-  submodels <-
-    unlist(model_list, use.names = FALSE) #Why does this matter?
-  all_inputs <- unlist(inputs_list, use.names = FALSE)
-  model_whole <- submodels %>%
-    concatenate_model_list(bias = TRUE)
-  model_whole <- keras::keras_model(all_inputs, model_whole)
-  model_whole %>%
-    keras::compile(
-      loss = keras::loss_mean_squared_error(),
-      optimizer = keras::optimizer_adam()
-    )
+compile_model <-
+  function(inputs_list, model_list, target = "continuous") {
+    submodels <-
+      unlist(model_list, use.names = FALSE) #Why does this matter?
+    all_inputs <- unlist(inputs_list, use.names = FALSE)
+    target_activation <-
+      if (target == "continuous") {
+        "linear"
+      } else {
+        "sigmoid"
+      }
+    model_whole <- submodels %>%
+      concatenate_model_list(bias = TRUE, activation = target_activation)
+    model_whole <- keras::keras_model(all_inputs, model_whole)
+    loss <- if (target == "continuous") {
+      keras::loss_mean_squared_error()
+    } else if (target == "binary") {
+      keras::loss_binary_crossentropy()
+    } else {
+      stop()
+    }
+    model_whole %>%
+      keras::compile(loss = loss,
+                     optimizer = keras::optimizer_adam())
 
-}
+  }
 #prepare data for model fitting by bringing it into the right input dimensions
 prepare_data <- function(data_original,
                          model_info,

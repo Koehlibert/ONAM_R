@@ -58,6 +58,7 @@ onam <- function(formula,
                  model = NULL,
                  prediction_function = NULL,
                  categorical_features = NULL,
+                 target = "continuous",
                  n_ensemble = 20,
                  epochs = 500,
                  callback = NULL,
@@ -113,7 +114,8 @@ onam <- function(formula,
       create_model(model_info,
                    list_of_deep_models,
                    categorical_features,
-                   cat_counts)
+                   cat_counts,
+                   target)
     model_whole <- model_object$model
     model_list <- model_object$model_list
     #Fit model####
