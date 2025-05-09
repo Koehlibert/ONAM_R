@@ -112,6 +112,10 @@ plot_inter_effect <- function(object,
     eff <- object$outputs_post_ensemble[, inter]
   }
   if (interpolate) {
+    if (!requireNamespace("akima", quietly = TRUE)) {
+      stop("Package \"akima\" must be installed for interpolation.",
+           call. = FALSE)
+    }
     tmp_interp <-
       akima::interp(
         x = object$data[, effect1],
@@ -127,7 +131,7 @@ plot_inter_effect <- function(object,
         y = rep(tmp_interp$y, each = length(tmp_interp$x)),
         prediction = tmp_interp$z %>% c()
       )
-    data_plot <- data_plot[which(!is.na(data_plot$prediction)), ]
+    data_plot <- data_plot[which(!is.na(data_plot$prediction)),]
     aes_gradient <-
       ggplot2::scale_fill_gradientn(
         colors =
