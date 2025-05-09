@@ -32,7 +32,7 @@ simple_model <- function(inputs) {
     keras::layer_dense(units = 64, activation = "relu", use_bias = TRUE) %>%
     keras::layer_dense(units = 32, activation = "relu", use_bias = TRUE) %>%
     keras::layer_dense(units = 16, activation = "relu", use_bias = TRUE) %>%
-    keras::layer_dense(units = 8, activation = "linear", use_bias = TRUE) %>%
+    keras::layer_dense(units = 8, activation = "relu", use_bias = TRUE) %>%
     keras::layer_dense(units = 1, activation = "linear", use_bias = TRUE)
   keras::keras_model(inputs, outputs)
 }
@@ -46,7 +46,7 @@ complex_model <- function(inputs) {
     keras::layer_dense(units = 64, activation = "relu", use_bias = TRUE) %>%
     keras::layer_dense(units = 32, activation = "relu", use_bias = TRUE) %>%
     keras::layer_dense(units = 16, activation = "relu", use_bias = TRUE) %>%
-    keras::layer_dense(units = 8, activation = "linear", use_bias = TRUE) %>%
+    keras::layer_dense(units = 8, activation = "relu", use_bias = TRUE) %>%
     keras::layer_dense(units = 1, activation = "linear", use_bias = TRUE)
   keras::keras_model(inputs, outputs)
 }
