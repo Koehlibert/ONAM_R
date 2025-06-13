@@ -75,13 +75,19 @@ decompose <- function(object, data = NULL) {
   sens_info <- sens_info[length(sens_info):1]
   out <- list(var_decomp = diag(tmp_var) / sum(diag(tmp_var)))
   attr(out, "sens_info") <- sens_info
+  attr(out, "target") <- object$model_info$target
   class(out) <- "var_decomp"
   out
 }
 #' @method print var_decomp
 #' @export
 print.var_decomp <- function(x, ...) {
-  cat("\nFraction of total variance explained per order:")
+  out_txt <- "\nFraction of total variance explained per order"
+  if (attr(x, "target") == "binary") {
+    out_txt <- paste0(out_txt, " (on logit level)")
+  }
+  out_txt <- paste0(out_txt, ":")
+  cat(out_txt)
   for (i in seq_along(x$var_decomp)) {
     if (i == 1) {
       cat("\nMain effects:", x$var_decomp[i])

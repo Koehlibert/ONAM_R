@@ -2,20 +2,18 @@
 #Define DNN architecture for simulation
 get_submodel <- function(inputs, regularizer = NULL) {
   outputs <- inputs %>%
-    # layer_dense(units = 512, activation = "relu",
-    #             use_bias = TRUE) %>%
-    # layer_dropout(rate = 0.2) %>%
-    # layer_dense(units = 256, activation = "relu",
-    #             use_bias = TRUE,
-    #             kernel_regularizer = regularizer) %>%
-    # # layer_dropout(rate = 0.2) %>%
+    # layer_dense(
+    #   units = 256,
+    #   activation = "relu",
+    #   use_bias = TRUE,
+    #   kernel_regularizer = regularizer
+    # ) %>%
     keras::layer_dense(
       units = 128,
       activation = "relu",
       use_bias = TRUE,
       kernel_regularizer = regularizer
     ) %>%
-    keras::layer_dropout(rate = 0.2) %>%
     keras::layer_dense(
       units = 64,
       activation = "relu",
@@ -23,7 +21,6 @@ get_submodel <- function(inputs, regularizer = NULL) {
       kernel_regularizer = regularizer,
       dtype = "float64"
     ) %>%
-    # layer_dropout(rate = 0.2) %>%
     keras::layer_dense(
       units = 32,
       activation = "relu",
@@ -31,7 +28,6 @@ get_submodel <- function(inputs, regularizer = NULL) {
       kernel_regularizer = regularizer,
       dtype = "float64"
     ) %>%
-    # layer_dropout(rate = 0.2) %>%
     keras::layer_dense(
       units = 16,
       activation = "relu",
@@ -78,7 +74,8 @@ get_theta <-
   function(model_formula,
            list_of_deep_models,
            feature_names,
-           categorical_features) {
+           categorical_features,
+           target) {
     #Separate Symbols
     theta_list <- lapply(model_formula, find_symbol)
     outcome_var <- theta_list[[2]][[1]]
@@ -99,7 +96,7 @@ get_theta <-
                 if (length(outcome_idx) > 0) {
                   c(tmp_item, feature_names[-outcome_idx])
                 } else {
-                  feature_names
+                  c(tmp_item, feature_names)
                 }
             }
           }
@@ -202,7 +199,9 @@ get_theta <-
     theta <- c(theta_deep, linear = list(additive_comps))
     list(theta = theta,
          name_models = model_list,
-         outcome = outcome_var)
+         categorical_features = categorical_features,
+         outcome = outcome_var,
+         target = target)
   }
 #help function to detect symbols
 find_symbol <- function(list_current) {
@@ -400,3 +399,78 @@ get_category_counts <- function(categorical_features,
   names(ret_list) <- categorical_features
   ret_list
 }
+get_output <-
+  function(model,
+           prediction_function,
+           model_data,
+           data,
+           target,
+           model_info) {
+    if (!is.null(model)) {
+      if (is.null(prediction_function)) {
+        for (tmp_class in class(model)) {
+          prediction_function <-
+            utils::getS3method("predict", tmp_class, optional = TRUE)
+          if (!is.null(prediction_function))
+            break
+        }
+        if (is.null(prediction_function)) {
+          stop(
+            paste0(
+              "Model of class ",
+              class(model),
+              " supplied without `prediction_function`, but no S3 method for class ",
+              class(model),
+              "exists. Please specify a prediction function that returns a vector of predictions."
+            ),
+            call. = FALSE
+          )
+        }
+      }
+      if (is.null(model_data)) {
+        model_data <- data
+      }
+      y <- prediction_function(model, model_data)
+      if (inherits(y, "factor")) {
+        if (is.null(target)) {
+          warning("Prediction function supplied factor. Binary outcome is assumed.")
+          target <- "binary"
+          y <- as.numeric(as.character(y))
+        } else if (target != "binary") {
+          stop(
+            paste0(
+              "Prediction function supplied factor, but target was supplied as ",
+              target,
+              "."
+            ),
+            call. = FALSE
+          )
+        } else {
+          y <- as.numeric(as.character(y))
+        }
+      }
+      if (!is.vector(y)) {
+        stop(
+          "Prediction function does not return an appropriate outcome. Please specify a prediction function that returns a vector of predictions.",
+          call. = FALSE
+        )
+      }
+
+    } else {
+      outcome_index <- which(colnames(data) ==
+                               as.character(model_info$outcome))
+      if (length(outcome_index) != 1) {
+        stop(
+          paste0(
+            "Outcome ",
+            model_info$outcome,
+            " specified in model formula, but not present in data."
+          ),
+          call. = FALSE
+        )
+      } else {
+        y <- data[, outcome_index]
+      }
+    }
+    y
+  }
