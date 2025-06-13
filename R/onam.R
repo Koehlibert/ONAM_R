@@ -15,6 +15,10 @@
 #' outcome. Only used if `model` is specified. If `NULL`(default), S3-method
 #' based on the `model`argument is used.
 #' @param categorical_features Vector of feature names of categorical features.
+#' @param target Target of prediction task. Can be either "continuous" or
+#' "binary". For "continuous"(default), an additive model for the prediction of
+#' a continuous outcome is fitted. For "binary", a binary classification with
+#' sigmoid activation in the last layer is fitted.
 #' @param epochs Number of epochs to train the model. See
 #' \code{\link[keras]{fit.keras.engine.training.Model}} for details.
 #' @param n_ensemble Number of orthogonal neural additive model ensembles
@@ -58,11 +62,14 @@ onam <- function(formula,
                  model = NULL,
                  prediction_function = NULL,
                  categorical_features = NULL,
+                 target = "continuous",
                  n_ensemble = 20,
                  epochs = 500,
                  callback = NULL,
                  progresstext = FALSE,
                  verbose = 0) {
+  inputs <- as.list(environment())
+  check_inputs_onam(inputs)
   feature_names <- colnames(data)
   model_info <-
     get_theta(formula,
@@ -113,7 +120,8 @@ onam <- function(formula,
       create_model(model_info,
                    list_of_deep_models,
                    categorical_features,
-                   cat_counts)
+                   cat_counts,
+                   target)
     model_whole <- model_object$model
     model_list <- model_object$model_list
     #Fit model####

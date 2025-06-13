@@ -218,12 +218,14 @@ find_symbol <- function(list_current) {
 create_model <- function(model_info,
                          list_of_deep_models,
                          categorical_features,
-                         cat_counts) {
+                         cat_counts,
+                         target = "continuous") {
   inputs_list <- create_inputs(model_info,
                                categorical_features, cat_counts)
   model_list <-
     create_models(model_info, inputs_list, list_of_deep_models)
-  model_whole <- compile_model(inputs_list, model_list)
+  model_whole <-
+    compile_model(inputs_list, model_list, target = target)
   list(model = model_whole,
        model_list = model_list)
 }
@@ -282,36 +284,54 @@ create_models <-
 
   }
 #concatenate models in model_list
-concatenate_model_list <- function(model_list, bias = FALSE) {
-  tmp_output <-
-    keras::layer_concatenate(lapply(model_list,
-                                    function(model)
-                                      model$output)) %>%
-    keras::layer_dense(1, use_bias = bias, trainable = FALSE)
-  tmp_weights <- tmp_output$node$layer$get_weights()
-  tmp_weights[[1]] <- matrix(rep(1, length(model_list)),
-                             ncol = 1)
-  if (bias) {
-    tmp_weights[[2]] <- tmp_weights[[2]] - tmp_weights[[2]]
+concatenate_model_list <-
+  function(model_list,
+           bias = FALSE,
+           activation = "linear") {
+    tmp_output <-
+      keras::layer_concatenate(lapply(model_list,
+                                      function(model)
+                                        model$output)) %>%
+      keras::layer_dense(1,
+                         use_bias = bias,
+                         trainable = FALSE,
+                         activation = activation)
+    tmp_weights <- tmp_output$node$layer$get_weights()
+    tmp_weights[[1]] <- matrix(rep(1, length(model_list)),
+                               ncol = 1)
+    if (bias) {
+      tmp_weights[[2]] <- tmp_weights[[2]] - tmp_weights[[2]]
+    }
+    tmp_output$node$layer %>% keras::set_weights(tmp_weights)
+    tmp_output
   }
-  tmp_output$node$layer %>% keras::set_weights(tmp_weights)
-  tmp_output
-}
 #compile created pho ensemble member
-compile_model <- function(inputs_list, model_list) {
-  submodels <-
-    unlist(model_list, use.names = FALSE) #Why does this matter?
-  all_inputs <- unlist(inputs_list, use.names = FALSE)
-  model_whole <- submodels %>%
-    concatenate_model_list(bias = TRUE)
-  model_whole <- keras::keras_model(all_inputs, model_whole)
-  model_whole %>%
-    keras::compile(
-      loss = keras::loss_mean_squared_error(),
-      optimizer = keras::optimizer_adam()
-    )
+compile_model <-
+  function(inputs_list, model_list, target = "continuous") {
+    submodels <-
+      unlist(model_list, use.names = FALSE) #Why does this matter?
+    all_inputs <- unlist(inputs_list, use.names = FALSE)
+    target_activation <-
+      if (target == "continuous") {
+        "linear"
+      } else {
+        "sigmoid"
+      }
+    model_whole <- submodels %>%
+      concatenate_model_list(bias = TRUE, activation = target_activation)
+    model_whole <- keras::keras_model(all_inputs, model_whole)
+    loss <- if (target == "continuous") {
+      keras::loss_mean_squared_error()
+    } else if (target == "binary") {
+      keras::loss_binary_crossentropy()
+    } else {
+      stop()
+    }
+    model_whole %>%
+      keras::compile(loss = loss,
+                     optimizer = keras::optimizer_adam())
 
-}
+  }
 #prepare data for model fitting by bringing it into the right input dimensions
 prepare_data <- function(data_original,
                          model_info,
@@ -380,74 +400,3 @@ get_category_counts <- function(categorical_features,
   names(ret_list) <- categorical_features
   ret_list
 }
-#check inputs for mismatch between formula and features/models
-#' @keywords internal
-check_inputs_formula <-
-  function(parts_list,
-           list_of_deep_models,
-           feature_names,
-           categorical_features,
-           outcome_var) {
-    features_ls <- lapply(parts_list, function(x) {
-      if (!as.character(x[[1]]) %in% names(list_of_deep_models)) {
-        stop(
-          paste0(
-            "Model formula contains model ",
-            x[[1]],
-            ", but ",
-            x[[1]],
-            " is not supplied in 'list_of_deep_models'."
-          ),
-          call. = FALSE
-        )
-      }
-      return(as.character(x[-1]))
-    })
-    features <- unlist(features_ls)
-    all_symbols <- c(outcome_var, features)
-    missing_features <-
-      all_symbols[which(!all_symbols %in% feature_names)]
-    if (length(missing_features)) {
-      stop(
-        paste0(
-          "Feature(s) ",
-          paste(missing_features, collapse = ", "),
-          " in formula, but not present in data. Make sure the features align with colnames(data)."
-        ),
-        call. = FALSE
-      )
-    }
-    if (any(!categorical_features %in% feature_names)) {
-      missing_features <-
-        categorical_features[which(!categorical_features %in% feature_names)]
-      stop(
-        paste0(
-          paste(missing_features, collapse = ", "),
-          " provided in categorical_features, but not present in data. Make sure the features align with colnames(data)."
-        ),
-        call. = FALSE
-      )
-    }
-    cat_not_in_formula <-
-      categorical_features[which(!categorical_features %in% all_symbols)]
-    if (length(cat_not_in_formula)) {
-      warning(
-        paste0(
-          "Feature(s) ",
-          paste(cat_not_in_formula, collapse = ", "),
-          " stated as categorical, but not present in model formula."
-        ),
-        call. = FALSE
-      )
-    }
-    highest_term_idx <- which.max(length(features_ls))
-    highest_term_features <- features_ls[[highest_term_idx]]
-    if (any(unlist(lapply(features_ls[-highest_term_idx], function(terms) {
-      any(!terms %in% highest_term_features)
-    })))) {
-      warning(
-        "Features in lower order effects do not appear in higher order effects. We recommend fitting a residual term that includes all lower order terms.",
-        call. = FALSE
-      )
-    }
-  }
