@@ -14,6 +14,9 @@
 #' @param prediction_function Prediction function to be used to generate the
 #' outcome. Only used if `model` is specified. If `NULL`(default), S3-method
 #' based on the `model`argument is used.
+#' @param model_data Data used for generating predictions of `model`. Necessary
+#' for some models that require specific data formats, i.e. xgboost.
+#' If `NULL`(default), `data` is used. Only used if `model` is specified.
 #' @param categorical_features Vector of feature names of categorical features.
 #' @param target Target of prediction task. Can be either "continuous" or
 #' "binary". For "continuous"(default), an additive model for the prediction of
@@ -48,8 +51,8 @@
 #' list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
 #' # Fit model
 #' callback <-
-#' keras::keras$callbacks$EarlyStopping(monitor = "loss",
-#'                                      patience = 10)
+#'   keras::keras$callbacks$EarlyStopping(monitor = "loss",
+#'                                        patience = 10)
 #' mod <- onam(model_formula, list_of_deep_models,
 #'                    data_train, n_ensemble = 2, epochs = 10,
 #'                    callback = callback,
@@ -61,6 +64,7 @@ onam <- function(formula,
                  data,
                  model = NULL,
                  prediction_function = NULL,
+                 model_data = NULL,
                  categorical_features = NULL,
                  target = "continuous",
                  n_ensemble = 20,
@@ -75,42 +79,19 @@ onam <- function(formula,
     get_theta(formula,
               list_of_deep_models,
               feature_names,
-              categorical_features)
-  if (!is.matrix(data)) {
-    data <- as.matrix(data)
-  }
-  data_fit <-
-    prepare_data(data, model_info, categorical_features)
+              categorical_features,
+              target)
   cat_counts <- get_category_counts(categorical_features,
                                     data)
-  if (!is.null(model)) {
-    if (is.null(prediction_function)) {
-      prediction_function <-
-        utils::getS3method("predict", class(model), optional = TRUE)
-      if (is.null(prediction_function)) {
-        stop(
-          paste0(
-            "Model of class ",
-            class(model),
-            " supplied without `prediction_function`, but no S3 method for class ",
-            class(model),
-            "exists. Please specify a prediction function that returns a vector of predictions."
-          ),
-          call. = FALSE
-        )
-      }
-      y <- predict(model, data = data)
-    }
-    y <- prediction_function(model, data)
-    if (!is.vector(y)) {
-      stop(
-        "Prediction function does not return an appropriate outcome. Please specify a prediction function that returns a vector of predictions."
-      )
-    }
-  } else {
-    y <- data[, which(colnames(data) ==
-                        as.character(model_info$outcome))]
-  }
+  y <-
+    get_output(model,
+               prediction_function,
+               model_data,
+               data,
+               target,
+               model_info)
+  data_fit <-
+    prepare_data(data, model_info, categorical_features)
   ensemble <- list()
   for (i in 1:n_ensemble) {
     if (progresstext) {
@@ -156,7 +137,8 @@ onam <- function(formula,
     model_list_pho,
     call = match.call(),
     w_post_ensemble = list(w_post_ensemble),
-    outputs_post_ensemble = list(outputs_post_ensemble)
+    outputs_post_ensemble = list(outputs_post_ensemble),
+    y = list(y)
   )
   class(out) <- "onam"
   out
@@ -205,17 +187,27 @@ onam <- function(formula,
 summary.onam <- function(object, ...) {
   prediction <- rowSums(object$outputs_post_ensemble)
   var_decomp <- decompose(object)$var_decomp
+  total_pred <- rowSums(object$outputs_post_ensemble)
+  convergence_metric <-
+    if (object$model_info$target == "continuous") {
+      stats::cor(total_pred,
+                 object$y)
+    } else {
+      # pROC::auc(object$y,
+      #           total_pred)
+      stats::cor(total_pred,
+                 object$y, method = "spearman")
+    }
   res <- list(
     call = object$call,
-    # input = object$input,
     n_ensemble = length(object$ensemble),
-    cor = stats::cor(rowSums(object$outputs_post_ensemble),
-                     object$data[, as.character(object$model_info$outcome)]),
+    conv_metric = convergence_metric,
     i_1 = var_decomp["1"],
     i_2 = var_decomp["2"],
     degree_expl = sum(var_decomp[c("1", "2")])
   )
   class(res) <- "summary.onam"
+  attr(res, "target") <- object$model_info$target
   res
 }
 
@@ -234,9 +226,18 @@ print.summary.onam <- function(x, ...) {
   # } else {
   #   lapply(x$input, function(input) cat("\n", as.character(input)))
   # }
-  cat("\nCorrelation of model prediction with outcome variable: ",
-      round(x$cor, 4),
-      sep = "")
+  if (attr(x, "target") == "continuous") {
+    cat("\nCorrelation of model prediction with outcome variable: ",
+        round(x$conv_metric, 4),
+        sep = "")
+  } else {
+    # cat("\nPrediction AUC: ",
+    #     round(x$conv_metric, 4),
+    #     sep = "")
+    cat("\nCorrelation of onam probabilities with original model predicted probabilities: ",
+        round(x$conv_metric, 4),
+        sep = "")
+  }
   cat("\nNumber of ensemble members: ", x$n_ensemble)
   cat("\nI_1: ",
       round(x$i_1, digits = 4),
