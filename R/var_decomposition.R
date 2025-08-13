@@ -30,14 +30,10 @@
 #' @export decompose
 decompose <- function(object, data = NULL) {
   if (is.null(data)) {
-    if (inherits(object, "onam")) {
-      effects <- object$outputs_post_ensemble
-    } else {
-      effects <- object$predictions_features
-    }
+      effects <- object$feature_effects
   } else {
     if (inherits(object, "onam")) {
-      effects <- predict(object, data)$predictions_features
+      effects <- predict(object, data)$feature_effects
     } else {
       stop(
         "When calling \`decompose\` with a non-default \`data\`

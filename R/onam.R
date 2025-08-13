@@ -137,7 +137,8 @@ onam <- function(formula,
     model_list_pho,
     call = match.call(),
     w_post_ensemble = list(w_post_ensemble),
-    outputs_post_ensemble = list(outputs_post_ensemble),
+    feature_effects = list(outputs_post_ensemble),
+    predictions = list(rowSums(outputs_post_ensemble)),
     y = list(y)
   )
   class(out) <- "onam"
@@ -185,17 +186,15 @@ onam <- function(formula,
 #' @method summary onam
 #' @export
 summary.onam <- function(object, ...) {
-  prediction <- rowSums(object$outputs_post_ensemble)
   var_decomp <- decompose(object)$var_decomp
-  total_pred <- rowSums(object$outputs_post_ensemble)
   convergence_metric <-
     if (object$model_info$target == "continuous") {
-      stats::cor(total_pred,
+      stats::cor(object$predictions,
                  object$y)
     } else {
       # pROC::auc(object$y,
       #           total_pred)
-      stats::cor(total_pred,
+      stats::cor(object$predictions,
                  object$y, method = "spearman")
     }
   res <- list(

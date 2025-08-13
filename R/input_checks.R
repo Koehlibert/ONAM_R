@@ -72,10 +72,8 @@ check_inputs_formula <-
 #check inputs for proper object specification and if specified effects were fitted
 #' @keywords internal
 check_inputs_plot <- function(object, effect, interaction = 0) {
-  if (inherits(object, "onam_prediction")) {
-    names <- colnames(object$predictions_features)
-  } else if (inherits(object, "onam")) {
-    names <- colnames(object$outputs_post_ensemble)
+  if (inherits(object, "onam_prediction") | inherits(object, "onam")) {
+    names <- colnames(object$feature_effects)
   } else {
     stop(
       "Visualization functions can only be called for objects of type 'onam'

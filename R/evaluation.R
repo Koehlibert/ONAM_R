@@ -104,8 +104,8 @@ predict.onam <- function(object, ...,
     dplyr::select(.data$prediction) %>% unlist()
   out <- list(
     data = data,
-    predictions_total = predictions_total,
-    predictions_features = predictions_features,
+    predictions = predictions_total,
+    feature_effects = predictions_features,
     model_info = model_info
   )
   class(out) <- "onam_prediction"

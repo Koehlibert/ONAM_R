@@ -29,15 +29,9 @@ utils::globalVariables(c("x", "y", "prediction", "x1", "x2", "y1", "y2"))
 #' @export plot_main_effect
 plot_main_effect <- function(object, effect) {
   check_inputs_plot(object, effect)
-  if (inherits(object, "onam_prediction")) {
-    data_plot <-
-      data.frame(x = object$data[, effect],
-                 y = object$predictions_features[, effect])
-  } else if (inherits(object, "onam")) {
-    data_plot <-
-      data.frame(x = object$data[, effect],
-                 y = object$outputs_post_ensemble[, effect])
-  }
+  data_plot <-
+    data.frame(x = object$data[, effect],
+               y = object$feature_effects[, effect])
   if (effect %in% object$model_info$categorical_features) {
     plt <- plot_main_categorical(data_plot)
   } else {
@@ -117,11 +111,7 @@ plot_inter_effect <- function(object,
         grDevices::colorRampPalette(colors = (x = RColorBrewer::brewer.pal(n = 11, name = "Spectral")))
     }
   }
-  if (inherits(object, "onam_prediction")) {
-    eff <- object$predictions_features[, inter]
-  } else if (inherits(object, "onam")) {
-    eff <- object$outputs_post_ensemble[, inter]
-  }
+  eff <- object$feature_effects[, inter]
   if (interpolate & (n_cat_effs == 0)) {
     tmp_interp <-
       akima::interp(
@@ -179,16 +169,21 @@ plot_inter_effect <- function(object,
     geom_param <- ggplot2::geom_point()
     prediction <- NULL #remove cmd check note
     if (n_cat_effs == 1) {
-      tmp_ylab <- ggplot2::ylab(eff_label_helper(object$model_info$target))
-      if(effect1 %in% object$model_info$categorical_features) {
+      tmp_ylab <-
+        ggplot2::ylab(eff_label_helper(object$model_info$target))
+      if (effect1 %in% object$model_info$categorical_features) {
         aes_gradient <- ggplot2::scale_color_discrete(name = effect1)
         data_plot$x <- as.factor(data_plot$x)
-        aes_param <- ggplot2::aes(x = y, y = prediction, color = x)
+        aes_param <- ggplot2::aes(x = y,
+                                  y = prediction,
+                                  color = x)
       } else {
         aes_gradient <- ggplot2::scale_color_discrete(name = effect2)
         data_plot$y <- as.factor(data_plot$y)
         tmp_xlab <- ggplot2::xlab(effect1)
-        aes_param <- ggplot2::aes(x = x, y = prediction, color = y)
+        aes_param <- ggplot2::aes(x = x,
+                                  y = prediction,
+                                  color = y)
       }
     } else {
       aes_param <- ggplot2::aes(x = x, y = y, color = prediction)
