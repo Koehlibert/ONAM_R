@@ -96,10 +96,10 @@ get_model_order <- function(model_idx_list) {
            idx_model[1]) %>% unlist()
 }
 #post hoc orthogonalization of fitted submodels
-pho <- function(model_list, model_info, data) {
+pho <- function(model_list, model_info, data_fit) {
   model_idx_list <- get_model_idx_list(model_info)
   u_object <-
-    get_u(model_list, model_idx_list, model_info, data)
+    get_u(model_list, model_idx_list, model_info, data_fit)
   w_list <-
     get_w_list(model_list, model_idx_list, model_info,
                u_object$u_idx_list)
