@@ -197,11 +197,13 @@ get_theta <-
     names(theta_deep) <- orders_unique
     names(model_list) <- orders_unique
     theta <- c(theta_deep, linear = list(additive_comps))
-    list(theta = theta,
-         name_models = model_list,
-         categorical_features = categorical_features,
-         outcome = outcome_var,
-         target = target)
+    list(
+      theta = theta,
+      name_models = model_list,
+      categorical_features = categorical_features,
+      outcome = outcome_var,
+      target = target
+    )
   }
 #help function to detect symbols
 find_symbol <- function(list_current) {
@@ -450,10 +452,15 @@ get_output <-
         }
       }
       if (!is.vector(y)) {
-        stop(
-          "Prediction function does not return an appropriate outcome. Please specify a prediction function that returns a vector of predictions.",
-          call. = FALSE
-        )
+        if ("predictions" %in% names(y)) {
+          y <- y[["predictions"]]
+        }
+        if (!is.vector(y)) {
+          stop(
+            "Prediction function does not return an appropriate outcome. Please specify a prediction function that returns a vector of predictions.",
+            call. = FALSE
+          )
+        }
       }
 
     } else {
