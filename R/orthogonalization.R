@@ -105,9 +105,15 @@ pho <- function(model_list, model_info, data_fit) {
                u_object$u_idx_list)
   w_list_old <- w_list
   model_order <- get_model_order(model_idx_list)
+  # all_orders <- as.numeric(setdiff(names(model_info$theta), "linear"))
+  # highest_order <- max(all_orders)
   #Iterate over interaction depth
   for (idx_ortho in 2:(length(model_info$theta) -
                        is.null(model_info$theta$Linear))) {
+    if (length(model_info$theta) -
+        is.null(model_info$theta$Linear) == 1) {
+      break
+    }
     list_idx_order_lower <- which(model_order >= idx_ortho)
     idx_rel <- u_object$u_idx_list[list_idx_order_lower] %>%
       unlist()
