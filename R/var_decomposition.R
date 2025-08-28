@@ -44,14 +44,15 @@ decompose <- function(object, data = NULL) {
   theta_deep <-
     object$model_info$theta[setdiff(names(object$model_info$theta),
                                     "linear")]
-  orders <- names(theta_deep)
-  effect_order_matrix <- matrix(nrow = nrow(effects),
+  orders <- sort(unique(c(1, 2, as.numeric(names(theta_deep)))))
+  effect_order_matrix <- matrix(0,
+                                nrow = nrow(effects),
                                 ncol = length(orders))
   sens_info = rep(0, length(orders))
   names(sens_info) <- orders
   for (idx_order in seq_along(orders)) {
     tmp_name <-
-      lapply(theta_deep[[orders[idx_order]]],
+      lapply(theta_deep[[as.character(orders[idx_order])]],
              function(effect) {
                paste(effect, collapse = "_")
              }) %>%
@@ -64,9 +65,9 @@ decompose <- function(object, data = NULL) {
     effect_order_matrix[, idx_order] <-
       tmp_effects
   }
+  # effect_order_matrix <-
+  #   matrix(effect_order_matrix[, ncol(effect_order_matrix):1])
   colnames(effect_order_matrix) <- orders
-  effect_order_matrix <-
-    effect_order_matrix[, ncol(effect_order_matrix):1]
   tmp_var <- stats::var(effect_order_matrix)
   sens_info <- sens_info[length(sens_info):1]
   out <- list(var_decomp = diag(tmp_var) / sum(diag(tmp_var)))
