@@ -72,7 +72,8 @@ check_inputs_formula <-
 #check inputs for proper object specification and if specified effects were fitted
 #' @keywords internal
 check_inputs_plot <- function(object, effect, interaction = 0) {
-  if (inherits(object, "onam_prediction") | inherits(object, "onam")) {
+  if (inherits(object, "onam_prediction") |
+      inherits(object, "onam")) {
     names <- colnames(object$feature_effects)
   } else {
     stop(
@@ -121,7 +122,26 @@ check_inputs_onam <- function(inputs) {
     stop("Parameter `epochs` must be a positive integer.",
          call. = FALSE)
   }
-  if(is.na(as.logical(inputs$progresstext)))
+  if (is.na(as.logical(inputs$progresstext)))
     stop("Parameter `progresstext` must be `TRUE` or `FALSE`.",
          call. = FALSE)
+}
+check_y_features <- function(data, y, model_info) {
+  if (model_info$all_feature_indic) {
+    f_y_cors <- apply(data, 2, function(x)
+      cor(x, y))
+    cor_orders <- order(f_y_cors, decreasing = TRUE)
+    if (f_y_cors[cor_orders[1]] > 0.99) {
+      warning(
+        paste0(
+          "Model formula includes term of type `deep_model(.)`. Data contains column ",
+          colnames(data)[cor_orders[1]],
+          ", which has a correlation of ",
+          round(f_y_cors[cor_orders[1]], 4),
+          " with the outcome. If using a term like `deep_model(.)` and supplying a `model` to generate the response, make sure that the original outcome is not contained in `data`."
+        ),
+        call. = FALSE
+      )
+    }
+  }
 }

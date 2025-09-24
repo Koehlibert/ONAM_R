@@ -77,6 +77,7 @@ get_theta <-
            categorical_features,
            target) {
     #Separate Symbols
+    all_feature_indic <- FALSE
     theta_list <- lapply(model_formula, find_symbol)
     outcome_var <- theta_list[[2]][[1]]
     parts_list <- list()
@@ -90,6 +91,7 @@ get_theta <-
         if (length(tmp_item) > 1) {
           if (!is.list(tmp_item[[2]])) {
             if (as.character(tmp_item[[2]]) == ".") {
+              all_feature_indic <- TRUE
               tmp_item[[2]] <- NULL
               outcome_idx <- which(feature_names == outcome_var)
               tmp_item <-
@@ -114,14 +116,14 @@ get_theta <-
         unlist())
     }) %>% unlist())
     parts_list[idx_sign] <- NULL
-    idx_additive_comps <- which(lapply(parts_list, function(item) {
-      any(lapply(item, function(sub_item) {
-        sub_item == as.name("+")
-      }) %>%
-        unlist()) | length(item) == 1
-    }) %>% unlist())
-    additive_comps_long <- parts_list[idx_additive_comps]
-    parts_list[idx_additive_comps] <- NULL
+    # idx_additive_comps <- which(lapply(parts_list, function(item) {
+    #   any(lapply(item, function(sub_item) {
+    #     sub_item == as.name("+")
+    #   }) %>%
+    #     unlist()) | length(item) == 1
+    # }) %>% unlist())
+    # additive_comps_long <- parts_list[idx_additive_comps]
+    # parts_list[idx_additive_comps] <- NULL
     check_inputs_formula(
       parts_list,
       list_of_deep_models,
@@ -129,16 +131,16 @@ get_theta <-
       categorical_features,
       outcome_var
     )
-    additive_comps <- lapply(additive_comps_long, function(item) {
-      if (length(item) == 1) {
-        item
-      } else {
-        item[which(lapply(item,
-                          function(sub_item)
-                            sub_item != as.name("+")) %>%
-                     unlist())]
-      }
-    }) %>% unlist() %>% unique()
+    # additive_comps <- lapply(additive_comps_long, function(item) {
+    #   if (length(item) == 1) {
+    #     item
+    #   } else {
+    #     item[which(lapply(item,
+    #                       function(sub_item)
+    #                         sub_item != as.name("+")) %>%
+    #                  unlist())]
+    #   }
+    # }) %>% unlist() %>% unique()
     order_inter <-
       lapply(parts_list, function(item)
         length(item) - 1) %>%
@@ -196,13 +198,15 @@ get_theta <-
     }
     names(theta_deep) <- orders_unique
     names(model_list) <- orders_unique
-    theta <- c(theta_deep, linear = list(additive_comps))
+    # theta <- c(theta_deep, linear = list(additive_comps))
+    theta <- theta_deep
     list(
       theta = theta,
       name_models = model_list,
       categorical_features = categorical_features,
       outcome = outcome_var,
-      target = target
+      target = target,
+      all_feature_indic = all_feature_indic
     )
   }
 #help function to detect symbols
@@ -234,16 +238,30 @@ create_model <- function(model_info,
 create_inputs <- function(model_info,
                           categorical_features,
                           cat_counts) {
-  if (length(model_info$theta$linear) > 0) {
-    inputs_linear <- lapply(1:length(model_info$theta$linear),
-                            function(x)
-                              keras::layer_input(shape = 1))
-  } else {
-    inputs_linear <- NULL
-  }
-  inputs_deep <-
-    lapply(1:length(model_info$theta[setdiff(names(model_info$theta),
-                                             "linear")]),
+  # if (length(model_info$theta$linear) > 0) {
+  #   inputs_linear <- lapply(1:length(model_info$theta$linear),
+  #                           function(x)
+  #                             keras::layer_input(shape = 1))
+  # } else {
+  #   inputs_linear <- NULL
+  # }
+  # inputs_deep <-
+  #   lapply(1:length(model_info$theta[setdiff(names(model_info$theta),
+  #                                            "linear")]),
+  #          function(idx_inter_count) {
+  #            lapply(model_info$theta[[idx_inter_count]],
+  #                   function(theta_sub) {
+  #                     n_inputs <- length(theta_sub)
+  #                     for (feature_name in theta_sub) {
+  #                       if (as.character(feature_name) %in% names(cat_counts)) {
+  #                         n_inputs <- n_inputs + cat_counts[[feature_name]] - 1
+  #                       }
+  #                     }
+  #                     keras::layer_input(shape = n_inputs)
+  #                   })
+  #          })
+  inputs <-
+    lapply(1:length(model_info$theta),
            function(idx_inter_count) {
              lapply(model_info$theta[[idx_inter_count]],
                     function(theta_sub) {
@@ -256,33 +274,39 @@ create_inputs <- function(model_info,
                       keras::layer_input(shape = n_inputs)
                     })
            })
-  names(inputs_deep) <-
-    names(model_info$theta[setdiff(names(model_info$theta),
-                                   "linear")])
-  list(deep = inputs_deep,
-       additive = inputs_linear)
+  names(inputs) <-
+    names(model_info$theta)
+  inputs
 }
 #create all submodels
 create_models <-
   function(model_info,
            inputs_list,
            list_of_deep_models) {
-    models_linear <- lapply(inputs_list$additive,
-                            get_linear_submodel)
-    models_deep <- list()
+    # models_linear <- lapply(inputs_list$additive,
+    #                         get_linear_submodel)
+    # models_deep <- list()
+    # for (idx_p in
+    #      names(model_info$theta[setdiff(names(model_info$theta),
+    #                                     "linear")])) {
+    #   models_deep[[idx_p]] <-
+    #     lapply(seq_along(model_info$name_models[[idx_p]]),
+    #            function(idx_model) {
+    #              name_model <- model_info$name_models[[idx_p]][[idx_model]]
+    #              return(list_of_deep_models[[name_model]](inputs_list$deep[[idx_p]][[idx_model]]))
+    #            })
+    # }
+    models <- list()
     for (idx_p in
-         names(model_info$theta[setdiff(names(model_info$theta),
-                                        "linear")])) {
-      models_deep[[idx_p]] <-
+         names(model_info$theta)) {
+      models[[idx_p]] <-
         lapply(seq_along(model_info$name_models[[idx_p]]),
                function(idx_model) {
                  name_model <- model_info$name_models[[idx_p]][[idx_model]]
-                 return(list_of_deep_models[[name_model]](inputs_list$deep[[idx_p]][[idx_model]]))
+                 return(list_of_deep_models[[name_model]](inputs_list[[idx_p]][[idx_model]]))
                })
     }
-    c(models_deep,
-      additive = list(models_linear))
-
+    models
   }
 #concatenate models in model_list
 concatenate_model_list <-
