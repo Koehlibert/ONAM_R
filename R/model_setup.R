@@ -77,6 +77,7 @@ get_theta <-
            categorical_features,
            target) {
     #Separate Symbols
+    all_feature_indic <- FALSE
     theta_list <- lapply(model_formula, find_symbol)
     outcome_var <- theta_list[[2]][[1]]
     parts_list <- list()
@@ -90,6 +91,7 @@ get_theta <-
         if (length(tmp_item) > 1) {
           if (!is.list(tmp_item[[2]])) {
             if (as.character(tmp_item[[2]]) == ".") {
+              all_feature_indic <- TRUE
               tmp_item[[2]] <- NULL
               outcome_idx <- which(feature_names == outcome_var)
               tmp_item <-
@@ -203,7 +205,8 @@ get_theta <-
       name_models = model_list,
       categorical_features = categorical_features,
       outcome = outcome_var,
-      target = target
+      target = target,
+      all_feature_indic = all_feature_indic
     )
   }
 #help function to detect symbols
