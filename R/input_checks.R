@@ -128,14 +128,16 @@ check_inputs_onam <- function(inputs) {
 }
 check_y_features <- function(data, y, model_info) {
   if (model_info$all_feature_indic) {
-    f_y_cors <- apply(data, 2, function(x)
+    data_no_outcome <-
+      data[,!(colnames(data) %in% as.character(model_info$outcome))]
+    f_y_cors <- apply(data_no_outcome, 2, function(x)
       cor(x, y))
     cor_orders <- order(f_y_cors, decreasing = TRUE)
     if (f_y_cors[cor_orders[1]] > 0.99) {
       warning(
         paste0(
           "Model formula includes term of type `deep_model(.)`. Data contains column ",
-          colnames(data)[cor_orders[1]],
+          colnames(data_no_outcome)[cor_orders[1]],
           ", which has a correlation of ",
           round(f_y_cors[cor_orders[1]], 4),
           " with the outcome. If using a term like `deep_model(.)` and supplying a `model` to generate the response, make sure that the original outcome is not contained in `data`."
