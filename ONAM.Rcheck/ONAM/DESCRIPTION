@@ -1,7 +1,7 @@
 Type: Package
 Package: ONAM
 Title: Fitting Interpretable Neural Additive Models Using
-    Orthogonalization
+        Orthogonalization
 Version: 0.0.0.9000
 Authors@R: 
     person("David", "Köhler", , "koehler@imbie.uni-bonn.de", role = c("aut", "cre"),
@@ -14,20 +14,15 @@ Description: An algorithm for fitting interpretable additive neural
     functional decomposition of the prediction function.
 License: MIT + file LICENSE
 BugReports: https://github.com/Koehlibert/ONAM
-Depends:
-    keras
-Imports:
-    dplyr,
-    scales,
-    rlang,
-    ggplot2,
-    pROC,
-    reticulate
-Suggests:
-    akima,
-    RColorBrewer,
-    testthat (>= 3.0.0)
+Depends: keras
+Imports: dplyr, scales, rlang, ggplot2, pROC
+Suggests: akima, RColorBrewer, testthat (>= 3.0.0)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Config/testthat/edition: 3
+NeedsCompilation: no
+Packaged: 2025-10-20 07:59:51 UTC; koehler
+Author: David Köhler [aut, cre] (<https://orcid.org/0009-0006-0027-4046>)
+Maintainer: David Köhler <koehler@imbie.uni-bonn.de>
+Built: R 4.2.2; ; 2025-10-20 08:26:29 UTC; windows

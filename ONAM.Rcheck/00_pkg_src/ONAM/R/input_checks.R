@@ -147,7 +147,3 @@ check_y_features <- function(data, y, model_info) {
     }
   }
 }
-require_keras <- function() {
-  if (!reticulate::py_module_available("tensorflow"))
-    stop("TensorFlow not installed. Run keras::install_keras() first.", call. = FALSE)
-}

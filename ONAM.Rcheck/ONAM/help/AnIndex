@@ -1,0 +1,8 @@
+decompose	decompose
+onam	onam
+plot_inter_effect	plot_inter_effect
+plot_main_effect	plot_main_effect
+predict	predict.onam
+predict.onam	predict.onam
+print.summary.onam	summary.onam
+summary.onam	summary.onam

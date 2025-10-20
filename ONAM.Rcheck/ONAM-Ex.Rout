@@ -1,0 +1,1376 @@
+
+R version 4.2.2 (2022-10-31 ucrt) -- "Innocent and Trusting"
+Copyright (C) 2022 The R Foundation for Statistical Computing
+Platform: x86_64-w64-mingw32/x64 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> pkgname <- "ONAM"
+> source(file.path(R.home("share"), "R", "examples-header.R"))
+> options(warn = 1)
+> options(pager = "console")
+> base::assign(".ExTimings", "ONAM-Ex.timings", pos = 'CheckExEnv')
+> base::cat("name\tuser\tsystem\telapsed\n", file=base::get(".ExTimings", pos = 'CheckExEnv'))
+> base::assign(".format_ptime",
++ function(x) {
++   if(!is.na(x[4L])) x[1L] <- x[1L] + x[4L]
++   if(!is.na(x[5L])) x[2L] <- x[2L] + x[5L]
++   options(OutDec = '.')
++   format(x[1L:3L], digits = 7L)
++ },
++ pos = 'CheckExEnv')
+> 
+> ### * </HEADER>
+> library('ONAM')
+Loading required package: keras
+Warning: package 'keras' was built under R version 4.2.3
+
+Attaching package: 'ONAM'
+
+The following object is masked from 'package:stats':
+
+    decompose
+
+> 
+> base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
+> base::assign(".old_wd", base::getwd(), pos = 'CheckExEnv')
+> cleanEx()
+> nameEx("decompose")
+> ### * decompose
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: decompose
+> ### Title: Get variance decomposition of orthogonal neural additive model
+> ### Aliases: decompose
+> 
+> ### ** Examples
+> 
+> ## No test: 
+> # Basic example for a simple ONAM-model
+> # Create training data
+> n <- 1000
+> x1 <- runif(n, -2, 2)
+> x2 <- runif(n, -2, 2)
+> y <- sin(x1) + ifelse(x2 > 0, pweibull(x2, shape = 3),
++   pweibull(-x2, shape = 0.5)) +
++   x1 * x2
+> data_train <- cbind(x1, x2, y)
+> # Define model
+> model_formula <- y ~ mod1(x1) + mod1(x2) +
++   mod1(x1, x2)
+> list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
+> # Fit model
+> mod <- onam(model_formula, list_of_deep_models,
++             data_train, n_ensemble = 2, epochs = 50,
++             progresstext = TRUE, verbose = 1)
+ Fitting model 1 of 22025-10-20 10:27:24.868273: I tensorflow/core/util/port.cc:113] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+WARNING:tensorflow:From C:\Users\koehler\DOCUME~1\VIRTUA~1\R-TENS~1\Lib\site-packages\keras\src\losses.py:2976: The name tf.losses.sparse_softmax_cross_entropy is deprecated. Please use tf.compat.v1.losses.sparse_softmax_cross_entropy instead.
+
+WARNING:tensorflow:From C:\Users\koehler\DOCUME~1\VIRTUA~1\R-TENS~1\Lib\site-packages\keras\src\backend.py:1398: The name tf.executing_eagerly_outside_functions is deprecated. Please use tf.compat.v1.executing_eagerly_outside_functions instead.
+
+2025-10-20 10:27:27.820472: I tensorflow/core/platform/cpu_feature_guard.cc:182] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: SSE SSE2 SSE3 SSE4.1 SSE4.2 AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+Epoch 1/50
+WARNING:tensorflow:From C:\Users\koehler\DOCUME~1\VIRTUA~1\R-TENS~1\Lib\site-packages\keras\src\utils\tf_utils.py:492: The name tf.ragged.RaggedTensorValue is deprecated. Please use tf.compat.v1.ragged.RaggedTensorValue instead.
+
+
+ 1/32 [..............................] - ETA: 59s - loss: 4.5839
+27/32 [========================>.....] - ETA: 0s - loss: 1.6511 
+32/32 [==============================] - 2s 2ms/step - loss: 1.5481
+Epoch 2/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.3071
+32/32 [==============================] - 0s 2ms/step - loss: 0.2086
+Epoch 3/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0956
+25/32 [======================>.......] - ETA: 0s - loss: 0.1161
+32/32 [==============================] - 0s 2ms/step - loss: 0.1087
+Epoch 4/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.1048
+32/32 [==============================] - 0s 1ms/step - loss: 0.0938
+Epoch 5/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0706
+32/32 [==============================] - 0s 1ms/step - loss: 0.0628
+Epoch 6/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0223
+32/32 [==============================] - 0s 2ms/step - loss: 0.0504
+Epoch 7/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0379
+32/32 [==============================] - 0s 2ms/step - loss: 0.0389
+Epoch 8/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0309
+32/32 [==============================] - 0s 1ms/step - loss: 0.0295
+Epoch 9/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0120
+32/32 [==============================] - 0s 2ms/step - loss: 0.0177
+Epoch 10/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0092
+27/32 [========================>.....] - ETA: 0s - loss: 0.0133
+32/32 [==============================] - 0s 2ms/step - loss: 0.0132
+Epoch 11/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0227
+32/32 [==============================] - 0s 2ms/step - loss: 0.0156
+Epoch 12/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0209
+32/32 [==============================] - 0s 2ms/step - loss: 0.0098
+Epoch 13/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0098
+32/32 [==============================] - ETA: 0s - loss: 0.0082
+32/32 [==============================] - 0s 2ms/step - loss: 0.0082
+Epoch 14/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0162
+32/32 [==============================] - 0s 1ms/step - loss: 0.0084
+Epoch 15/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0166
+32/32 [==============================] - 0s 2ms/step - loss: 0.0095
+Epoch 16/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0047
+32/32 [==============================] - 0s 2ms/step - loss: 0.0077
+Epoch 17/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0046
+32/32 [==============================] - 0s 2ms/step - loss: 0.0045
+Epoch 18/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0020
+32/32 [==============================] - 0s 2ms/step - loss: 0.0047
+Epoch 19/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0038
+32/32 [==============================] - 0s 2ms/step - loss: 0.0041
+Epoch 20/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0027
+32/32 [==============================] - ETA: 0s - loss: 0.0032
+32/32 [==============================] - 0s 2ms/step - loss: 0.0032
+Epoch 21/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0031
+32/32 [==============================] - 0s 2ms/step - loss: 0.0031
+Epoch 22/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0023
+32/32 [==============================] - 0s 2ms/step - loss: 0.0033
+Epoch 23/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0036
+32/32 [==============================] - 0s 2ms/step - loss: 0.0029
+Epoch 24/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0020
+32/32 [==============================] - 0s 1ms/step - loss: 0.0051
+Epoch 25/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0020
+31/32 [============================>.] - ETA: 0s - loss: 0.0019
+32/32 [==============================] - 0s 2ms/step - loss: 0.0019
+Epoch 26/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0030
+32/32 [==============================] - 0s 2ms/step - loss: 0.0031
+Epoch 27/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0026
+32/32 [==============================] - 0s 2ms/step - loss: 0.0050
+Epoch 28/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0045
+32/32 [==============================] - 0s 1ms/step - loss: 0.0031
+Epoch 29/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0024
+32/32 [==============================] - 0s 1ms/step - loss: 0.0021
+Epoch 30/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0033
+32/32 [==============================] - 0s 2ms/step - loss: 0.0019
+Epoch 31/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0018
+32/32 [==============================] - ETA: 0s - loss: 0.0023
+32/32 [==============================] - 0s 2ms/step - loss: 0.0023
+Epoch 32/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0034
+32/32 [==============================] - 0s 2ms/step - loss: 0.0032
+Epoch 33/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 4.6477e-04
+32/32 [==============================] - 0s 2ms/step - loss: 0.0016
+Epoch 34/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 8.3198e-04
+32/32 [==============================] - 0s 2ms/step - loss: 0.0029
+Epoch 35/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0023
+32/32 [==============================] - 0s 1ms/step - loss: 0.0022
+Epoch 36/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0018
+32/32 [==============================] - 0s 2ms/step - loss: 0.0028
+Epoch 37/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0025
+32/32 [==============================] - 0s 2ms/step - loss: 0.0025
+Epoch 38/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0020
+32/32 [==============================] - 0s 2ms/step - loss: 0.0018
+Epoch 39/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0015
+32/32 [==============================] - 0s 1ms/step - loss: 0.0025
+Epoch 40/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0014
+32/32 [==============================] - 0s 2ms/step - loss: 8.3008e-04
+Epoch 41/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 3.6953e-04
+32/32 [==============================] - 0s 2ms/step - loss: 8.7862e-04
+Epoch 42/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 6.8659e-04
+32/32 [==============================] - 0s 1ms/step - loss: 0.0017
+Epoch 43/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0018
+32/32 [==============================] - 0s 1ms/step - loss: 0.0016
+Epoch 44/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 8.4616e-04
+32/32 [==============================] - 0s 2ms/step - loss: 0.0012
+Epoch 45/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0025
+32/32 [==============================] - 0s 2ms/step - loss: 0.0013
+Epoch 46/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0018
+32/32 [==============================] - 0s 1ms/step - loss: 0.0019
+Epoch 47/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0074
+32/32 [==============================] - 0s 1ms/step - loss: 0.0032
+Epoch 48/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0041
+24/32 [=====================>........] - ETA: 0s - loss: 0.0050
+32/32 [==============================] - 0s 2ms/step - loss: 0.0046
+Epoch 49/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0029
+25/32 [======================>.......] - ETA: 0s - loss: 0.0018
+32/32 [==============================] - 0s 2ms/step - loss: 0.0017
+Epoch 50/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0012
+30/32 [===========================>..] - ETA: 0s - loss: 9.6860e-04
+32/32 [==============================] - 0s 2ms/step - loss: 9.5155e-04
+ Fitting model 2 of 2Epoch 1/50
+
+ 1/32 [..............................] - ETA: 53s - loss: 3.0462
+32/32 [==============================] - ETA: 0s - loss: 1.0904 
+32/32 [==============================] - 2s 2ms/step - loss: 1.0904
+Epoch 2/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.1668
+31/32 [============================>.] - ETA: 0s - loss: 0.1450
+32/32 [==============================] - 0s 2ms/step - loss: 0.1444
+Epoch 3/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0691
+32/32 [==============================] - 0s 2ms/step - loss: 0.1028
+Epoch 4/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0885
+32/32 [==============================] - 0s 1ms/step - loss: 0.0751
+Epoch 5/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0903
+32/32 [==============================] - 0s 2ms/step - loss: 0.0570
+Epoch 6/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0532
+32/32 [==============================] - 0s 1ms/step - loss: 0.0361
+Epoch 7/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0151
+32/32 [==============================] - ETA: 0s - loss: 0.0226
+32/32 [==============================] - 0s 2ms/step - loss: 0.0226
+Epoch 8/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0128
+32/32 [==============================] - 0s 1ms/step - loss: 0.0184
+Epoch 9/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0088
+32/32 [==============================] - 0s 1ms/step - loss: 0.0124
+Epoch 10/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0076
+32/32 [==============================] - 0s 2ms/step - loss: 0.0092
+Epoch 11/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0096
+32/32 [==============================] - 0s 2ms/step - loss: 0.0074
+Epoch 12/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0079
+29/32 [==========================>...] - ETA: 0s - loss: 0.0045
+32/32 [==============================] - 0s 2ms/step - loss: 0.0046
+Epoch 13/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0015
+32/32 [==============================] - 0s 1ms/step - loss: 0.0050
+Epoch 14/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0085
+32/32 [==============================] - 0s 2ms/step - loss: 0.0045
+Epoch 15/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0013
+32/32 [==============================] - 0s 2ms/step - loss: 0.0037
+Epoch 16/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0030
+32/32 [==============================] - 0s 2ms/step - loss: 0.0029
+Epoch 17/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0040
+32/32 [==============================] - 0s 2ms/step - loss: 0.0025
+Epoch 18/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0112
+32/32 [==============================] - 0s 1ms/step - loss: 0.0048
+Epoch 19/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0036
+32/32 [==============================] - 0s 2ms/step - loss: 0.0038
+Epoch 20/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0018
+32/32 [==============================] - 0s 2ms/step - loss: 0.0024
+Epoch 21/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0017
+32/32 [==============================] - 0s 1ms/step - loss: 0.0023
+Epoch 22/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0013
+32/32 [==============================] - 0s 1ms/step - loss: 0.0020
+Epoch 23/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0036
+32/32 [==============================] - 0s 2ms/step - loss: 0.0033
+Epoch 24/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0015
+32/32 [==============================] - 0s 2ms/step - loss: 0.0017
+Epoch 25/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0030
+32/32 [==============================] - 0s 1ms/step - loss: 0.0017
+Epoch 26/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 7.1928e-04
+30/32 [===========================>..] - ETA: 0s - loss: 0.0010    
+32/32 [==============================] - 0s 2ms/step - loss: 0.0011
+Epoch 27/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 6.4828e-04
+32/32 [==============================] - 0s 1ms/step - loss: 9.8250e-04
+Epoch 28/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 8.4161e-04
+32/32 [==============================] - 0s 2ms/step - loss: 7.2497e-04
+Epoch 29/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 8.4291e-04
+32/32 [==============================] - 0s 1ms/step - loss: 0.0011
+Epoch 30/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 7.0900e-04
+32/32 [==============================] - 0s 2ms/step - loss: 0.0012
+Epoch 31/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 6.4376e-04
+32/32 [==============================] - 0s 2ms/step - loss: 0.0010
+Epoch 32/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0017
+32/32 [==============================] - 0s 2ms/step - loss: 0.0013
+Epoch 33/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 7.9355e-04
+32/32 [==============================] - 0s 1ms/step - loss: 0.0014
+Epoch 34/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0016
+32/32 [==============================] - 0s 2ms/step - loss: 0.0012
+Epoch 35/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 6.5111e-04
+32/32 [==============================] - 0s 2ms/step - loss: 0.0016
+Epoch 36/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 4.5438e-04
+32/32 [==============================] - 0s 2ms/step - loss: 0.0013
+Epoch 37/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 6.9699e-04
+32/32 [==============================] - 0s 1ms/step - loss: 6.3941e-04
+Epoch 38/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 3.4013e-04
+32/32 [==============================] - 0s 1ms/step - loss: 5.8278e-04
+Epoch 39/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 6.7188e-04
+32/32 [==============================] - 0s 2ms/step - loss: 5.4271e-04
+Epoch 40/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 1.7181e-04
+32/32 [==============================] - 0s 2ms/step - loss: 4.5700e-04
+Epoch 41/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 3.0952e-04
+32/32 [==============================] - 0s 1ms/step - loss: 5.8318e-04
+Epoch 42/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 2.7727e-04
+32/32 [==============================] - 0s 1ms/step - loss: 8.2235e-04
+Epoch 43/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0011
+32/32 [==============================] - 0s 2ms/step - loss: 8.8984e-04
+Epoch 44/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 3.9438e-04
+32/32 [==============================] - 0s 2ms/step - loss: 4.7587e-04
+Epoch 45/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0014
+32/32 [==============================] - 0s 2ms/step - loss: 5.4571e-04
+Epoch 46/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 2.9683e-04
+32/32 [==============================] - 0s 2ms/step - loss: 3.0933e-04
+Epoch 47/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 8.6724e-04
+32/32 [==============================] - 0s 1ms/step - loss: 0.0011
+Epoch 48/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0021
+32/32 [==============================] - 0s 1ms/step - loss: 0.0016
+Epoch 49/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0010
+32/32 [==============================] - 0s 2ms/step - loss: 7.6087e-04
+Epoch 50/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 7.7286e-04
+32/32 [==============================] - 0s 2ms/step - loss: 0.0012
+> decompose(mod)
+
+Fraction of total variance explained per order:
+Main effects: 0.2041673
+Interactions of order  2 :  0.7958> ## End(No test)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("decompose", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("onam")
+> ### * onam
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: onam
+> ### Title: Fit orthogonal neural additive model
+> ### Aliases: onam
+> 
+> ### ** Examples
+> 
+> ## No test: 
+> # Basic example for a simple ONAM-model
+> # Create training data
+> n <- 1000
+> x1 <- runif(n, -2, 2)
+> x2 <- runif(n, -2, 2)
+> y <- sin(x1) + ifelse(x2 > 0, pweibull(x2, shape = 3),
++   pweibull(-x2, shape = 0.5)) +
++   x1 * x2
+> data_train <- cbind(x1, x2, y)
+> # Define model
+> model_formula <- y ~ mod1(x1) + mod1(x2) +
++   mod1(x1, x2)
+> list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
+> # Fit model
+> callback <-
++   keras::keras$callbacks$EarlyStopping(monitor = "loss",
++                                        patience = 10)
+> mod <- onam(model_formula, list_of_deep_models,
++                    data_train, n_ensemble = 2, epochs = 10,
++                    callback = callback,
++                    progresstext = TRUE, verbose = 1)
+ Fitting model 1 of 2Epoch 1/10
+
+ 1/32 [..............................] - ETA: 54s - loss: 2.6033
+31/32 [============================>.] - ETA: 0s - loss: 1.5860 
+32/32 [==============================] - 2s 2ms/step - loss: 1.5799
+Epoch 2/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.5195
+31/32 [============================>.] - ETA: 0s - loss: 0.2739
+32/32 [==============================] - 0s 2ms/step - loss: 0.2722
+Epoch 3/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.1431
+32/32 [==============================] - ETA: 0s - loss: 0.1156
+32/32 [==============================] - 0s 2ms/step - loss: 0.1156
+Epoch 4/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.1018
+32/32 [==============================] - 0s 2ms/step - loss: 0.0887
+Epoch 5/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0950
+32/32 [==============================] - 0s 2ms/step - loss: 0.0773
+Epoch 6/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0611
+32/32 [==============================] - 0s 1ms/step - loss: 0.0653
+Epoch 7/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0577
+32/32 [==============================] - 0s 1ms/step - loss: 0.0497
+Epoch 8/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0437
+32/32 [==============================] - 0s 1ms/step - loss: 0.0400
+Epoch 9/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0496
+32/32 [==============================] - 0s 2ms/step - loss: 0.0289
+Epoch 10/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0160
+32/32 [==============================] - 0s 1ms/step - loss: 0.0222
+ Fitting model 2 of 2Epoch 1/10
+
+ 1/32 [..............................] - ETA: 54s - loss: 4.1740
+32/32 [==============================] - ETA: 0s - loss: 1.3079 
+32/32 [==============================] - 2s 2ms/step - loss: 1.3079
+Epoch 2/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.2546
+31/32 [============================>.] - ETA: 0s - loss: 0.1779
+32/32 [==============================] - 0s 2ms/step - loss: 0.1770
+Epoch 3/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.2139
+27/32 [========================>.....] - ETA: 0s - loss: 0.1217
+32/32 [==============================] - 0s 2ms/step - loss: 0.1202
+Epoch 4/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0741
+32/32 [==============================] - 0s 2ms/step - loss: 0.1015
+Epoch 5/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0646
+32/32 [==============================] - 0s 1ms/step - loss: 0.0798
+Epoch 6/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0927
+32/32 [==============================] - 0s 1ms/step - loss: 0.0636
+Epoch 7/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0664
+17/32 [==============>...............] - ETA: 0s - loss: 0.0535
+32/32 [==============================] - 0s 2ms/step - loss: 0.0513
+Epoch 8/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0450
+32/32 [==============================] - 0s 1ms/step - loss: 0.0372
+Epoch 9/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0323
+32/32 [==============================] - 0s 2ms/step - loss: 0.0283
+Epoch 10/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0206
+32/32 [==============================] - 0s 1ms/step - loss: 0.0193
+> ## End(No test)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("onam", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("plot_inter_effect")
+> ### * plot_inter_effect
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: plot_inter_effect
+> ### Title: Plot Interaction Effect
+> ### Aliases: plot_inter_effect
+> 
+> ### ** Examples
+> 
+> ## No test: 
+> # Basic example for a simple ONAM-model
+> # Create training data
+> n <- 1000
+> x1 <- runif(n, -2, 2)
+> x2 <- runif(n, -2, 2)
+> y <- sin(x1) + ifelse(x2 > 0, pweibull(x2, shape = 3),
++   pweibull(-x2, shape = 0.5)) +
++   x1 * x2
+> data_train <- cbind(x1, x2, y)
+> # Define model
+> model_formula <- y ~ mod1(x1) + mod1(x2) +
++   mod1(x1, x2)
+> list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
+> # Fit model
+> mod <- onam(model_formula, list_of_deep_models,
++             data_train, n_ensemble = 2, epochs = 10,
++             progresstext = TRUE, verbose = 1)
+ Fitting model 1 of 2Epoch 1/10
+
+ 1/32 [..............................] - ETA: 54s - loss: 3.1404
+32/32 [==============================] - 2s 2ms/step - loss: 0.9811
+Epoch 2/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.1036
+32/32 [==============================] - 0s 2ms/step - loss: 0.1281
+Epoch 3/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0565
+32/32 [==============================] - 0s 1ms/step - loss: 0.0894
+Epoch 4/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0691
+32/32 [==============================] - 0s 2ms/step - loss: 0.0752
+Epoch 5/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0713
+32/32 [==============================] - 0s 2ms/step - loss: 0.0640
+Epoch 6/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0568
+32/32 [==============================] - 0s 2ms/step - loss: 0.0473
+Epoch 7/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0179
+32/32 [==============================] - 0s 2ms/step - loss: 0.0323
+Epoch 8/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0305
+32/32 [==============================] - ETA: 0s - loss: 0.0243
+32/32 [==============================] - 0s 2ms/step - loss: 0.0243
+Epoch 9/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0401
+32/32 [==============================] - 0s 2ms/step - loss: 0.0166
+Epoch 10/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0192
+32/32 [==============================] - 0s 2ms/step - loss: 0.0115
+ Fitting model 2 of 2Epoch 1/10
+
+ 1/32 [..............................] - ETA: 55s - loss: 2.3909
+27/32 [========================>.....] - ETA: 0s - loss: 1.4770 
+32/32 [==============================] - 2s 2ms/step - loss: 1.3276
+Epoch 2/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.2489
+32/32 [==============================] - 0s 2ms/step - loss: 0.1526
+Epoch 3/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0581
+32/32 [==============================] - 0s 1ms/step - loss: 0.1067
+Epoch 4/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.1136
+32/32 [==============================] - 0s 1ms/step - loss: 0.0894
+Epoch 5/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0644
+32/32 [==============================] - 0s 2ms/step - loss: 0.0633
+Epoch 6/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0610
+32/32 [==============================] - 0s 2ms/step - loss: 0.0539
+Epoch 7/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0416
+32/32 [==============================] - 0s 2ms/step - loss: 0.0380
+Epoch 8/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0444
+32/32 [==============================] - 0s 2ms/step - loss: 0.0312
+Epoch 9/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0093
+32/32 [==============================] - 0s 2ms/step - loss: 0.0214
+Epoch 10/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0241
+32/32 [==============================] - 0s 1ms/step - loss: 0.0156
+> plot_inter_effect(mod, "x1", "x2", interpolate = TRUE)
+> ## End(No test)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("plot_inter_effect", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("plot_main_effect")
+> ### * plot_main_effect
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: plot_main_effect
+> ### Title: Plot Main Effect
+> ### Aliases: plot_main_effect
+> 
+> ### ** Examples
+> 
+> ## No test: 
+> # Basic example for a simple ONAM-model
+> # Create training data
+> n <- 1000
+> x1 <- runif(n, -2, 2)
+> x2 <- runif(n, -2, 2)
+> y <- sin(x1) + ifelse(x2 > 0, pweibull(x2, shape = 3),
++   pweibull(-x2, shape = 0.5)) +
++   x1 * x2
+> data_train <- cbind(x1, x2, y)
+> # Define model
+> model_formula <- y ~ mod1(x1) + mod1(x2) +
++   mod1(x1, x2)
+> list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
+> # Fit model
+> mod <- onam(model_formula, list_of_deep_models,
++             data_train, n_ensemble = 2, epochs = 10,
++             progresstext = TRUE, verbose = 1)
+ Fitting model 1 of 2Epoch 1/10
+
+ 1/32 [..............................] - ETA: 54s - loss: 2.9997
+28/32 [=========================>....] - ETA: 0s - loss: 1.8045 
+32/32 [==============================] - 2s 2ms/step - loss: 1.7054
+Epoch 2/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 1.2319
+29/32 [==========================>...] - ETA: 0s - loss: 0.2362
+32/32 [==============================] - 0s 2ms/step - loss: 0.2266
+Epoch 3/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.1734
+30/32 [===========================>..] - ETA: 0s - loss: 0.1225
+32/32 [==============================] - 0s 2ms/step - loss: 0.1211
+Epoch 4/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0651
+32/32 [==============================] - 0s 1ms/step - loss: 0.0897
+Epoch 5/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.1088
+32/32 [==============================] - 0s 2ms/step - loss: 0.0750
+Epoch 6/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0872
+32/32 [==============================] - 0s 2ms/step - loss: 0.0568
+Epoch 7/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0652
+32/32 [==============================] - 0s 1ms/step - loss: 0.0480
+Epoch 8/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0326
+32/32 [==============================] - 0s 1ms/step - loss: 0.0373
+Epoch 9/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0261
+32/32 [==============================] - 0s 2ms/step - loss: 0.0286
+Epoch 10/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0222
+32/32 [==============================] - 0s 2ms/step - loss: 0.0218
+ Fitting model 2 of 2Epoch 1/10
+
+ 1/32 [..............................] - ETA: 54s - loss: 3.7696
+32/32 [==============================] - ETA: 0s - loss: 1.4353 
+32/32 [==============================] - 2s 2ms/step - loss: 1.4353
+Epoch 2/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.2536
+31/32 [============================>.] - ETA: 0s - loss: 0.1381
+32/32 [==============================] - 0s 2ms/step - loss: 0.1381
+Epoch 3/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0980
+32/32 [==============================] - ETA: 0s - loss: 0.0992
+32/32 [==============================] - 0s 2ms/step - loss: 0.0992
+Epoch 4/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0585
+32/32 [==============================] - 0s 1ms/step - loss: 0.0815
+Epoch 5/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0510
+32/32 [==============================] - 0s 2ms/step - loss: 0.0673
+Epoch 6/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0626
+32/32 [==============================] - 0s 1ms/step - loss: 0.0590
+Epoch 7/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0393
+31/32 [============================>.] - ETA: 0s - loss: 0.0438
+32/32 [==============================] - 0s 2ms/step - loss: 0.0436
+Epoch 8/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0204
+32/32 [==============================] - 0s 2ms/step - loss: 0.0390
+Epoch 9/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0495
+32/32 [==============================] - 0s 2ms/step - loss: 0.0277
+Epoch 10/10
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0222
+32/32 [==============================] - 0s 1ms/step - loss: 0.0206
+> plot_main_effect(mod, "x1")
+> ## End(No test)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("plot_main_effect", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("summary.onam")
+> ### * summary.onam
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: summary.onam
+> ### Title: Get summary of an onam object
+> ### Aliases: summary.onam print.summary.onam
+> 
+> ### ** Examples
+> 
+> ## No test: 
+> # Basic example for a simple ONAM-model
+> # Create training data
+> n <- 1000
+> x1 <- runif(n, -2, 2)
+> x2 <- runif(n, -2, 2)
+> y <- sin(x1) + ifelse(x2 > 0, pweibull(x2, shape = 3),
++   pweibull(-x2, shape = 0.5)) +
++   x1 * x2
+> data_train <- cbind(x1, x2, y)
+> # Define model
+> model_formula <- y ~ mod1(x1) + mod1(x2) +
++   mod1(x1, x2)
+> list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
+> # Fit model
+> callback <-
++ keras::keras$callbacks$EarlyStopping(monitor = "loss",
++                                      patience = 10)
+> mod <- onam(model_formula, list_of_deep_models,
++                    data_train, n_ensemble = 2, epochs = 50,
++                    callback = callback,
++                    progresstext = TRUE, verbose = 1)
+ Fitting model 1 of 2Epoch 1/50
+
+ 1/32 [..............................] - ETA: 54s - loss: 2.5408
+29/32 [==========================>...] - ETA: 0s - loss: 0.9778 
+32/32 [==============================] - 2s 2ms/step - loss: 0.9240
+Epoch 2/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.1708
+26/32 [=======================>......] - ETA: 0s - loss: 0.1396
+32/32 [==============================] - 0s 2ms/step - loss: 0.1316
+Epoch 3/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.1123
+32/32 [==============================] - ETA: 0s - loss: 0.0986
+32/32 [==============================] - 0s 2ms/step - loss: 0.0986
+Epoch 4/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.1104
+32/32 [==============================] - 0s 1ms/step - loss: 0.0761
+Epoch 5/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.1036
+32/32 [==============================] - 0s 2ms/step - loss: 0.0792
+Epoch 6/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0446
+32/32 [==============================] - 0s 2ms/step - loss: 0.0565
+Epoch 7/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0392
+32/32 [==============================] - 0s 1ms/step - loss: 0.0445
+Epoch 8/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0552
+32/32 [==============================] - 0s 2ms/step - loss: 0.0351
+Epoch 9/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0278
+32/32 [==============================] - 0s 2ms/step - loss: 0.0292
+Epoch 10/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0210
+32/32 [==============================] - 0s 1ms/step - loss: 0.0181
+Epoch 11/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0168
+32/32 [==============================] - ETA: 0s - loss: 0.0149
+32/32 [==============================] - 0s 2ms/step - loss: 0.0149
+Epoch 12/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0124
+32/32 [==============================] - ETA: 0s - loss: 0.0117
+32/32 [==============================] - 0s 2ms/step - loss: 0.0117
+Epoch 13/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0141
+32/32 [==============================] - ETA: 0s - loss: 0.0081
+32/32 [==============================] - 0s 2ms/step - loss: 0.0081
+Epoch 14/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0027
+32/32 [==============================] - ETA: 0s - loss: 0.0060
+32/32 [==============================] - 0s 2ms/step - loss: 0.0060
+Epoch 15/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0023
+31/32 [============================>.] - ETA: 0s - loss: 0.0053
+32/32 [==============================] - 0s 2ms/step - loss: 0.0053
+Epoch 16/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0023
+32/32 [==============================] - 0s 2ms/step - loss: 0.0051
+Epoch 17/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0140
+32/32 [==============================] - 0s 2ms/step - loss: 0.0042
+Epoch 18/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0031
+31/32 [============================>.] - ETA: 0s - loss: 0.0034
+32/32 [==============================] - 0s 2ms/step - loss: 0.0034
+Epoch 19/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0046
+31/32 [============================>.] - ETA: 0s - loss: 0.0027
+32/32 [==============================] - 0s 2ms/step - loss: 0.0028
+Epoch 20/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0024
+32/32 [==============================] - 0s 2ms/step - loss: 0.0028
+Epoch 21/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0044
+31/32 [============================>.] - ETA: 0s - loss: 0.0028
+32/32 [==============================] - 0s 2ms/step - loss: 0.0028
+Epoch 22/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0040
+32/32 [==============================] - 0s 1ms/step - loss: 0.0024
+Epoch 23/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0047
+32/32 [==============================] - 0s 2ms/step - loss: 0.0020
+Epoch 24/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0012
+32/32 [==============================] - ETA: 0s - loss: 0.0052
+32/32 [==============================] - 0s 2ms/step - loss: 0.0052
+Epoch 25/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0020
+32/32 [==============================] - 0s 2ms/step - loss: 0.0036
+Epoch 26/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0024
+32/32 [==============================] - 0s 2ms/step - loss: 0.0039
+Epoch 27/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0039
+32/32 [==============================] - 0s 2ms/step - loss: 0.0021
+Epoch 28/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0044
+32/32 [==============================] - 0s 1ms/step - loss: 0.0014
+Epoch 29/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 6.7371e-04
+32/32 [==============================] - 0s 2ms/step - loss: 0.0012
+Epoch 30/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0023
+32/32 [==============================] - 0s 2ms/step - loss: 9.2849e-04
+Epoch 31/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0026
+32/32 [==============================] - 0s 1ms/step - loss: 9.9614e-04
+Epoch 32/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 6.4309e-04
+32/32 [==============================] - ETA: 0s - loss: 0.0011    
+32/32 [==============================] - 0s 2ms/step - loss: 0.0011
+Epoch 33/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 2.6809e-04
+32/32 [==============================] - 0s 2ms/step - loss: 8.0364e-04
+Epoch 34/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 7.3283e-04
+32/32 [==============================] - 0s 1ms/step - loss: 7.9198e-04
+Epoch 35/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 8.2775e-04
+32/32 [==============================] - 0s 2ms/step - loss: 0.0012
+Epoch 36/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0021
+32/32 [==============================] - 0s 2ms/step - loss: 0.0019
+Epoch 37/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 9.0439e-04
+32/32 [==============================] - ETA: 0s - loss: 0.0026    
+32/32 [==============================] - 0s 2ms/step - loss: 0.0026
+Epoch 38/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0025
+28/32 [=========================>....] - ETA: 0s - loss: 0.0031
+32/32 [==============================] - 0s 2ms/step - loss: 0.0029
+Epoch 39/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0014
+31/32 [============================>.] - ETA: 0s - loss: 0.0017
+32/32 [==============================] - 0s 2ms/step - loss: 0.0017
+Epoch 40/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 6.0076e-04
+32/32 [==============================] - 0s 1ms/step - loss: 7.8070e-04
+Epoch 41/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 8.2581e-04
+32/32 [==============================] - 0s 2ms/step - loss: 5.9886e-04
+Epoch 42/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0019
+32/32 [==============================] - 0s 2ms/step - loss: 8.1875e-04
+Epoch 43/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 2.2568e-04
+32/32 [==============================] - 0s 1ms/step - loss: 0.0017
+Epoch 44/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 5.2056e-04
+32/32 [==============================] - ETA: 0s - loss: 0.0014    
+32/32 [==============================] - 0s 2ms/step - loss: 0.0014
+Epoch 45/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0015
+27/32 [========================>.....] - ETA: 0s - loss: 0.0012
+32/32 [==============================] - 0s 2ms/step - loss: 0.0013
+Epoch 46/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0015
+32/32 [==============================] - 0s 2ms/step - loss: 0.0039
+Epoch 47/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0032
+32/32 [==============================] - 0s 2ms/step - loss: 0.0024
+Epoch 48/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 5.6138e-04
+32/32 [==============================] - 0s 2ms/step - loss: 0.0012
+Epoch 49/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 7.8161e-04
+32/32 [==============================] - 0s 2ms/step - loss: 8.3379e-04
+Epoch 50/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0010
+32/32 [==============================] - 0s 2ms/step - loss: 0.0020
+ Fitting model 2 of 2Epoch 1/50
+
+ 1/32 [..............................] - ETA: 59s - loss: 3.6421
+27/32 [========================>.....] - ETA: 0s - loss: 1.6361 
+32/32 [==============================] - 2s 2ms/step - loss: 1.5130
+Epoch 2/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.4332
+32/32 [==============================] - ETA: 0s - loss: 0.2090
+32/32 [==============================] - 0s 2ms/step - loss: 0.2090
+Epoch 3/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.1951
+30/32 [===========================>..] - ETA: 0s - loss: 0.1099
+32/32 [==============================] - 0s 2ms/step - loss: 0.1095
+Epoch 4/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0889
+32/32 [==============================] - 0s 2ms/step - loss: 0.0936
+Epoch 5/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0649
+32/32 [==============================] - 0s 2ms/step - loss: 0.0765
+Epoch 6/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0752
+32/32 [==============================] - 0s 2ms/step - loss: 0.0627
+Epoch 7/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0368
+32/32 [==============================] - ETA: 0s - loss: 0.0612
+32/32 [==============================] - 0s 2ms/step - loss: 0.0612
+Epoch 8/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0573
+30/32 [===========================>..] - ETA: 0s - loss: 0.0407
+32/32 [==============================] - 0s 2ms/step - loss: 0.0403
+Epoch 9/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0421
+32/32 [==============================] - ETA: 0s - loss: 0.0305
+32/32 [==============================] - 0s 2ms/step - loss: 0.0305
+Epoch 10/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0207
+32/32 [==============================] - 0s 2ms/step - loss: 0.0266
+Epoch 11/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0097
+31/32 [============================>.] - ETA: 0s - loss: 0.0208
+32/32 [==============================] - 0s 2ms/step - loss: 0.0207
+Epoch 12/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0405
+32/32 [==============================] - 0s 2ms/step - loss: 0.0238
+Epoch 13/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0161
+32/32 [==============================] - 0s 2ms/step - loss: 0.0116
+Epoch 14/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0132
+31/32 [============================>.] - ETA: 0s - loss: 0.0090
+32/32 [==============================] - 0s 2ms/step - loss: 0.0090
+Epoch 15/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0124
+32/32 [==============================] - 0s 2ms/step - loss: 0.0087
+Epoch 16/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0070
+32/32 [==============================] - 0s 2ms/step - loss: 0.0065
+Epoch 17/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0066
+32/32 [==============================] - ETA: 0s - loss: 0.0076
+32/32 [==============================] - 0s 2ms/step - loss: 0.0076
+Epoch 18/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0081
+30/32 [===========================>..] - ETA: 0s - loss: 0.0102
+32/32 [==============================] - 0s 2ms/step - loss: 0.0104
+Epoch 19/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0101
+30/32 [===========================>..] - ETA: 0s - loss: 0.0097
+32/32 [==============================] - 0s 2ms/step - loss: 0.0094
+Epoch 20/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0035
+31/32 [============================>.] - ETA: 0s - loss: 0.0056
+32/32 [==============================] - 0s 2ms/step - loss: 0.0055
+Epoch 21/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0070
+32/32 [==============================] - 0s 2ms/step - loss: 0.0038
+Epoch 22/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0036
+32/32 [==============================] - 0s 2ms/step - loss: 0.0050
+Epoch 23/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0076
+32/32 [==============================] - ETA: 0s - loss: 0.0036
+32/32 [==============================] - 0s 2ms/step - loss: 0.0036
+Epoch 24/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0054
+32/32 [==============================] - 0s 2ms/step - loss: 0.0031
+Epoch 25/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0066
+32/32 [==============================] - 0s 2ms/step - loss: 0.0034
+Epoch 26/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0023
+32/32 [==============================] - 0s 2ms/step - loss: 0.0020
+Epoch 27/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0016
+32/32 [==============================] - 0s 2ms/step - loss: 0.0019
+Epoch 28/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0027
+32/32 [==============================] - 0s 2ms/step - loss: 0.0017
+Epoch 29/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0014
+32/32 [==============================] - 0s 2ms/step - loss: 0.0021
+Epoch 30/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0017
+32/32 [==============================] - 0s 2ms/step - loss: 0.0014
+Epoch 31/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0013
+32/32 [==============================] - ETA: 0s - loss: 0.0013
+32/32 [==============================] - 0s 2ms/step - loss: 0.0013
+Epoch 32/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 6.6135e-04
+32/32 [==============================] - 0s 2ms/step - loss: 0.0014
+Epoch 33/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0013
+32/32 [==============================] - 0s 2ms/step - loss: 9.6545e-04
+Epoch 34/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0012
+32/32 [==============================] - 0s 2ms/step - loss: 9.4794e-04
+Epoch 35/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0014
+32/32 [==============================] - 0s 2ms/step - loss: 0.0014
+Epoch 36/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 7.1967e-04
+32/32 [==============================] - 0s 2ms/step - loss: 0.0015
+Epoch 37/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0018
+32/32 [==============================] - 0s 2ms/step - loss: 0.0013
+Epoch 38/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 6.2090e-04
+32/32 [==============================] - 0s 2ms/step - loss: 8.1513e-04
+Epoch 39/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0067
+32/32 [==============================] - 0s 2ms/step - loss: 0.0043
+Epoch 40/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0022
+32/32 [==============================] - 0s 2ms/step - loss: 0.0019
+Epoch 41/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0017
+32/32 [==============================] - 0s 2ms/step - loss: 0.0011
+Epoch 42/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 9.5882e-04
+32/32 [==============================] - 0s 2ms/step - loss: 0.0014
+Epoch 43/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0020
+32/32 [==============================] - 0s 2ms/step - loss: 0.0018
+Epoch 44/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0021
+32/32 [==============================] - 0s 2ms/step - loss: 0.0014
+Epoch 45/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0014
+32/32 [==============================] - 0s 2ms/step - loss: 0.0011
+Epoch 46/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0010
+32/32 [==============================] - 0s 2ms/step - loss: 8.8051e-04
+Epoch 47/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 0.0012
+32/32 [==============================] - 0s 2ms/step - loss: 9.5738e-04
+Epoch 48/50
+
+ 1/32 [..............................] - ETA: 0s - loss: 4.4303e-04
+32/32 [==============================] - 0s 2ms/step - loss: 8.6328e-04
+> summary(mod)
+
+Call:
+onam(formula = model_formula, list_of_deep_models = list_of_deep_models, 
+    data = data_train, n_ensemble = 2, epochs = 50, callback = callback, 
+    progresstext = TRUE, verbose = 1)
+
+Correlation of model prediction with outcome variable: 0.9999
+Number of ensemble members:  2
+I_1: 0.1919; I_2:  0.8081
+Degree of interpretability: 1> ## End(No test)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("summary.onam", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> ### * <FOOTER>
+> ###
+> cleanEx()
+> options(digits = 7L)
+> base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+Time elapsed:  60.49 11.79 51.22 NA NA 
+> grDevices::dev.off()
+null device 
+          1 
+> ###
+> ### Local variables: ***
+> ### mode: outline-minor ***
+> ### outline-regexp: "\\(> \\)?### [*]+" ***
+> ### End: ***
+> quit('no')

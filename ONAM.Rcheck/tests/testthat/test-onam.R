@@ -1,11 +1,9 @@
 test_that("Input checks work", {
-  testthat::skip_if_not(reticulate::py_module_available("tensorflow"),
-                        "TensorFlow not available")
   n <- 5000
-  x1 <- runif(n,-2, 2)
-  x2 <- runif(n,-2, 2)
-  x3 <- runif(n,-2, 2)
-  x4 <- runif(n,-2, 2)
+  x1 <- runif(n, -2, 2)
+  x2 <- runif(n, -2, 2)
+  x3 <- runif(n, -2, 2)
+  x4 <- runif(n, -2, 2)
   y <- sin(x1) + ifelse(x2 > 0, pweibull(x2, shape = 3),
                         pweibull(-x2, shape = 0.5)) +
     dt(x3, 1) * 4 +

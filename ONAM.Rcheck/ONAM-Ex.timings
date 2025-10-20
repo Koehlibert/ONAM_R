@@ -1,0 +1,6 @@
+name	user	system	elapsed
+decompose	16.55	 6.22	15.38	
+onam	7.70	1.03	7.18	
+plot_inter_effect	8.56	0.90	7.77	
+plot_main_effect	7.86	0.93	7.10	
+summary.onam	18.23	 2.64	11.61	
