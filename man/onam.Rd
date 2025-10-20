@@ -13,7 +13,7 @@ onam(
   model_data = NULL,
   categorical_features = NULL,
   target = "continuous",
-  n_ensemble = 20,
+  n_ensemble = 10,
   epochs = 500,
   callback = NULL,
   progresstext = FALSE,
