@@ -3,8 +3,8 @@ get_intermediate_model <-
   function(model,
            idx_layer = length(model$layers) - 1) {
     deep_part_in <-
-      keras::get_layer(model, index = as.integer(idx_layer))
-    keras::keras_model(model$input,
+      keras3::get_layer(model, index = as.integer(idx_layer))
+    keras3::keras_model(model$input,
                        deep_part_in$output)
   }
 #Solve linear system after removing linear dependencies
@@ -37,7 +37,7 @@ get_u <- function(model_list,
                   data) {
   data_dictionary <- get_data_dictionary(model_info)
   get_bias_helper <- function(model) {
-    model$output$node$layer$get_config()$use_bias
+    utils::tail(model$layers, 1)[[1]]$use_bias
   }
   u_list <-
     lapply(seq_along(model_idx_list),
@@ -77,8 +77,8 @@ get_w_list <- function(model_list,
   w_list_sep <- lapply(seq_along(model_idx_list),
                        function(idx) {
                          weights <- model_list[[model_idx_list[[idx]]]] %>%
-                           keras::get_layer(index = -1) %>%
-                           keras::get_weights()
+                           keras3::get_layer(index = -1) %>%
+                           keras3::get_weights()
                          return(unlist(weights))
                        })
   w <- c(unlist(w_list_sep), 0)

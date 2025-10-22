@@ -23,14 +23,14 @@
 #' a continuous outcome is fitted. For "binary", a binary classification with
 #' sigmoid activation in the last layer is fitted.
 #' @param epochs Number of epochs to train the model. See
-#' \code{\link[keras]{fit.keras.engine.training.Model}} for details.
+#' \code{\link[keras3]{fit}} for details.
 #' @param n_ensemble Number of orthogonal neural additive model ensembles
 #' @param callback Callback to be called during training. See
-#' \code{\link[keras]{fit.keras.engine.training.Model}} for details.
+#' \code{\link[keras3]{fit}} for details.
 #' @param progresstext Show model fitting progress. If `TRUE`, shows current
 #' number of ensemble being fitted
 #' @param verbose Verbose argument for internal model fitting. used for
-#' debugging. See \code{\link[keras]{fit.keras.engine.training.Model}} for
+#' debugging. See \code{\link[keras3]{fit}} for
 #' details.
 #' @returns Returns a model object of class \code{onam}, containing all ensemble
 #' members, ensemble weights, and main and interaction effect outputs.
@@ -50,13 +50,8 @@
 #'   mod1(x1, x2)
 #' list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
 #' # Fit model
-#' callback <-
-#'   keras::keras$callbacks$EarlyStopping(monitor = "loss",
-#'                                        patience = 10)
 #' mod <- onam(model_formula, list_of_deep_models,
-#'                    data_train, n_ensemble = 2, epochs = 10,
-#'                    callback = callback,
-#'                    progresstext = TRUE, verbose = 1)
+#'                    data_train, n_ensemble = 2, epochs = 10)
 #' summary(mod)
 #' }
 #' @export onam
@@ -110,10 +105,10 @@ onam <- function(formula,
     model_list <- model_object$model_list
     #Fit model####
     # callback <-
-    #   keras::keras$callbacks$EarlyStopping(monitor = "loss",
+    #   keras3::keras$callbacks$EarlyStopping(monitor = "loss",
     #                                        patience = 10)
     history <- model_whole %>%
-      keras::fit(
+      keras3::fit(
         data_fit,
         y,
         epochs = epochs,
@@ -161,9 +156,8 @@ onam <- function(formula,
 #' @returns Gives summary of the `onam` object, including model inputs, number
 #' of ensembles, correlation of model output and original outcome variable, and
 #' interpretability metrics i_1 and i_2
-#' @examples
-#' For examples see example(onam)
-#' }
+#' @details
+#' For examples see \code{\link[=onam]{example(onam)}}
 #' @method summary onam
 #' @export
 summary.onam <- function(object, ...) {
