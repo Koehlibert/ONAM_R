@@ -1,7 +1,0 @@
-decompose               Get variance decomposition of orthogonal neural
-                        additive model
-onam                    Fit orthogonal neural additive model
-plot_inter_effect       Plot Interaction Effect
-plot_main_effect        Plot Main Effect
-predict.onam            Evaluate orthogonal neural additive model
-summary.onam            Get summary of an onam object
