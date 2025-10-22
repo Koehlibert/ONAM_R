@@ -5,7 +5,7 @@ utils::globalVariables(c("x", "y", "prediction", "x1", "x2", "y1", "y2"))
 #' @param effect Effect to be plotted, must be present in the model formula.
 #' For interaction terms, use plotInteractionEffect
 #' @returns Returns a ggplot2 object of the specified effect
-#' @examples
+#' @examplesIf reticulate::py_module_available(tensorflow)
 #' \donttest{
 #' # Basic example for a simple ONAM-model
 #' # Create training data
@@ -53,7 +53,7 @@ plot_main_effect <- function(object, effect) {
 #' @param n_interpolate number of values per coordinate axis to interpolate.
 #' Ignored if 'interpolate = FALSE'.
 #' @returns Returns a 'ggplot2' object of the specified effect interaction
-#' @examples
+#' @examplesIf reticulate::py_module_available(tensorflow)
 #' \donttest{
 #' # Basic example for a simple ONAM-model
 #' # Create training data

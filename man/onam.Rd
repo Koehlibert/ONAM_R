@@ -71,6 +71,7 @@ Fits an interpretable neural additive model with post hoc orthogonalization
 for a given network architecture and user-specified feature sets.
 }
 \examples{
+\dontshow{if (reticulate::py_module_available(tensorflow)) withAutoprint(\{ # examplesIf}
 \donttest{
 # Basic example for a simple ONAM-model
 # Create training data
@@ -93,5 +94,7 @@ mod <- onam(model_formula, list_of_deep_models,
                    data_train, n_ensemble = 2, epochs = 10,
                    callback = callback,
                    progresstext = TRUE, verbose = 1)
+summary(mod)
 }
+\dontshow{\}) # examplesIf}
 }

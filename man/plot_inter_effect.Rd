@@ -37,6 +37,7 @@ Returns a 'ggplot2' object of the specified effect interaction
 Plot Interaction Effect
 }
 \examples{
+\dontshow{if (reticulate::py_module_available(tensorflow)) withAutoprint(\{ # examplesIf}
 \donttest{
 # Basic example for a simple ONAM-model
 # Create training data
@@ -57,4 +58,5 @@ mod <- onam(model_formula, list_of_deep_models,
             progresstext = TRUE, verbose = 1)
 plot_inter_effect(mod, "x1", "x2", interpolate = TRUE)
 }
+\dontshow{\}) # examplesIf}
 }

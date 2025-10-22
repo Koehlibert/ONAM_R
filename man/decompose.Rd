@@ -22,6 +22,7 @@ interaction order.
 Get variance decomposition of orthogonal neural additive model
 }
 \examples{
+\dontshow{if (reticulate::py_module_available(tensorflow)) withAutoprint(\{ # examplesIf}
 \donttest{
 # Basic example for a simple ONAM-model
 # Create training data
@@ -42,4 +43,5 @@ mod <- onam(model_formula, list_of_deep_models,
             progresstext = TRUE, verbose = 1)
 decompose(mod)
 }
+\dontshow{\}) # examplesIf}
 }

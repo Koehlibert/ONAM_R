@@ -6,7 +6,7 @@
 #' with which \code{model} was fitted.
 #' @returns Returns a named vector of percentage of variance explained by each
 #' interaction order.
-#' @examples
+#' @examplesIf reticulate::py_module_available(tensorflow)
 #' \donttest{
 #' # Basic example for a simple ONAM-model
 #' # Create training data
