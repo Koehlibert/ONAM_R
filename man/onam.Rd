@@ -50,16 +50,16 @@ sigmoid activation in the last layer is fitted.}
 \item{n_ensemble}{Number of orthogonal neural additive model ensembles}
 
 \item{epochs}{Number of epochs to train the model. See
-\code{\link[keras]{fit.keras.engine.training.Model}} for details.}
+\code{\link[keras3]{fit}} for details.}
 
 \item{callback}{Callback to be called during training. See
-\code{\link[keras]{fit.keras.engine.training.Model}} for details.}
+\code{\link[keras3]{fit}} for details.}
 
 \item{progresstext}{Show model fitting progress. If \code{TRUE}, shows current
 number of ensemble being fitted}
 
 \item{verbose}{Verbose argument for internal model fitting. used for
-debugging. See \code{\link[keras]{fit.keras.engine.training.Model}} for
+debugging. See \code{\link[keras3]{fit}} for
 details.}
 }
 \value{
@@ -87,13 +87,8 @@ model_formula <- y ~ mod1(x1) + mod1(x2) +
   mod1(x1, x2)
 list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
 # Fit model
-callback <-
-  keras::keras$callbacks$EarlyStopping(monitor = "loss",
-                                       patience = 10)
 mod <- onam(model_formula, list_of_deep_models,
-                   data_train, n_ensemble = 2, epochs = 10,
-                   callback = callback,
-                   progresstext = TRUE, verbose = 1)
+                   data_train, n_ensemble = 2, epochs = 10)
 summary(mod)
 }
 \dontshow{\}) # examplesIf}

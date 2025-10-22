@@ -1,4 +1,3 @@
-#' @import keras
 #Define DNN architecture for simulation
 get_submodel <- function(inputs, regularizer = NULL) {
   outputs <- inputs %>%
@@ -8,66 +7,66 @@ get_submodel <- function(inputs, regularizer = NULL) {
     #   use_bias = TRUE,
     #   kernel_regularizer = regularizer
     # ) %>%
-    keras::layer_dense(
+    keras3::layer_dense(
       units = 128,
       activation = "relu",
       use_bias = TRUE,
       kernel_regularizer = regularizer
     ) %>%
-    keras::layer_dense(
+    keras3::layer_dense(
       units = 64,
       activation = "relu",
       use_bias = TRUE,
       kernel_regularizer = regularizer,
       dtype = "float64"
     ) %>%
-    keras::layer_dense(
+    keras3::layer_dense(
       units = 32,
       activation = "relu",
       use_bias = TRUE,
       kernel_regularizer = regularizer,
       dtype = "float64"
     ) %>%
-    keras::layer_dense(
+    keras3::layer_dense(
       units = 16,
       activation = "relu",
       use_bias = TRUE,
       kernel_regularizer = regularizer,
       dtype = "float64"
     ) %>%
-    keras::layer_dense(
+    keras3::layer_dense(
       units = 8,
       activation = "linear",
       use_bias = TRUE,
       kernel_regularizer = regularizer,
       dtype = "float64"
     ) %>%
-    keras::layer_dense(units = 1,
+    keras3::layer_dense(units = 1,
                        activation = "linear",
                        use_bias = TRUE)
-  keras::keras_model(inputs, outputs)
+  keras3::keras_model(inputs, outputs)
 }
 #Define linear Model DNN structure
 get_linear_submodel <- function(inputs) {
   outputs <- inputs %>%
-    keras::layer_dense(
+    keras3::layer_dense(
       units = 1,
       activation = "linear",
       use_bias = FALSE,
       dtype = "float64"
     )
-  keras::keras_model(inputs, outputs)
+  keras3::keras_model(inputs, outputs)
 }
 #Define model architecture for categorical variable
 get_categorical_submodel <- function(inputs) {
   outputs <- inputs %>%
-    keras::layer_dense(
+    keras3::layer_dense(
       units = 1,
       activation = "linear",
       use_bias = TRUE,
       dtype = "float64"
     )
-  keras::keras_model(inputs, outputs)
+  keras3::keras_model(inputs, outputs)
 }
 #Derive Theta from model Formula
 get_theta <-
@@ -241,7 +240,7 @@ create_inputs <- function(model_info,
   # if (length(model_info$theta$linear) > 0) {
   #   inputs_linear <- lapply(1:length(model_info$theta$linear),
   #                           function(x)
-  #                             keras::layer_input(shape = 1))
+  #                             keras3::layer_input(shape = 1))
   # } else {
   #   inputs_linear <- NULL
   # }
@@ -257,7 +256,7 @@ create_inputs <- function(model_info,
   #                         n_inputs <- n_inputs + cat_counts[[feature_name]] - 1
   #                       }
   #                     }
-  #                     keras::layer_input(shape = n_inputs)
+  #                     keras3::layer_input(shape = n_inputs)
   #                   })
   #          })
   inputs <-
@@ -271,7 +270,7 @@ create_inputs <- function(model_info,
                           n_inputs <- n_inputs + cat_counts[[feature_name]] - 1
                         }
                       }
-                      keras::layer_input(shape = n_inputs)
+                      keras3::layer_input(shape = n_inputs)
                     })
            })
   names(inputs) <-
@@ -283,19 +282,6 @@ create_models <-
   function(model_info,
            inputs_list,
            list_of_deep_models) {
-    # models_linear <- lapply(inputs_list$additive,
-    #                         get_linear_submodel)
-    # models_deep <- list()
-    # for (idx_p in
-    #      names(model_info$theta[setdiff(names(model_info$theta),
-    #                                     "linear")])) {
-    #   models_deep[[idx_p]] <-
-    #     lapply(seq_along(model_info$name_models[[idx_p]]),
-    #            function(idx_model) {
-    #              name_model <- model_info$name_models[[idx_p]][[idx_model]]
-    #              return(list_of_deep_models[[name_model]](inputs_list$deep[[idx_p]][[idx_model]]))
-    #            })
-    # }
     models <- list()
     for (idx_p in
          names(model_info$theta)) {
@@ -313,22 +299,24 @@ concatenate_model_list <-
   function(model_list,
            bias = FALSE,
            activation = "linear") {
-    tmp_output <-
-      keras::layer_concatenate(lapply(model_list,
+    concatenated <-
+      keras3::layer_concatenate(lapply(model_list,
                                       function(model)
-                                        model$output)) %>%
-      keras::layer_dense(1,
+                                        model$output))
+    dense_layer <-
+      keras3::layer_dense(units = 1,
                          use_bias = bias,
                          trainable = FALSE,
                          activation = activation)
-    tmp_weights <- tmp_output$node$layer$get_weights()
+    output <- dense_layer(concatenated)
+    tmp_weights <- dense_layer$get_weights()
     tmp_weights[[1]] <- matrix(rep(1, length(model_list)),
                                ncol = 1)
     if (bias) {
       tmp_weights[[2]] <- tmp_weights[[2]] - tmp_weights[[2]]
     }
-    tmp_output$node$layer %>% keras::set_weights(tmp_weights)
-    tmp_output
+    dense_layer$set_weights(tmp_weights)
+    output
   }
 #compile created pho ensemble member
 compile_model <-
@@ -344,17 +332,17 @@ compile_model <-
       }
     model_whole <- submodels %>%
       concatenate_model_list(bias = TRUE, activation = target_activation)
-    model_whole <- keras::keras_model(all_inputs, model_whole)
+    model_whole <- keras3::keras_model(all_inputs, model_whole)
     loss <- if (target == "continuous") {
-      keras::loss_mean_squared_error()
+      keras3::loss_mean_squared_error()
     } else if (target == "binary") {
-      keras::loss_binary_crossentropy()
+      keras3::loss_binary_crossentropy()
     } else {
       stop()
     }
     model_whole %>%
-      keras::compile(loss = loss,
-                     optimizer = keras::optimizer_adam())
+      keras3::compile(loss = loss,
+                     optimizer = keras3::optimizer_adam())
 
   }
 #prepare data for model fitting by bringing it into the right input dimensions

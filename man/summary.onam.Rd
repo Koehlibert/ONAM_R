@@ -27,3 +27,6 @@ generates a summary of a fitted \code{onam} object including
 information on ensembling strategy and performance metrics such as
 correlation and degree of interpretabiltity
 }
+\details{
+For examples see \code{\link[=onam]{example(onam)}}
+}
