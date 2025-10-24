@@ -147,6 +147,7 @@ check_y_features <- function(data, y, model_info) {
     }
   }
 }
+#' @importFrom reticulate py_available
 require_keras <- function() {
   if(!reticulate::py_available())
   {
