@@ -1,4 +1,4 @@
-.onLoad <- function(libname, pkgname) {
+.onAttach <- function(libname, pkgname) {
   # --- prevent automatic Python/conda setup ---
   options(reticulate.auto_configure = FALSE)
   options(reticulate.conda_auto_install = FALSE)
