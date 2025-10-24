@@ -13,15 +13,16 @@ Description: An algorithm for fitting interpretable additive neural
     arbitrary order while preserving identifiability to enable a
     functional decomposition of the prediction function.
 License: MIT + file LICENSE
-BugReports: https://github.com/Koehlibert/ONAM
-Imports:
+BugReports: https://github.com/Koehlibert/ONAM_R
+Depends:
     keras3,
+    reticulate
+Imports:
     dplyr,
     scales,
     rlang,
     ggplot2,
-    pROC,
-    reticulate
+    pROC
 Suggests:
     akima,
     RColorBrewer,
@@ -30,3 +31,4 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Config/testthat/edition: 3
+NeedsCompilation: no

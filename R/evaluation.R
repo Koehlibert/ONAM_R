@@ -38,8 +38,8 @@ evaluate_onam_single <- function(model,
 #' @docType methods
 #' @param object model of class `onam` as returned from [onam] to be
 #' evaluated
-#' @param data Data for which the model is to be evaluated. Default is the data
-#' with which \code{model} was fitted.
+#' @param data Data for which the model is to be evaluated. If NULL (default),
+#' data with which \code{model} was fitted is used.
 #' @returns Returns a list containing data, model output for each observation in
 #' `data` and main and interaction effects obtained by the model
 #' @param ... some methods for this generic require additional arguments. None
@@ -48,9 +48,13 @@ evaluate_onam_single <- function(model,
 #' @method predict onam
 #' @export
 predict.onam <- function(object, ...,
-                         data = object$data) {
-  if (is.null(data))
+                         data = NULL) {
+  if (!require_keras()) {
+    invisible(return(NULL))
+  }
+  if (is.null(data)) {
     data <- object$data
+  }
   model_info <- object$model_info
   n <- nrow(data)
   n_ensemble <- length(object$ensemble)

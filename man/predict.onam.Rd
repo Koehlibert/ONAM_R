@@ -6,7 +6,7 @@
 \alias{predict}
 \title{Evaluate orthogonal neural additive model}
 \usage{
-\method{predict}{onam}(object, ..., data = object$data)
+\method{predict}{onam}(object, ..., data = NULL)
 }
 \arguments{
 \item{object}{model of class \code{onam} as returned from \link{onam} to be
@@ -15,8 +15,8 @@ evaluated}
 \item{...}{some methods for this generic require additional arguments. None
 are used in this method.}
 
-\item{data}{Data for which the model is to be evaluated. Default is the data
-with which \code{model} was fitted.}
+\item{data}{Data for which the model is to be evaluated. If NULL (default),
+data with which \code{model} was fitted is used.}
 }
 \value{
 Returns a list containing data, model output for each observation in

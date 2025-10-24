@@ -1,11 +1,14 @@
 #Get submodel until penultimate layer
 get_intermediate_model <-
   function(model,
-           idx_layer = length(model$layers) - 1) {
+           idx_layer = NULL) {
+    if (is.null(idx_layer)) {
+      idx_layer <- length(model$layers) - 1
+    }
     deep_part_in <-
       keras3::get_layer(model, index = as.integer(idx_layer))
     keras3::keras_model(model$input,
-                       deep_part_in$output)
+                        deep_part_in$output)
   }
 #Solve linear system after removing linear dependencies
 solve_singular_matrix <- function(tmp_u, pivot) {
@@ -118,7 +121,7 @@ pho <- function(model_list, model_info, data_fit) {
     idx_rel <- u_object$u_idx_list[list_idx_order_lower] %>%
       unlist()
     tmp_u <- u_object$u
-    tmp_u[, -idx_rel] <- 0
+    tmp_u[,-idx_rel] <- 0
     tmp_u[, ncol(tmp_u)] <- 1
     h <- crossprod(tmp_u)
     qr_res <- qr(h)
@@ -175,7 +178,8 @@ pho <- function(model_list, model_info, data_fit) {
              tmp_w <- w_list[[w_Idx]]
              tmp_w[length(tmp_w)] <- if (w_Idx == 1)
                sum(unlist(allOutputMeans)[-1])
-             else-allOutputMeans[[w_Idx]]
+             else
+               - allOutputMeans[[w_Idx]]
              tmp_w
            })
   list(
@@ -206,7 +210,7 @@ pho_ensemble <- function(data_model_eval, model_info) {
                        is.null(model_info$theta$Linear))) {
     list_idx_order_lower <- which(model_order >= idx_ortho)
     tmp_u <- u
-    tmp_u[, -list_idx_order_lower] <- 0
+    tmp_u[,-list_idx_order_lower] <- 0
     h <- crossprod(tmp_u)
     qr_res <- qr(h)
     h_order <- qr_res$pivot[1:qr_res$rank]

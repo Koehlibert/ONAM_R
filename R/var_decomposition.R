@@ -29,6 +29,9 @@
 #' }
 #' @export decompose
 decompose <- function(object, data = NULL) {
+  if(!require_keras()) {
+    invisible(return(NULL))
+  }
   if (is.null(data)) {
       effects <- object$feature_effects
   } else {

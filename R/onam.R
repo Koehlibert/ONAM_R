@@ -68,7 +68,9 @@ onam <- function(formula,
                  callback = NULL,
                  progresstext = FALSE,
                  verbose = 0) {
-  require_keras()
+  if(!require_keras()) {
+    invisible(return(NULL))
+  }
   inputs <- as.list(environment())
   check_inputs_onam(inputs)
   feature_names <- colnames(data)
