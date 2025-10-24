@@ -32,6 +32,7 @@
 #' @param verbose Verbose argument for internal model fitting. used for
 #' debugging. See \code{\link[keras3]{fit}} for
 #' details.
+#' @importFrom keras3 fit
 #' @returns Returns a model object of class \code{onam}, containing all ensemble
 #' members, ensemble weights, and main and interaction effect outputs.
 #' @examplesIf reticulate::py_module_available(tensorflow)
