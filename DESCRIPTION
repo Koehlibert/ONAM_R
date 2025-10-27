@@ -2,7 +2,7 @@ Type: Package
 Package: ONAM
 Title: Fitting Interpretable Neural Additive Models Using
     Orthogonalization
-Version: 0.0.0.9000
+Version: 1.0.0
 Authors@R: 
     person("David", "Köhler", , "koehler@imbie.uni-bonn.de", role = c("aut", "cre"),
            comment = c(ORCID = "0009-0006-0027-4046"))
@@ -13,7 +13,7 @@ Description: An algorithm for fitting interpretable additive neural
     arbitrary order while preserving identifiability to enable a
     functional decomposition of the prediction function.
 License: MIT + file LICENSE
-BugReports: https://github.com/Koehlibert/ONAM_R
+BugReports: https://github.com/Koehlibert/ONAM_R/issues
 Depends:
     keras3,
     reticulate
