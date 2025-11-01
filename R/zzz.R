@@ -1,7 +1,7 @@
 .onAttach <- function(libname, pkgname) {
   # --- prevent automatic Python/conda setup ---
-  options(reticulate.auto_configure = FALSE)
-  options(reticulate.conda_auto_install = FALSE)
+  # options(reticulate.auto_configure = FALSE)
+  # options(reticulate.conda_auto_install = FALSE)
 
   # --- check availability WITHOUT initializing Python ---
   if (!reticulate::py_available(initialize = FALSE) ||

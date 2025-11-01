@@ -6,7 +6,6 @@ utils::globalVariables(c("x", "y", "prediction", "x1", "x2", "y1", "y2"))
 #' For interaction terms, use plotInteractionEffect
 #' @returns Returns a ggplot2 object of the specified effect
 #' @examplesIf reticulate::py_module_available(tensorflow)
-#' \donttest{
 #' # Basic example for a simple ONAM-model
 #' # Create training data
 #' n <- 1000
@@ -19,13 +18,20 @@ utils::globalVariables(c("x", "y", "prediction", "x1", "x2", "y1", "y2"))
 #' # Define model
 #' model_formula <- y ~ mod1(x1) + mod1(x2) +
 #'   mod1(x1, x2)
-#' list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
+#' mod1 <- function(inputs) {
+#'   outputs <- inputs %>%
+#'     layer_dense(units = 16, activation = "relu") %>%
+#'     layer_dense(units = 8, activation = "linear",
+#'                 use_bias = TRUE) %>%
+#'     layer_dense(units = 1, activation = "linear",
+#'                 use_bias = TRUE)
+#'   keras_model(inputs, outputs)
+#' }
+#' list_of_deep_models <- list(mod1 = mod1)
 #' # Fit model
 #' mod <- onam(model_formula, list_of_deep_models,
-#'             data_train, n_ensemble = 2, epochs = 10,
-#'             progresstext = TRUE, verbose = 1)
+#'             data_train, n_ensemble = 1, epochs = 10)
 #' plot_main_effect(mod, "x1")
-#' }
 #' @export plot_main_effect
 plot_main_effect <- function(object, effect) {
   check_inputs_plot(object, effect)
@@ -44,8 +50,7 @@ plot_main_effect <- function(object, effect) {
 #' Plot Interaction Effect
 #' @param object Either model of class `onam` as returned from [onam] or
 #' model evaluation outcome as returned from [predict.onam]
-#' @param effect1 First effect to be plotted.
-#' @param effect2 Second effect to be plotted.
+#' @param effect1,effect2 Effects to be plotted.
 #' @param interpolate If TRUE, values will be interpolated for a smooth plot.
 #' If FALSE (default), only observations in the data will be plotted.
 #' @param custom_colors color palette object for the interaction plot. Default
@@ -54,7 +59,6 @@ plot_main_effect <- function(object, effect) {
 #' Ignored if 'interpolate = FALSE'.
 #' @returns Returns a 'ggplot2' object of the specified effect interaction
 #' @examplesIf reticulate::py_module_available(tensorflow)
-#' \donttest{
 #' # Basic example for a simple ONAM-model
 #' # Create training data
 #' n <- 1000
@@ -67,13 +71,20 @@ plot_main_effect <- function(object, effect) {
 #' # Define model
 #' model_formula <- y ~ mod1(x1) + mod1(x2) +
 #'   mod1(x1, x2)
-#' list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
+#' mod1 <- function(inputs) {
+#'   outputs <- inputs %>%
+#'     layer_dense(units = 16, activation = "relu") %>%
+#'     layer_dense(units = 8, activation = "linear",
+#'                 use_bias = TRUE) %>%
+#'     layer_dense(units = 1, activation = "linear",
+#'                 use_bias = TRUE)
+#'   keras_model(inputs, outputs)
+#' }
+#' list_of_deep_models <- list(mod1 = mod1)
 #' # Fit model
 #' mod <- onam(model_formula, list_of_deep_models,
-#'             data_train, n_ensemble = 2, epochs = 10,
-#'             progresstext = TRUE, verbose = 1)
-#' plot_inter_effect(mod, "x1", "x2", interpolate = TRUE)
-#' }
+#'             data_train, n_ensemble = 1, epochs = 10)
+#' plot_inter_effect(mod, "x1", "x2")
 #' @export plot_inter_effect
 plot_inter_effect <- function(object,
                               effect1,

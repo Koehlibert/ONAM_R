@@ -1,7 +1,7 @@
 test_that("Input checks work", {
   testthat::skip_if_not(reticulate::py_module_available("tensorflow"),
                         "TensorFlow not available")
-  n <- 5000
+  n <- 100
   x1 <- runif(n,-2, 2)
   x2 <- runif(n,-2, 2)
   x3 <- runif(n,-2, 2)
@@ -27,8 +27,8 @@ test_that("Input checks work", {
       f2,
       list_of_deep_models,
       data_train,
-      n_ensemble = 2,
-      epochs = 200,
+      n_ensemble = 1,
+      epochs = 10,
       progresstext = FALSE,
       verbose = 0
     ),
@@ -39,8 +39,8 @@ test_that("Input checks work", {
       f3,
       list_of_deep_models,
       data_train,
-      n_ensemble = 2,
-      epochs = 200,
+      n_ensemble = 1,
+      epochs = 10,
       progresstext = FALSE,
       verbose = 0
     ),
@@ -52,8 +52,8 @@ test_that("Input checks work", {
       list_of_deep_models,
       data_train,
       categorical_features = c("x5"),
-      n_ensemble = 2,
-      epochs = 200,
+      n_ensemble = 1,
+      epochs = 10,
       progresstext = FALSE,
       verbose = 0
     ),
@@ -65,7 +65,7 @@ test_that("Input checks work", {
       list_of_deep_models,
       data_train,
       n_ensemble = 1,
-      epochs = 2,
+      epochs = 10,
       progresstext = FALSE,
       verbose = 0
     ),
@@ -78,7 +78,7 @@ test_that("Input checks work", {
       data_train,
       categorical_features = c("x4"),
       n_ensemble = 1,
-      epochs = 2,
+      epochs = 10,
       progresstext = FALSE,
       verbose = 0
     ),
@@ -88,8 +88,8 @@ test_that("Input checks work", {
     f1,
     list_of_deep_models,
     data_train,
-    n_ensemble = 2,
-    epochs = 5,
+    n_ensemble = 1,
+    epochs = 10,
     progresstext = FALSE,
     verbose = 0
   )

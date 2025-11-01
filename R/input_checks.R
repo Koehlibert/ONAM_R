@@ -151,13 +151,16 @@ check_y_features <- function(data, y, model_info) {
 require_keras <- function() {
   if(!reticulate::py_available())
   {
-    message("No Python Environemt available. Use install.keras() ",
-            "to install recommended environment.")
+    message("No Python Environemt available. Use ",
+              "keras3::install_keras(method = \"conda\", conda = \"auto\") ",
+            "to install recommended environment. If `install_keras` does not work",
+            "(esp. on windows machines), use ",
+              "install_conda_env().")
     return(FALSE)
   }
   if(!reticulate::py_module_available("tensorflow"))
   {
-    message("Tensorflow not available. Use install_keras().")
+    message("Tensorflow not available. Use install_keras(method = \"conda\", conda = \"auto\").")
     return(FALSE)
   }
   TRUE
