@@ -4,14 +4,14 @@
 \alias{plot_main_effect}
 \title{Plot Main Effect}
 \usage{
-plot_main_effect(object, effect)
+plot_main_effect(object, feature)
 }
 \arguments{
 \item{object}{Either model of class \code{onam} as returned from \link{onam} or
 model evaluation outcome as returned from \link{predict.onam}}
 
-\item{effect}{Effect to be plotted, must be present in the model formula.
-For interaction terms, use plotInteractionEffect}
+\item{feature}{Feature for which the effect is to be plotted, must be present
+in the model formula. For interaction terms, use plotInteractionEffect}
 }
 \value{
 Returns a ggplot2 object of the specified effect

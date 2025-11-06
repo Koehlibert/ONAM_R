@@ -6,8 +6,8 @@
 \usage{
 plot_inter_effect(
   object,
-  effect1,
-  effect2,
+  feature1,
+  feature2,
   interpolate = FALSE,
   custom_colors = "spectral",
   n_interpolate = 200
@@ -17,7 +17,7 @@ plot_inter_effect(
 \item{object}{Either model of class \code{onam} as returned from \link{onam} or
 model evaluation outcome as returned from \link{predict.onam}}
 
-\item{effect1, effect2}{Effects to be plotted.}
+\item{feature1, feature2}{Effects to be plotted.}
 
 \item{interpolate}{If TRUE, values will be interpolated for a smooth plot.
 If FALSE (default), only observations in the data will be plotted.}

@@ -11,7 +11,8 @@ Description: An algorithm for fitting interpretable additive neural
     hoc orthogonalization. Fit custom neural networks intuitively using
     established 'R' 'formula' notation, including interaction effects of
     arbitrary order while preserving identifiability to enable a
-    functional decomposition of the prediction function.
+    functional decomposition of the prediction function. For more details see 
+    Koehler et al. (2025) <doi:10.1038/s44387-025-00033-7>.
 License: MIT + file LICENSE
 BugReports: https://github.com/Koehlibert/ONAM_R/issues
 Depends:

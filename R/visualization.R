@@ -2,8 +2,8 @@ utils::globalVariables(c("x", "y", "prediction", "x1", "x2", "y1", "y2"))
 #' Plot Main Effect
 #' @param object Either model of class `onam` as returned from [onam] or
 #' model evaluation outcome as returned from [predict.onam]
-#' @param effect Effect to be plotted, must be present in the model formula.
-#' For interaction terms, use plotInteractionEffect
+#' @param feature Feature for which the effect is to be plotted, must be present
+#' in the model formula. For interaction terms, use plotInteractionEffect
 #' @returns Returns a ggplot2 object of the specified effect
 #' @examplesIf reticulate::py_module_available(tensorflow)
 #' # Basic example for a simple ONAM-model
@@ -33,24 +33,24 @@ utils::globalVariables(c("x", "y", "prediction", "x1", "x2", "y1", "y2"))
 #'             data_train, n_ensemble = 1, epochs = 10)
 #' plot_main_effect(mod, "x1")
 #' @export plot_main_effect
-plot_main_effect <- function(object, effect) {
-  check_inputs_plot(object, effect)
+plot_main_effect <- function(object, feature) {
+  check_inputs_plot(object, feature)
   data_plot <-
-    data.frame(x = object$data[, effect],
-               y = object$feature_effects[, effect])
-  if (effect %in% object$model_info$categorical_features) {
+    data.frame(x = object$data[, feature],
+               y = object$feature_effects[, feature])
+  if (feature %in% object$model_info$categorical_features) {
     plt <- plot_main_categorical(data_plot)
   } else {
     plt <- ggplot2::ggplot(data_plot, ggplot2::aes(x = x, y = y)) +
       ggplot2::geom_point()
   }
   plt + ggplot2::ylab(eff_label_helper(object$model_info$target)) +
-    ggplot2::xlab(effect)
+    ggplot2::xlab(feature)
 }
 #' Plot Interaction Effect
 #' @param object Either model of class `onam` as returned from [onam] or
 #' model evaluation outcome as returned from [predict.onam]
-#' @param effect1,effect2 Effects to be plotted.
+#' @param feature1,feature2 Effects to be plotted.
 #' @param interpolate If TRUE, values will be interpolated for a smooth plot.
 #' If FALSE (default), only observations in the data will be plotted.
 #' @param custom_colors color palette object for the interaction plot. Default
@@ -87,35 +87,35 @@ plot_main_effect <- function(object, effect) {
 #' plot_inter_effect(mod, "x1", "x2")
 #' @export plot_inter_effect
 plot_inter_effect <- function(object,
-                              effect1,
-                              effect2,
+                              feature1,
+                              feature2,
                               interpolate = FALSE,
                               custom_colors = "spectral",
                               n_interpolate = 200) {
-  n_cat_effs <- sum(c(effect1, effect2) %in%
+  n_cat_effs <- sum(c(feature1, feature2) %in%
                       object$model_info$categorical_features)
   if ((n_cat_effs > 0) & interpolate) {
     warning("Interaction contains categorical feature. No Interpolation will be performed.")
   }
-  inter <- paste(effect1, effect2, sep = "_")
+  inter <- paste(feature1, feature2, sep = "_")
   if (!is.null(check_inputs_plot(object, inter, interaction = 1))) {
-    inter <- paste(effect2, effect1, sep = "_")
+    inter <- paste(feature2, feature1, sep = "_")
     if (!is.null(check_inputs_plot(object, inter, interaction = 2))) {
       stop(paste(
         "No interaction effect fitted for ",
-        effect1,
+        feature1,
         " and ",
-        effect2,
+        feature2,
         ".",
         sep = ""
       ))
     }
-    tmp <- effect1
-    effect1 <- effect2
-    effect2 <- tmp
+    tmp <- feature1
+    feature1 <- feature2
+    feature2 <- tmp
   }
-  tmp_xlab <- ggplot2::xlab(effect2)
-  tmp_ylab <- ggplot2::ylab(effect1)
+  tmp_xlab <- ggplot2::xlab(feature2)
+  tmp_ylab <- ggplot2::ylab(feature1)
   if (typeof(custom_colors) != "closure") {
     if (custom_colors == "spectral") {
       custom_colors <-
@@ -126,8 +126,8 @@ plot_inter_effect <- function(object,
   if (interpolate & (n_cat_effs == 0)) {
     tmp_interp <-
       akima::interp(
-        x = object$data[, effect1],
-        y = object$data[, effect2],
+        x = object$data[, feature1],
+        y = object$data[, feature2],
         z = eff,
         nx = n_interpolate,
         ny = n_interpolate,
@@ -159,8 +159,8 @@ plot_inter_effect <- function(object,
     aes_param <- ggplot2::aes(x = x, y = y, fill = prediction)
   } else {
     data_plot <-
-      data.frame(x = object$data[, effect1],
-                 y = object$data[, effect2],
+      data.frame(x = object$data[, feature1],
+                 y = object$data[, feature2],
                  prediction = eff)
     aes_gradient <-
       ggplot2::scale_color_gradientn(
@@ -182,16 +182,16 @@ plot_inter_effect <- function(object,
     if (n_cat_effs == 1) {
       tmp_ylab <-
         ggplot2::ylab(eff_label_helper(object$model_info$target))
-      if (effect1 %in% object$model_info$categorical_features) {
-        aes_gradient <- ggplot2::scale_color_discrete(name = effect1)
+      if (feature1 %in% object$model_info$categorical_features) {
+        aes_gradient <- ggplot2::scale_color_discrete(name = feature1)
         data_plot$x <- as.factor(data_plot$x)
         aes_param <- ggplot2::aes(x = y,
                                   y = prediction,
                                   color = x)
       } else {
-        aes_gradient <- ggplot2::scale_color_discrete(name = effect2)
+        aes_gradient <- ggplot2::scale_color_discrete(name = feature2)
         data_plot$y <- as.factor(data_plot$y)
-        tmp_xlab <- ggplot2::xlab(effect1)
+        tmp_xlab <- ggplot2::xlab(feature1)
         aes_param <- ggplot2::aes(x = x,
                                   y = prediction,
                                   color = y)
