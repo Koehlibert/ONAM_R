@@ -2,10 +2,10 @@ test_that("Input checks work", {
   testthat::skip_if_not(reticulate::py_module_available("tensorflow"),
                         "TensorFlow not available")
   n <- 100
-  x1 <- runif(n, -2, 2)
-  x2 <- runif(n, -2, 2)
-  x3 <- runif(n, -2, 2)
-  x4 <- runif(n, -2, 2)
+  x1 <- runif(n,-2, 2)
+  x2 <- runif(n,-2, 2)
+  x3 <- runif(n,-2, 2)
+  x4 <- runif(n,-2, 2)
   y <- sin(x1) + ifelse(x2 > 0, pweibull(x2, shape = 3),
                         pweibull(-x2, shape = 0.5)) +
     dt(x3, 1) * 4 +
@@ -20,7 +20,18 @@ test_that("Input checks work", {
     mod1(x1, x2) + mod1(x1, x2, x3) + mod4(x2)
   f4 <- y ~ mod1(x1) + mod1(x2) + mod1(x3) +
     mod1(x1, x2)
-  list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
+  mod1 <- function(inputs) {
+    outputs <- inputs %>%
+      layer_dense(units = 16, activation = "relu") %>%
+      layer_dense(units = 8,
+                  activation = "linear",
+                  use_bias = TRUE) %>%
+      layer_dense(units = 1,
+                  activation = "linear",
+                  use_bias = TRUE)
+    keras_model(inputs, outputs)
+  }
+  list_of_deep_models <- list(mod1 = mod1)
   # Fit model
   expect_error(
     onam(

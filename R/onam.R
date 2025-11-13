@@ -97,7 +97,7 @@ onam <- function(formula,
                data,
                target,
                model_info)
-  check_y_features(data, y, model_info)
+  check_y_features(data, y, model_info, target)
   data_fit <-
     prepare_data(data, model_info, categorical_features)
   ensemble <- list()

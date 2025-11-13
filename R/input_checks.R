@@ -58,7 +58,7 @@ check_inputs_formula <-
         call. = FALSE
       )
     }
-    highest_term_idx <- which.max(length(features_ls))
+    highest_term_idx <- which.max(lapply(features_ls, length))
     highest_term_features <- features_ls[[highest_term_idx]]
     if (any(unlist(lapply(features_ls[-highest_term_idx], function(terms) {
       any(!terms %in% highest_term_features)
@@ -126,12 +126,17 @@ check_inputs_onam <- function(inputs) {
     stop("Parameter `progresstext` must be `TRUE` or `FALSE`.",
          call. = FALSE)
 }
-check_y_features <- function(data, y, model_info) {
-  if (model_info$all_feature_indic) {
+check_y_features <- function(data, y, model_info, target) {
+  if (model_info$all_feature_indic & target == "continuous") {
     data_no_outcome <-
       data[,!(colnames(data) %in% as.character(model_info$outcome))]
-    f_y_cors <- apply(data_no_outcome, 2, function(x)
-      stats::cor(x, y))
+    f_y_cors <- apply(data_no_outcome, 2, function(x) {
+      if (!is.numeric(x)) {
+        0
+      } else {
+        stats::cor(x, y)
+      }
+    })
     cor_orders <- order(f_y_cors, decreasing = TRUE)
     if (f_y_cors[cor_orders[1]] > 0.99) {
       warning(
@@ -149,18 +154,22 @@ check_y_features <- function(data, y, model_info) {
 }
 #' @importFrom reticulate py_available
 require_keras <- function() {
-  if(!reticulate::py_available())
+  if (!reticulate::py_available())
   {
-    message("No Python Environemt available. Use ",
-              "keras3::install_keras(method = \"conda\", conda = \"auto\") ",
-            "to install recommended environment. If `install_keras` does not work",
-            "(esp. on windows machines), use ",
-              "install_conda_env().")
+    message(
+      "No Python Environemt available. Use ",
+      "keras3::install_keras(method = \"conda\", conda = \"auto\") ",
+      "to install recommended environment. If `install_keras` does not work",
+      "(esp. on windows machines), use ",
+      "install_conda_env()."
+    )
     return(FALSE)
   }
-  if(!reticulate::py_module_available("tensorflow"))
+  if (!reticulate::py_module_available("tensorflow"))
   {
-    message("Tensorflow not available. Use install_keras(method = \"conda\", conda = \"auto\").")
+    message(
+      "Tensorflow not available. Use install_keras(method = \"conda\", conda = \"auto\")."
+    )
     return(FALSE)
   }
   TRUE
