@@ -63,7 +63,7 @@ model_formula = y ~ simple(x1) + simple(x2) + simple(x3) +
   complex(x1, x2) + complex(x1, x2, x3)
 ```
 
-##Fit onam model
+## Fit onam model
 
 An onam model can then be fitted according to the model formula. An ensembling strategy is used, here with 2 ensemble members. Further model fitting parameters can be specified, such as verbosity, callbacks or number of training steps.
 
