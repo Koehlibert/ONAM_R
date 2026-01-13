@@ -61,10 +61,7 @@ install_conda_env <- function(
   reticulate::use_condaenv(envname, required = TRUE)
 
   reticulate::py_run_string(
-    "import sys, tensorflow as tf, keras;
-     print(sys.version);
-     print(tf.__version__);
-     print(keras.__version__)"
+    "import sys, tensorflow as tf, keras; print(sys.version); print(tf.__version__); print(keras.__version__)"
   )
 
   invisible(TRUE)

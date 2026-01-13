@@ -154,7 +154,7 @@ check_y_features <- function(data, y, model_info, target) {
 }
 #' @importFrom reticulate py_available
 require_keras <- function() {
-  if (!reticulate::py_available())
+  if (!reticulate::py_available(initialize = TRUE))
   {
     message(
       "No Python Environemt available. Use ",
@@ -175,14 +175,34 @@ require_keras <- function() {
   TRUE
 }
 #' @keywords internal
-load_conda_env <- function(envname = "r-keras") {
-  conda_bin <- reticulate::conda_binary()
-  envs <- reticulate::conda_list(conda = conda_bin)$name
+skip_if_no_conda_env <- function(envname = "r-keras") {
 
-  if (envname %in% envs) {
-    reticulate::use_condaenv(envname, required = TRUE)
-    invisible(TRUE)
-  } else {
-    invisible(FALSE)
+  testthat::skip_on_cran()
+
+  conda_bin <- tryCatch(
+    reticulate::conda_binary(),
+    error = function(e) NULL
+  )
+
+  if (is.null(conda_bin)) {
+    testthat::skip("Conda is not available")
   }
+
+  envs <- tryCatch(
+    reticulate::conda_list(conda = conda_bin)$name,
+    error = function(e) character()
+  )
+
+  if (!envname %in% envs) {
+    testthat::skip(
+      paste0("Conda environment '", envname, "' is not available")
+    )
+  }
+
+  reticulate::use_condaenv(envname, required = TRUE)
+
+  reticulate::py_available(initialize = TRUE)
+
+  invisible(TRUE)
 }
+
