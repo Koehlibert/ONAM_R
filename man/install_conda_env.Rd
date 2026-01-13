@@ -4,12 +4,19 @@
 \alias{install_conda_env}
 \title{Set up conda environment for keras functionality}
 \usage{
-install_conda_env(envname = "r-keras", python_version = "python=3.10")
+install_conda_env(
+  envname = "r-keras",
+  python_version = "python=3.10",
+  overwrite = FALSE
+)
 }
 \arguments{
 \item{envname}{Name for the conda environment to be created.}
 
 \item{python_version}{Python version to be installed in the conda environment.}
+
+\item{overwrite}{Should an existing conda environment of name \code{envname} be
+overwritten if present?}
 }
 \value{
 No return value, called for side effects

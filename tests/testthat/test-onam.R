@@ -1,4 +1,5 @@
 test_that("Input checks work", {
+  load_conda_env()
   testthat::skip_if_not(reticulate::py_module_available("tensorflow"),
                         "TensorFlow not available")
   n <- 100

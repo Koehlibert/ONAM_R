@@ -174,3 +174,15 @@ require_keras <- function() {
   }
   TRUE
 }
+#' @keywords internal
+load_conda_env <- function(envname = "r-keras") {
+  conda_bin <- reticulate::conda_binary()
+  envs <- reticulate::conda_list(conda = conda_bin)$name
+
+  if (envname %in% envs) {
+    reticulate::use_condaenv(envname, required = TRUE)
+    invisible(TRUE)
+  } else {
+    invisible(FALSE)
+  }
+}
