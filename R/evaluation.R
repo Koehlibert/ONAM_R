@@ -38,32 +38,31 @@ evaluate_onam_single <- function(model,
 #' @docType methods
 #' @param object model of class `onam` as returned from [onam] to be
 #' evaluated
-#' @param data Data for which the model is to be evaluated. If NULL (default),
+#' @param newdata Data for which the model is to be evaluated. If NULL (default),
 #' data with which \code{model} was fitted is used.
 #' @returns Returns a list containing data, model output for each observation in
-#' `data` and main and interaction effects obtained by the model
+#' `newdata` and main and interaction effects obtained by the model
 #' @param ... some methods for this generic require additional arguments. None
 #' are used in this method.
 #' @aliases predict
 #' @method predict onam
 #' @export
-predict.onam <- function(object, ...,
-                         data = NULL) {
+predict.onam <- function(object, newdata = NULL, ...) {
   if (!require_keras()) {
     invisible(return(NULL))
   }
-  if (is.null(data)) {
-    data <- object$data
+  if (is.null(newdata)) {
+    newdata <- object$data
   }
   model_info <- object$model_info
-  n <- nrow(data)
+  n <- nrow(newdata)
   n_ensemble <- length(object$ensemble)
   categorical_features <- object$categorical_features
   predictions_separate <-
     lapply(
       object$ensemble,
       evaluate_onam_single,
-      data = data,
+      data = newdata,
       model_info = model_info,
       categorical_features = categorical_features
     )
@@ -107,7 +106,7 @@ predict.onam <- function(object, ...,
     dplyr::summarise(prediction = sum(.data$y) / n_ensemble) %>%
     dplyr::select(.data$prediction) %>% unlist()
   out <- list(
-    data = data,
+    data = newdata,
     predictions = predictions_total,
     feature_effects = predictions_features,
     model_info = model_info
