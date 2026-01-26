@@ -1,10 +1,10 @@
 test_that("ONAM works", {
   skip_if_no_conda_env()
   n <- 100
-  x1 <- runif(n,-2, 2)
-  x2 <- runif(n,-2, 2)
-  x3 <- runif(n,-2, 2)
-  x4 <- runif(n,-2, 2)
+  x1 <- runif(n, -2, 2)
+  x2 <- runif(n, -2, 2)
+  x3 <- runif(n, -2, 2)
+  x4 <- runif(n, -2, 2)
   y <- sin(x1) + ifelse(x2 > 0, pweibull(x2, shape = 3),
                         pweibull(-x2, shape = 0.5)) +
     dt(x3, 1) * 4 +
@@ -26,23 +26,26 @@ test_that("ONAM works", {
   }
   list_of_deep_models <- list(mod1 = mod1)
   # Fit model
-  mod <- onam(
-    f1,
-    list_of_deep_models,
-    data_train,
-    n_ensemble = 1,
-    epochs = 10,
-    progresstext = FALSE,
-    verbose = 0
+  expect_error(
+    onam(
+      f1,
+      list_of_deep_models,
+      data_train,
+      n_ensemble = 1,
+      epochs = 10,
+      progresstext = FALSE,
+      verbose = 0
+    ),
+    regexp = NA
   )
 })
 test_that("Input checks work", {
   skip_if_no_conda_env()
   n <- 100
-  x1 <- runif(n,-2, 2)
-  x2 <- runif(n,-2, 2)
-  x3 <- runif(n,-2, 2)
-  x4 <- runif(n,-2, 2)
+  x1 <- runif(n, -2, 2)
+  x2 <- runif(n, -2, 2)
+  x3 <- runif(n, -2, 2)
+  x4 <- runif(n, -2, 2)
   y <- sin(x1) + ifelse(x2 > 0, pweibull(x2, shape = 3),
                         pweibull(-x2, shape = 0.5)) +
     dt(x3, 1) * 4 +

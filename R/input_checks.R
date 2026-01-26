@@ -154,6 +154,8 @@ check_y_features <- function(data, y, model_info, target) {
 }
 #' @importFrom reticulate py_available
 require_keras <- function() {
+  try(reticulate::use_condaenv("r-keras", required = TRUE),
+      silent = TRUE)
   if (!reticulate::py_available(initialize = TRUE))
   {
     message(
@@ -205,4 +207,3 @@ skip_if_no_conda_env <- function(envname = "r-keras") {
 
   invisible(TRUE)
 }
-

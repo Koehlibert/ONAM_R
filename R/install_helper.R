@@ -38,6 +38,7 @@ install_conda_env <- function(
 
     if (!overwrite) {
       message("Using existing conda environment: ", envname)
+      reticulate::use_condaenv(envname, required = TRUE)
       return(invisible(FALSE))
     }
 
