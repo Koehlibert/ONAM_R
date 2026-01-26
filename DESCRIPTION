@@ -2,7 +2,7 @@ Type: Package
 Package: ONAM
 Title: Fitting Interpretable Neural Additive Models Using
     Orthogonalization
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: 
     person("David", "Köhler", , "koehler@imbie.uni-bonn.de", role = c("aut", "cre"),
            comment = c(ORCID = "0009-0006-0027-4046"))
