@@ -71,23 +71,49 @@ check_inputs_formula <-
   }
 #check inputs for proper object specification and if specified effects were fitted
 #' @keywords internal
-check_inputs_plot <- function(object, effect, interaction = 0) {
+check_inputs_plot <- function(object,
+                              effect,
+                              interaction = 0,
+                              reference_level = NULL) {
   if (inherits(object, "onam_prediction") |
       inherits(object, "onam")) {
     names <- colnames(object$feature_effects)
   } else {
     stop(
-      "Visualization functions can only be called for objects of type 'onam'
-         or 'onam_prediction'."
+      "Visualization functions can only be called on objects of type 'onam'
+         or 'onam_prediction'.",
+      call. = FALSE
     )
   }
   if (!effect %in% names) {
     if (interaction == 1) {
       return(interaction)
     } else {
-      stop(paste(effect,
-                 " is not present in the fitted model effects.",
-                 sep = ""))
+      stop(paste0(effect,
+                  " is not present in the fitted model effects."),
+           call. = FALSE)
+    }
+  }
+  if (!is.null(reference_level) && (interaction == 0))
+  {
+    if (!effect %in% object$categorical_features)
+    {
+      warning(
+        paste0(
+          "Reference level given, but ",
+          effect,
+          " is not modeled as categorical."
+        ),
+        call. = FALSE
+      )
+    }
+    else if (!  reference_level %in%
+             unique(object$data[, effect]))
+    {
+      stop(paste0(reference_level,
+                  " is not a level of feature ",
+                  effect, "."),
+           call. = FALSE)
     }
   }
 }
@@ -129,7 +155,7 @@ check_inputs_onam <- function(inputs) {
 check_y_features <- function(data, y, model_info, target) {
   if (model_info$all_feature_indic & target == "continuous") {
     data_no_outcome <-
-      data[,!(colnames(data) %in% as.character(model_info$outcome))]
+      data[, !(colnames(data) %in% as.character(model_info$outcome))]
     f_y_cors <- apply(data_no_outcome, 2, function(x) {
       if (!is.numeric(x)) {
         0
@@ -178,12 +204,12 @@ require_keras <- function() {
 }
 #' @keywords internal
 skip_if_no_conda_env <- function(envname = "r-keras") {
-
   testthat::skip_on_cran()
 
   conda_bin <- tryCatch(
     reticulate::conda_binary(),
-    error = function(e) NULL
+    error = function(e)
+      NULL
   )
 
   if (is.null(conda_bin)) {
@@ -192,13 +218,12 @@ skip_if_no_conda_env <- function(envname = "r-keras") {
 
   envs <- tryCatch(
     reticulate::conda_list(conda = conda_bin)$name,
-    error = function(e) character()
+    error = function(e)
+      character()
   )
 
   if (!envname %in% envs) {
-    testthat::skip(
-      paste0("Conda environment '", envname, "' is not available")
-    )
+    testthat::skip(paste0("Conda environment '", envname, "' is not available"))
   }
 
   reticulate::use_condaenv(envname, required = TRUE)

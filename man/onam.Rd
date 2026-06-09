@@ -16,6 +16,7 @@ onam(
   n_ensemble = 10,
   epochs = 500,
   callback = NULL,
+  seed = NULL,
   progresstext = FALSE,
   verbose = 0
 )
@@ -55,10 +56,13 @@ sigmoid activation in the last layer is fitted.}
 \item{callback}{Callback to be called during training. See
 \code{\link[keras3]{fit}} for details.}
 
+\item{seed}{Random seed used by R, python, numpy, and backend framework.
+See \code{\link[keras3]{set_random_seed}} for details.}
+
 \item{progresstext}{Show model fitting progress. If \code{TRUE}, shows current
 number of ensemble being fitted}
 
-\item{verbose}{Verbose argument for internal model fitting. used for
+\item{verbose}{Verbose argument for internal model fitting. Used for
 debugging. See \code{\link[keras3]{fit}} for
 details.}
 }

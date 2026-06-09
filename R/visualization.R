@@ -4,6 +4,9 @@ utils::globalVariables(c("x", "y", "prediction", "x1", "x2", "y1", "y2"))
 #' model evaluation outcome as returned from [predict.onam]
 #' @param feature Feature for which the effect is to be plotted, must be present
 #' in the model formula. For interaction terms, use plotInteractionEffect
+#' @param reference_level Reference level to be used when plotting categorical
+#' effects for better interpretability. Effect of the reference level will be
+#' set to zero and subtracted from all over factor levels.
 #' @returns Returns a ggplot2 object of the specified effect
 #' @examplesIf reticulate::py_module_available(tensorflow)
 #' # Basic example for a simple ONAM-model
@@ -33,20 +36,22 @@ utils::globalVariables(c("x", "y", "prediction", "x1", "x2", "y1", "y2"))
 #'             data_train, n_ensemble = 1, epochs = 10)
 #' plot_main_effect(mod, "x1")
 #' @export plot_main_effect
-plot_main_effect <- function(object, feature) {
-  check_inputs_plot(object, feature)
-  data_plot <-
-    data.frame(x = object$data[, feature],
-               y = object$feature_effects[, feature])
-  if (feature %in% object$model_info$categorical_features) {
-    plt <- plot_main_categorical(data_plot)
-  } else {
-    plt <- ggplot2::ggplot(data_plot, ggplot2::aes(x = x, y = y)) +
-      ggplot2::geom_point()
+plot_main_effect <-
+  function(object, feature, reference_level = NULL) {
+    check_inputs_plot(object, feature,
+                      reference_level = reference_level)
+    data_plot <-
+      data.frame(x = object$data[, feature],
+                 y = object$feature_effects[, feature])
+    if (feature %in% object$model_info$categorical_features) {
+      plt <- plot_main_categorical(data_plot, reference_level)
+    } else {
+      plt <- ggplot2::ggplot(data_plot, ggplot2::aes(x = x, y = y)) +
+        ggplot2::geom_point()
+    }
+    plt + ggplot2::ylab(eff_label_helper(object$model_info$target)) +
+      ggplot2::xlab(feature)
   }
-  plt + ggplot2::ylab(eff_label_helper(object$model_info$target)) +
-    ggplot2::xlab(feature)
-}
 #' Plot Interaction Effect
 #' @param object Either model of class `onam` as returned from [onam] or
 #' model evaluation outcome as returned from [predict.onam]
@@ -57,6 +62,9 @@ plot_main_effect <- function(object, feature) {
 #' is "spectral", returning a color palette based on the spectral theme.
 #' @param n_interpolate number of values per coordinate axis to interpolate.
 #' Ignored if 'interpolate = FALSE'.
+#' @param include_main If TRUE, main effects for features feature1 and feature2
+#' will be added to the interaction term to give combined effect of main and
+#' interaction effects. Default is FALSE.
 #' @returns Returns a 'ggplot2' object of the specified effect interaction
 #' @examplesIf reticulate::py_module_available(tensorflow)
 #' # Basic example for a simple ONAM-model
@@ -91,7 +99,8 @@ plot_inter_effect <- function(object,
                               feature2,
                               interpolate = FALSE,
                               custom_colors = "spectral",
-                              n_interpolate = 200) {
+                              n_interpolate = 200,
+                              include_main = FALSE) {
   n_cat_effs <- sum(c(feature1, feature2) %in%
                       object$model_info$categorical_features)
   if ((n_cat_effs > 0) & interpolate) {
@@ -114,8 +123,8 @@ plot_inter_effect <- function(object,
     feature1 <- feature2
     feature2 <- tmp
   }
-  tmp_xlab <- ggplot2::xlab(feature2)
-  tmp_ylab <- ggplot2::ylab(feature1)
+  tmp_xlab <- ggplot2::xlab(feature1)
+  tmp_ylab <- ggplot2::ylab(feature2)
   if (typeof(custom_colors) != "closure") {
     if (custom_colors == "spectral") {
       custom_colors <-
@@ -123,6 +132,29 @@ plot_inter_effect <- function(object,
     }
   }
   eff <- object$feature_effects[, inter]
+  if (include_main)
+  {
+    f1_in <- feature1 %in% colnames(object$feature_effects)
+    f2_in <- feature2 %in% colnames(object$feature_effects)
+    if (!all(f1_in, f2_in))
+    {
+      warning(
+        paste0(
+          "`include_main` has been set to `true`, ",
+          "but not all features were included as main effects."
+        ),
+        call. = FALSE
+      )
+    }
+    if (f1_in)
+    {
+      eff <- eff + object$feature_effects[, feature1]
+    }
+    if (f2_in)
+    {
+      eff <- eff + object$feature_effects[, feature2]
+    }
+  }
   if (interpolate & (n_cat_effs == 0)) {
     tmp_interp <-
       akima::interp(
@@ -222,21 +254,33 @@ eff_label_helper <- function(target) {
     "Effect on logit scale"
   }
 }
-plot_main_categorical <- function(data_plot) {
-  x_uq <- unique(data_plot$x)
-  y_uq <- unique(data_plot$y)
-  data_plot_categ <-
-    data.frame(x = x_uq,
-               y = y_uq)
-  ggplot2::ggplot(data_plot_categ, ggplot2::aes(x = x, y = y)) +
-    ggplot2::geom_bar(stat = "identity") +
-    ggplot2::geom_text(ggplot2::aes(
-      y = 0,
-      label = x,
-      vjust = 0.5 + 0.75 * sign(y)
-    )) +
-    ggplot2::theme(
-      axis.text.x = ggplot2::element_blank(),
-      axis.ticks.x = ggplot2::element_blank()
-    )
-}
+plot_main_categorical <-
+  function(data_plot, reference_level = NULL) {
+    x_uq <- unique(data_plot$x)
+    first_x <-
+      sapply(x_uq, function(x_val)
+        which.min(data_plot$x == x_val))
+    y_uq <- data_plot$y[first_x]
+    data_plot_categ <-
+      data.frame(x = x_uq,
+                 y = y_uq)
+    if (!is.null(reference_level))
+    {
+      x_ref_idx <- which(data_plot_categ$x == reference_level)
+      data_plot_categ$y <- data_plot_categ$y -
+        data_plot_categ$y[x_ref_idx]
+      data_plot_categ$x[x_ref_idx] <-
+        paste0(reference_level, " (Reference)")
+    }
+    ggplot2::ggplot(data_plot_categ, ggplot2::aes(x = x, y = y)) +
+      ggplot2::geom_bar(stat = "identity") +
+      ggplot2::geom_text(ggplot2::aes(
+        y = 0,
+        label = x,
+        vjust = 0.5 + 0.75 * sign(y)
+      )) +
+      ggplot2::theme(
+        axis.text.x = ggplot2::element_blank(),
+        axis.ticks.x = ggplot2::element_blank()
+      )
+  }

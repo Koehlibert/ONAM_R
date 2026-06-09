@@ -27,9 +27,11 @@
 #' @param n_ensemble Number of orthogonal neural additive model ensembles
 #' @param callback Callback to be called during training. See
 #' \code{\link[keras3]{fit}} for details.
+#' @param seed Random seed used by R, python, numpy, and backend framework.
+#' See \code{\link[keras3]{set_random_seed}} for details.
 #' @param progresstext Show model fitting progress. If `TRUE`, shows current
 #' number of ensemble being fitted
-#' @param verbose Verbose argument for internal model fitting. used for
+#' @param verbose Verbose argument for internal model fitting. Used for
 #' debugging. See \code{\link[keras3]{fit}} for
 #' details.
 #' @importFrom keras3 fit
@@ -74,6 +76,7 @@ onam <- function(formula,
                  n_ensemble = 10,
                  epochs = 500,
                  callback = NULL,
+                 seed = NULL,
                  progresstext = FALSE,
                  verbose = 0) {
   if(!require_keras()) {
@@ -184,6 +187,7 @@ summary.onam <- function(object, ...) {
     }
   res <- list(
     call = object$call,
+    formula = object$model_info$model_formula,
     n_ensemble = length(object$ensemble),
     conv_metric = convergence_metric,
     i_1 = var_decomp["1"],
@@ -201,6 +205,8 @@ summary.onam <- function(object, ...) {
 print.summary.onam <- function(x, ...) {
   cat("\nCall:\n")
   print(x$call)
+  cat("\nFormula:\n")
+  print(x$formula)
   # cat("\nInputs:")
   # input_string_1 <- as.character(x$input[[1]])
   # if (input_string_1 == "<pointer: 0x0>") {

@@ -10,7 +10,8 @@ plot_inter_effect(
   feature2,
   interpolate = FALSE,
   custom_colors = "spectral",
-  n_interpolate = 200
+  n_interpolate = 200,
+  include_main = FALSE
 )
 }
 \arguments{
@@ -27,6 +28,10 @@ is "spectral", returning a color palette based on the spectral theme.}
 
 \item{n_interpolate}{number of values per coordinate axis to interpolate.
 Ignored if 'interpolate = FALSE'.}
+
+\item{include_main}{If TRUE, main effects for features feature1 and feature2
+will be added to the interaction term to give combined effect of main and
+interaction effects. Default is FALSE.}
 }
 \value{
 Returns a 'ggplot2' object of the specified effect interaction

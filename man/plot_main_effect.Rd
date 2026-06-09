@@ -4,7 +4,7 @@
 \alias{plot_main_effect}
 \title{Plot Main Effect}
 \usage{
-plot_main_effect(object, feature)
+plot_main_effect(object, feature, reference_level = NULL)
 }
 \arguments{
 \item{object}{Either model of class \code{onam} as returned from \link{onam} or
@@ -12,6 +12,10 @@ model evaluation outcome as returned from \link{predict.onam}}
 
 \item{feature}{Feature for which the effect is to be plotted, must be present
 in the model formula. For interaction terms, use plotInteractionEffect}
+
+\item{reference_level}{Reference level to be used when plotting categorical
+effects for better interpretability. Effect of the reference level will be
+set to zero and subtracted from all over factor levels.}
 }
 \value{
 Returns a ggplot2 object of the specified effect

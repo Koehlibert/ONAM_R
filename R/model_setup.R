@@ -205,7 +205,8 @@ get_theta <-
       categorical_features = categorical_features,
       outcome = outcome_var,
       target = target,
-      all_feature_indic = all_feature_indic
+      all_feature_indic = all_feature_indic,
+      model_formula = model_formula
     )
   }
 #help function to detect symbols
