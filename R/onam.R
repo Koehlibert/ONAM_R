@@ -86,7 +86,7 @@ onam <- function(formula,
   check_inputs_onam(inputs)
   if(!is.null(seed))
   {
-    tensorflow::set_random_seed(seed)
+    keras3::set_random_seed(seed)
   }
   feature_names <- colnames(data)
   model_info <-
