@@ -195,7 +195,7 @@ test_that("ONAM predict works", {
   expect_false(isTRUE(all.equal((predict(mod, newdat))$predictions, mod$predictions
   )))
 })
-test_that("ONAM works", {
+test_that("ONAM works with model", {
   skip_if_no_conda_env()
   n <- 100
   x1 <- runif(n, -2, 2)
@@ -249,4 +249,53 @@ test_that("ONAM works", {
     ),
     regexp = "Model formula includes term of type `deep_model\\(.\\)`. Data contains column y, which has a correlation of 1 with the outcome. If using a term like `deep_model\\(.\\)` and supplying a `model` to generate the response, make sure that the original outcome is not contained in `data`."
   )
+})
+test_that("Seed works", {
+  skip_if_no_conda_env()
+  n <- 100
+  x1 <- runif(n, -2, 2)
+  x2 <- runif(n, -2, 2)
+  y <- 2 * x1 - 2 * x2
+  data_train <- cbind(x1, x2, y)
+
+  # Define model
+  f1 <- y ~ mod1(x1) + mod1(x2) + mod1(.)
+  mod1 <- function(inputs) {
+    outputs <- inputs %>%
+      layer_dense(units = 16, activation = "relu") %>%
+      layer_dense(units = 8,
+                  activation = "linear",
+                  use_bias = TRUE) %>%
+      layer_dense(units = 1,
+                  activation = "linear",
+                  use_bias = TRUE)
+    keras_model(inputs, outputs)
+  }
+  list_of_deep_models <- list(mod1 = mod1)
+  # Fit model
+  expect_error(
+    mod <- onam(
+      f1,
+      list_of_deep_models,
+      data_train,
+      n_ensemble = 1,
+      epochs = 10,
+      progresstext = FALSE,
+      seed = 1,
+      verbose = 0
+    ),
+    regexp = NA
+  )
+  tmp_eff <- mod$feature_effects[, "x1"]
+  mod2 <- onam(
+    f1,
+    list_of_deep_models,
+    data_train,
+    n_ensemble = 1,
+    epochs = 10,
+    progresstext = FALSE,
+    seed = 1,
+    verbose = 0
+  )
+  expect_equal(mod2$feature_effects[, "x1"], tmp_eff)
 })

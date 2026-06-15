@@ -84,6 +84,10 @@ onam <- function(formula,
   }
   inputs <- as.list(environment())
   check_inputs_onam(inputs)
+  if(!is.null(seed))
+  {
+    tensorflow::set_random_seed(seed)
+  }
   feature_names <- colnames(data)
   model_info <-
     get_theta(formula,
