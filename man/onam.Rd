@@ -15,6 +15,7 @@ onam(
   target = "continuous",
   n_ensemble = 10,
   epochs = 500,
+  learning_rate = 0.001,
   callback = NULL,
   seed = NULL,
   progresstext = FALSE,
@@ -51,7 +52,10 @@ sigmoid activation in the last layer is fitted.}
 \item{n_ensemble}{Number of orthogonal neural additive model ensembles}
 
 \item{epochs}{Number of epochs to train the model. See
-\code{\link[keras3]{fit}} for details.}
+\code{\link[keras3]{fit}} for details.#}
+
+\item{learning_rate}{Learning rate for model fitting. See
+\code{\link[keras3]{compile}} for details.}
 
 \item{callback}{Callback to be called during training. See
 \code{\link[keras3]{fit}} for details.}

@@ -111,10 +111,8 @@ pho <- function(model_list, model_info, data_fit) {
   # all_orders <- as.numeric(setdiff(names(model_info$theta), "linear"))
   # highest_order <- max(all_orders)
   #Iterate over interaction depth
-  for (idx_ortho in 2:(length(model_info$theta) -
-                       is.null(model_info$theta$Linear))) {
-    if (length(model_info$theta) -
-        is.null(model_info$theta$Linear) == 1) {
+  for (idx_ortho in 2:(length(model_info$theta))) {
+    if (length(model_info$theta) == 1) {
       break
     }
     list_idx_order_lower <- which(model_order >= idx_ortho)
@@ -206,8 +204,7 @@ pho_ensemble <- function(data_model_eval, model_info) {
     matrix(nrow = n)
   w <- diag(1, nrow = n_models)
   #Iterate over interaction depth
-  for (idx_ortho in 2:(length(model_info$theta) -
-                       is.null(model_info$theta$Linear))) {
+  for (idx_ortho in 2:(length(model_info$theta))) {
     list_idx_order_lower <- which(model_order >= idx_ortho)
     tmp_u <- u
     tmp_u[,-list_idx_order_lower] <- 0

@@ -42,8 +42,8 @@ get_submodel <- function(inputs, regularizer = NULL) {
       dtype = "float64"
     ) %>%
     keras3::layer_dense(units = 1,
-                       activation = "linear",
-                       use_bias = TRUE)
+                        activation = "linear",
+                        use_bias = TRUE)
   keras3::keras_model(inputs, outputs)
 }
 #Define linear Model DNN structure
@@ -146,12 +146,10 @@ get_theta <-
       unlist()
     order_highest <- max(order_inter)
     ordered_parts_list <-
-      parts_list[(1:length(parts_list))[order(order_inter,
-                                              decreasing = TRUE)]]
+      parts_list[(1:length(parts_list))[order(order_inter, decreasing = TRUE)]]
     order_counts <- table(order_inter)
     order_counts <-
-      order_counts[order(as.numeric(names(order_counts)),
-                         decreasing = TRUE)]
+      order_counts[order(as.numeric(names(order_counts)), decreasing = TRUE)]
     idx_counts <- list()
     start_index <- 1
     for (i in seq_along(order_counts)) {
@@ -165,19 +163,16 @@ get_theta <-
       lapply(seq_along(orders_unique), function(countIdx)
         ordered_parts_list[idx_counts[[countIdx]]])
     idx_names <-
-      lapply(seq_along(theta_deep_name),
-             function(idx_item) {
-               lapply(seq_along(theta_deep_name[[idx_item]]),
-                      function(idx_item_in) {
-                        lapply(seq_along(theta_deep_name[[idx_item]][[idx_item_in]]),
-                               function(idx_item_in_2) {
-                                 if (as.character(theta_deep_name[[idx_item]][[idx_item_in]][[idx_item_in_2]])
-                                     %in% names(list_of_deep_models)) {
-                                   return(c(idx_item, idx_item_in, idx_item_in_2))
-                                 }
-                               })
-                      })
-             }) %>%
+      lapply(seq_along(theta_deep_name), function(idx_item) {
+        lapply(seq_along(theta_deep_name[[idx_item]]), function(idx_item_in) {
+          lapply(seq_along(theta_deep_name[[idx_item]][[idx_item_in]]), function(idx_item_in_2) {
+            if (as.character(theta_deep_name[[idx_item]][[idx_item_in]][[idx_item_in_2]])
+                %in% names(list_of_deep_models)) {
+              return(c(idx_item, idx_item_in, idx_item_in_2))
+            }
+          })
+        })
+      }) %>%
       unlist()
     idx_names <-
       idx_names %>% split(rep(1:(length(idx_names) / 3), each = 3))
@@ -224,15 +219,17 @@ create_model <- function(model_info,
                          list_of_deep_models,
                          categorical_features,
                          cat_counts,
-                         target = "continuous") {
-  inputs_list <- create_inputs(model_info,
-                               categorical_features, cat_counts)
+                         target = "continuous",
+                         learning_rate) {
+  inputs_list <- create_inputs(model_info, categorical_features, cat_counts)
   model_list <-
     create_models(model_info, inputs_list, list_of_deep_models)
   model_whole <-
-    compile_model(inputs_list, model_list, target = target)
-  list(model = model_whole,
-       model_list = model_list)
+    compile_model(inputs_list,
+                  model_list,
+                  target = target,
+                  learning_rate = learning_rate)
+  list(model = model_whole, model_list = model_list)
 }
 #create inputs for each submodel
 create_inputs <- function(model_info,
@@ -261,19 +258,17 @@ create_inputs <- function(model_info,
   #                   })
   #          })
   inputs <-
-    lapply(1:length(model_info$theta),
-           function(idx_inter_count) {
-             lapply(model_info$theta[[idx_inter_count]],
-                    function(theta_sub) {
-                      n_inputs <- length(theta_sub)
-                      for (feature_name in theta_sub) {
-                        if (as.character(feature_name) %in% names(cat_counts)) {
-                          n_inputs <- n_inputs + cat_counts[[feature_name]] - 1
-                        }
-                      }
-                      keras3::layer_input(shape = n_inputs)
-                    })
-           })
+    lapply(1:length(model_info$theta), function(idx_inter_count) {
+      lapply(model_info$theta[[idx_inter_count]], function(theta_sub) {
+        n_inputs <- length(theta_sub)
+        for (feature_name in theta_sub) {
+          if (as.character(feature_name) %in% names(cat_counts)) {
+            n_inputs <- n_inputs + cat_counts[[feature_name]] - 1
+          }
+        }
+        keras3::layer_input(shape = n_inputs)
+      })
+    })
   names(inputs) <-
     names(model_info$theta)
   inputs
@@ -287,11 +282,10 @@ create_models <-
     for (idx_p in
          names(model_info$theta)) {
       models[[idx_p]] <-
-        lapply(seq_along(model_info$name_models[[idx_p]]),
-               function(idx_model) {
-                 name_model <- model_info$name_models[[idx_p]][[idx_model]]
-                 return(list_of_deep_models[[name_model]](inputs_list[[idx_p]][[idx_model]]))
-               })
+        lapply(seq_along(model_info$name_models[[idx_p]]), function(idx_model) {
+          name_model <- model_info$name_models[[idx_p]][[idx_model]]
+          return(list_of_deep_models[[name_model]](inputs_list[[idx_p]][[idx_model]]))
+        })
     }
     models
   }
@@ -301,18 +295,18 @@ concatenate_model_list <-
            bias = FALSE,
            activation = "linear") {
     concatenated <-
-      keras3::layer_concatenate(lapply(model_list,
-                                      function(model)
-                                        model$output))
+      keras3::layer_concatenate(lapply(model_list, function(model)
+        model$output))
     dense_layer <-
-      keras3::layer_dense(units = 1,
-                         use_bias = bias,
-                         trainable = FALSE,
-                         activation = activation)
+      keras3::layer_dense(
+        units = 1,
+        use_bias = bias,
+        trainable = FALSE,
+        activation = activation
+      )
     output <- dense_layer(concatenated)
     tmp_weights <- dense_layer$get_weights()
-    tmp_weights[[1]] <- matrix(rep(1, length(model_list)),
-                               ncol = 1)
+    tmp_weights[[1]] <- matrix(rep(1, length(model_list)), ncol = 1)
     if (bias) {
       tmp_weights[[2]] <- tmp_weights[[2]] - tmp_weights[[2]]
     }
@@ -321,7 +315,10 @@ concatenate_model_list <-
   }
 #compile created pho ensemble member
 compile_model <-
-  function(inputs_list, model_list, target = "continuous") {
+  function(inputs_list,
+           model_list,
+           target = "continuous",
+           learning_rate) {
     submodels <-
       unlist(model_list, use.names = FALSE) #Why does this matter?
     all_inputs <- unlist(inputs_list, use.names = FALSE)
@@ -342,8 +339,10 @@ compile_model <-
       stop()
     }
     model_whole %>%
-      keras3::compile(loss = loss,
-                     optimizer = keras3::optimizer_adam())
+      keras3::compile(
+        loss = loss,
+        optimizer = keras3::optimizer_adam(learning_rate = learning_rate)
+      )
 
   }
 #prepare data for model fitting by bringing it into the right input dimensions
@@ -351,30 +350,26 @@ prepare_data <- function(data_original,
                          model_info,
                          categorical_features) {
   data_additive <-
-    lapply(model_info$theta$linear,
-           function(feature_name) {
-             data_original[, as.character(feature_name)]
-           })
+    lapply(model_info$theta$linear, function(feature_name) {
+      data_original[, as.character(feature_name)]
+    })
   deep_data <-
-    lapply(unlist(model_info$theta[setdiff(names(model_info$theta),
-                                           "linear")], recursive = FALSE),
-           function(theta_sub) {
-             ret_mat <- matrix(nrow = nrow(data_original), ncol = 0)
-             for (feature in theta_sub) {
-               feature <- as.character(unlist(feature))
-               ret_mat <-
-                 cbind(ret_mat,
-                       if (feature %in% categorical_features) {
-                         encode_dummy(data_original[, feature], feature)
-                       } else {
-                         data_original[, feature]
-                       })
-               if (!feature %in% categorical_features) {
-                 colnames(ret_mat)[ncol(ret_mat)] <- feature
-               }
-             }
-             return(ret_mat)
-           })
+    lapply(unlist(model_info$theta[setdiff(names(model_info$theta), "linear")], recursive = FALSE), function(theta_sub) {
+      ret_mat <- matrix(nrow = nrow(data_original), ncol = 0)
+      for (feature in theta_sub) {
+        feature <- as.character(unlist(feature))
+        ret_mat <-
+          cbind(ret_mat, if (feature %in% categorical_features) {
+            encode_dummy(data_original[, feature], feature)
+          } else {
+            data_original[, feature]
+          })
+        if (!feature %in% categorical_features) {
+          colnames(ret_mat)[ncol(ret_mat)] <- feature
+        }
+      }
+      return(ret_mat)
+    })
   newData <- c(deep_data, data_additive)
   unname(newData)
 }
@@ -394,23 +389,19 @@ get_data_dictionary <- function(model_info) {
 #create dummy variables for categorical data
 encode_dummy <- function(x, name) {
   uq_vals <- unique(x)
-  ret_mat <- matrix(sapply(uq_vals[-1],
-                           function(val) {
-                             x == val
-                           }),
-                    nrow = length(x))
+  ret_mat <- matrix(sapply(uq_vals[-1], function(val) {
+    x == val
+  }), nrow = length(x))
   colnames(ret_mat) <- paste(name, uq_vals[-1], sep = "_")
   ret_mat
 }
 #get number of unique categories per categorical feature - 1 (because of dummy
 #encoding)
-get_category_counts <- function(categorical_features,
-                                data) {
+get_category_counts <- function(categorical_features, data) {
   ret_list <-
-    lapply(categorical_features,
-           function(feature) {
-             length(unique(data[, feature])) - 1
-           })
+    lapply(categorical_features, function(feature) {
+      length(unique(data[, feature])) - 1
+    })
   names(ret_list) <- categorical_features
   ret_list
 }

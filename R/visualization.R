@@ -259,7 +259,7 @@ plot_main_categorical <-
     x_uq <- unique(data_plot$x)
     first_x <-
       sapply(x_uq, function(x_val)
-        which.min(data_plot$x == x_val))
+        min(which(data_plot$x == x_val)))
     y_uq <- data_plot$y[first_x]
     data_plot_categ <-
       data.frame(x = x_uq,

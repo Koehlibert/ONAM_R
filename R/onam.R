@@ -23,7 +23,9 @@
 #' a continuous outcome is fitted. For "binary", a binary classification with
 #' sigmoid activation in the last layer is fitted.
 #' @param epochs Number of epochs to train the model. See
-#' \code{\link[keras3]{fit}} for details.
+#' \code{\link[keras3]{fit}} for details.#
+#' @param learning_rate Learning rate for model fitting. See
+#' \code{\link[keras3]{compile}} for details.
 #' @param n_ensemble Number of orthogonal neural additive model ensembles
 #' @param callback Callback to be called during training. See
 #' \code{\link[keras3]{fit}} for details.
@@ -75,6 +77,7 @@ onam <- function(formula,
                  target = "continuous",
                  n_ensemble = 10,
                  epochs = 500,
+                 learning_rate = 0.001,
                  callback = NULL,
                  seed = NULL,
                  progresstext = FALSE,
@@ -117,7 +120,8 @@ onam <- function(formula,
                    list_of_deep_models,
                    categorical_features,
                    cat_counts,
-                   target)
+                   target,
+                   learning_rate)
     model_whole <- model_object$model
     model_list <- model_object$model_list
     #Fit model####
