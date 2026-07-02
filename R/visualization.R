@@ -212,6 +212,9 @@ plot_inter_effect <- function(object,
     geom_param <- ggplot2::geom_point()
     prediction <- NULL #remove cmd check note
     if (n_cat_effs == 1) {
+      data_plot <- data_plot %>%
+        dplyr::group_by(x, y) %>%
+        dplyr::summarise(prediction = mean(prediction), .groups = "drop")
       tmp_ylab <-
         ggplot2::ylab(eff_label_helper(object$model_info$target))
       if (feature1 %in% object$model_info$categorical_features) {

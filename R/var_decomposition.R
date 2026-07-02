@@ -3,7 +3,6 @@
 #' model evaluation outcome as returned from [predict.onam]
 #' @param data Data for which the model is to be evaluated. If \code{NULL}
 #' (DEFAULT), the data from model fitting is used.
-#' with which \code{model} was fitted.
 #' @returns Returns a named vector of percentage of variance explained by each
 #' interaction order.
 #' @examplesIf reticulate::py_module_available(tensorflow)
@@ -37,36 +36,35 @@
 #' }
 #' @export decompose
 decompose <- function(object, data = NULL) {
-  if(!require_keras()) {
+  if (!require_keras()) {
     invisible(return(NULL))
   }
   if (is.null(data)) {
-      effects <- object$feature_effects
+    effects <- object$feature_effects
   } else {
     if (inherits(object, "onam")) {
       effects <- predict(object, data)$feature_effects
     } else {
       stop(
         "When calling \`decompose\` with a non-default \`data\`
-      argument, \`object\` has to be the \`onam\`-model."
+      argument, \`object\` has to be the \`onam\`-model.",
+        call. = FALSE
       )
     }
   }
   theta_deep <-
-    object$model_info$theta[setdiff(names(object$model_info$theta),
-                                    "linear")]
-  orders <- sort(unique(c(1, 2, as.numeric(names(theta_deep)))))
-  effect_order_matrix <- matrix(0,
-                                nrow = nrow(effects),
-                                ncol = length(orders))
+    object$model_info$theta[setdiff(names(object$model_info$theta), "linear")]
+  orders <- sort(unique(c(1, 2, as.numeric(
+    names(theta_deep)
+  ))))
+  effect_order_matrix <- matrix(0, nrow = nrow(effects), ncol = length(orders))
   sens_info = rep(0, length(orders))
   names(sens_info) <- orders
   for (idx_order in seq_along(orders)) {
     tmp_name <-
-      lapply(theta_deep[[as.character(orders[idx_order])]],
-             function(effect) {
-               paste(effect, collapse = "_")
-             }) %>%
+      lapply(theta_deep[[as.character(orders[idx_order])]], function(effect) {
+        paste(effect, collapse = "_")
+      }) %>%
       unlist()
     sens_info[idx_order] <- length(tmp_name)
     tmp_effects <- effects[, tmp_name]
@@ -111,5 +109,111 @@ print.var_decomp <- function(x, ...) {
   #   cat("\n", names(x$sens_index)[i],
   #       ": ", round(x$sens_index[i], 5))
   # }
+  invisible(x)
+}
+#' Compute Generalized Sobol Indices for dependent features
+#' @param object Either model of class `onam` as returned from [onam] or
+#' evaluation outcome as returned from [predict.onam].
+#' @param data Data for which the model is to be evaluated. If \code{NULL}
+#' (DEFAULT), the data from model fitting is used.
+#' @returns Returns a named vector of percentage of variance explained by each
+#' interaction order.
+#' @examplesIf reticulate::py_module_available(tensorflow)
+#' \donttest{
+#' # Basic example for a simple ONAM-model
+#' # Create training data
+#' n <- 1000
+#' x1 <- runif(n, -2, 2)
+#' x2 <- runif(n, -2, 2)
+#' y <- sin(x1) + ifelse(x2 > 0, pweibull(x2, shape = 3),
+#'   pweibull(-x2, shape = 0.5)) +
+#'   x1 * x2
+#' data_train <- cbind(x1, x2, y)
+#' # Define model
+#' model_formula <- y ~ mod1(x1) + mod1(x2) +
+#'   mod1(x1, x2)
+#' mod1 <- function(inputs) {
+#'   outputs <- inputs %>%
+#'     layer_dense(units = 16, activation = "relu") %>%
+#'     layer_dense(units = 8, activation = "linear",
+#'                 use_bias = TRUE) %>%
+#'     layer_dense(units = 1, activation = "linear",
+#'                 use_bias = TRUE)
+#'   keras_model(inputs, outputs)
+#' }
+#' list_of_deep_models <- list(mod1 = mod1)
+#' # Fit model
+#' mod <- onam(model_formula, list_of_deep_models,
+#'             data_train, n_ensemble = 1, epochs = 10)
+#' gen_sobol(mod)
+#' }
+#' @details For details on generalized sobol indices, see
+#' Chastaing et al. (2012) \doi{10.1214/12-EJS749}.
+#' @export gen_sobol
+gen_sobol <- function(object, data = NULL) {
+  if (!require_keras()) {
+    invisible(return(NULL))
+  }
+  if (inherits(object, "onam") |
+      inherits(object, "onam_prediction"))
+  {
+    tmp_var <- stats::var(object$feature_effects)
+  } else
+  {
+    stop(
+      "`gen_sobol`` can only be called on objects of class
+       `onam` and `onam_prediction`.",
+      call. = FALSE
+    )
+  }
+  total_var <- sum(tmp_var)
+  gen_sobol_index_1 <- diag(tmp_var)
+  gen_sobol_index_2 <- (rowSums(tmp_var) - gen_sobol_index_1) / total_var
+  gen_sobol_index_1 <- gen_sobol_index_1 / total_var
+  total_sobol_index <- gen_sobol_index_1 + gen_sobol_index_2
+  effect_orders <- sapply(seq_along(object$model_info$theta), function(i)
+    rep(
+      names(object$model_info$theta)[i],
+      length(object$model_info$theta[[i]])
+    )) %>% unlist() %>% as.numeric()
+  out_df <-
+    data.frame(effect_order = effect_orders,
+               gen_sobol_index_1 = gen_sobol_index_1,
+               gen_sobol_index_2 = gen_sobol_index_2,
+               total_sobol_index = total_sobol_index)
+  out <- list(
+    out_df = out_df,
+    gen_sobol_index_1 = gen_sobol_index_1,
+    gen_sobol_index_2 = gen_sobol_index_2,
+    total_sobol_index = total_sobol_index
+  )
+  attr(out, "target") <- object$model_info$target
+  class(out) <- "gen_sobol"
+  out
+}
+#' @method print gen_sobol
+#' @export
+print.gen_sobol <- function(x, ...) {
+  out_txt <- "\nGeneralized Sobol Indices"
+  if (attr(x, "target") == "binary") {
+    out_txt <- paste0(out_txt, " (on logit level)")
+  }
+  out_txt <- paste0(out_txt, ":")
+  cat(out_txt)
+  tmp <- x$out_df %>% dplyr::arrange(.data$effect_order)
+  for (i in unique(tmp$effect_order)) {
+    sub_tmp <- tmp %>% dplyr::filter(.data$effect_order == i) %>% as.matrix()
+    if (i == 1) {
+      cat("\nMain effects:")
+    } else {
+      cat("\nInteractions of order ",
+          i,
+          ": ")
+    }
+    for (j in seq(nrow(sub_tmp)))
+    {
+      cat("\n ", rownames(sub_tmp)[j], sub_tmp[j, "total_sobol_index"])
+    }
+  }
   invisible(x)
 }
