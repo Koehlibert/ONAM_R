@@ -82,12 +82,12 @@ onam <- function(formula,
                  seed = NULL,
                  progresstext = FALSE,
                  verbose = 0) {
-  if(!require_keras()) {
+  if (!require_keras()) {
     invisible(return(NULL))
   }
   inputs <- as.list(environment())
   check_inputs_onam(inputs)
-  if(!is.null(seed))
+  if (!is.null(seed))
   {
     keras3::set_random_seed(seed)
   }
@@ -98,8 +98,7 @@ onam <- function(formula,
               feature_names,
               categorical_features,
               target)
-  cat_counts <- get_category_counts(categorical_features,
-                                    data)
+  cat_counts <- get_category_counts(categorical_features, data)
   y <-
     get_output(model,
                prediction_function,
@@ -116,12 +115,14 @@ onam <- function(formula,
       show_progress(i, n_ensemble)
     }
     model_object <-
-      create_model(model_info,
-                   list_of_deep_models,
-                   categorical_features,
-                   cat_counts,
-                   target,
-                   learning_rate)
+      create_model(
+        model_info,
+        list_of_deep_models,
+        categorical_features,
+        cat_counts,
+        target,
+        learning_rate
+      )
     model_whole <- model_object$model
     model_list <- model_object$model_list
     #Fit model####
@@ -183,16 +184,23 @@ onam <- function(formula,
 #' @export
 summary.onam <- function(object, ...) {
   var_decomp <- decompose(object)$var_decomp
-  convergence_metric <-
-    if (object$model_info$target == "continuous") {
-      stats::cor(object$predictions,
-                 object$y)
-    } else {
-      pROC::auc(object$y,
-                object$predictions)
-      # stats::cor(object$predictions,
-      #            object$y, method = "spearman")
+
+  if (object$model_info$target == "continuous") {
+    convergence_metric <- stats::cor(object$predictions, object$y)
+    conv_met_attr <- "cor"
+  } else {
+    if (is.numeric(object$y) && !is.integer(object$y))
+    {
+      convergence_metric <- stats::cor(object$predictions, object$y)
+      conv_met_attr <- "cor_p"
+    } else
+    {
+      convergence_metric <- pROC::auc(object$y, object$predictions)
+      conv_met_attr <- "auc"
     }
+    # stats::cor(object$predictions,
+    #            object$y, method = "spearman")
+  }
   res <- list(
     call = object$call,
     formula = object$model_info$model_formula,
@@ -204,6 +212,7 @@ summary.onam <- function(object, ...) {
   )
   class(res) <- "summary.onam"
   attr(res, "target") <- object$model_info$target
+  attr(res, "conv_met") <- conv_met_attr
   res
 }
 
@@ -224,17 +233,20 @@ print.summary.onam <- function(x, ...) {
   # } else {
   #   lapply(x$input, function(input) cat("\n", as.character(input)))
   # }
-  if (attr(x, "target") == "continuous") {
-    cat("\nCorrelation of model prediction with outcome variable: ",
-        round(x$conv_metric, 4),
-        sep = "")
-  } else {
-    cat("\nPrediction AUC: ",
-        round(x$conv_metric, 4),
-        sep = "")
-    # cat("\nCorrelation of onam probabilities with original model predicted probabilities: ",
-    #     round(x$conv_metric, 4),
-    #     sep = "")
+  if (attr(x, "conv_met") == "cor") {
+    cat(
+      "\nCorrelation of model prediction with outcome variable: ",
+      round(x$conv_metric, 4),
+      sep = ""
+    )
+  } else if (attr(x, "conv_met") == "cor_p") {
+    cat(
+      "\nCorrelation of onam probabilities with original model predicted probabilities: ",
+      round(x$conv_metric, 4),
+      sep = ""
+    )
+  } else  if (attr(x, "conv_met") == "auc") {
+    cat("\nPrediction AUC: ", round(x$conv_metric, 4), sep = "")
   }
   cat("\nNumber of ensemble members: ", x$n_ensemble)
   cat("\nI_1: ",

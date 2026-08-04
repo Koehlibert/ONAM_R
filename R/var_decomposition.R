@@ -177,10 +177,12 @@ gen_sobol <- function(object, data = NULL) {
       length(object$model_info$theta[[i]])
     )) %>% unlist() %>% as.numeric()
   out_df <-
-    data.frame(effect_order = effect_orders,
-               gen_sobol_index_1 = gen_sobol_index_1,
-               gen_sobol_index_2 = gen_sobol_index_2,
-               total_sobol_index = total_sobol_index)
+    data.frame(
+      effect_order = effect_orders,
+      gen_sobol_index_1 = gen_sobol_index_1,
+      gen_sobol_index_2 = gen_sobol_index_2,
+      total_sobol_index = total_sobol_index
+    )
   out <- list(
     out_df = out_df,
     gen_sobol_index_1 = gen_sobol_index_1,
@@ -206,9 +208,7 @@ print.gen_sobol <- function(x, ...) {
     if (i == 1) {
       cat("\nMain effects:")
     } else {
-      cat("\nInteractions of order ",
-          i,
-          ": ")
+      cat("\nInteractions of order ", i, ": ")
     }
     for (j in seq(nrow(sub_tmp)))
     {
