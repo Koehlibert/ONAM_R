@@ -54,6 +54,7 @@ decompose <- function(object, data = NULL) {
   }
   theta_deep <-
     object$model_info$theta[setdiff(names(object$model_info$theta), "linear")]
+  max_order <- max(as.numeric(names(theta_deep)))
   orders <- sort(unique(c(1, 2, as.numeric(
     names(theta_deep)
   ))))
@@ -62,10 +63,8 @@ decompose <- function(object, data = NULL) {
   names(sens_info) <- orders
   for (idx_order in seq_along(orders)) {
     tmp_name <-
-      lapply(theta_deep[[as.character(orders[idx_order])]], function(effect) {
-        paste(effect, collapse = "_")
-      }) %>%
-      unlist()
+      get_effect_names_for_order(theta_deep[[as.character(orders[idx_order])]],
+                                 max_order)
     sens_info[idx_order] <- length(tmp_name)
     tmp_effects <- effects[, tmp_name]
     if (!is.null(dim(tmp_effects))) {
@@ -127,7 +126,7 @@ plot.var_decomp <- function(x, ...) {
     order = factor(order_labels, levels = order_labels),
     variance = as.numeric(x$var_decomp)
   )
-  ylab_val <- "Fraction of variance explained"
+  ylab_val <- "Fraction of explained variance"
   if (attr(x, "target") == "binary") {
     ylab_val <- paste0(ylab_val, " (logit scale)")
   }
@@ -256,7 +255,7 @@ print.gen_sobol <- function(x, ...) {
 #' @returns Returns a 'ggplot2' object showing, for each fitted effect, the
 #' generalized Sobol index split into the effect's own contribution
 #' (`gen_sobol_index_1`) and its contribution through interactions with
-#' other features (`gen_sobol_index_2`)
+#' other effects of the same order (`gen_sobol_index_2`)
 #' @method plot gen_sobol
 #' @export
 plot.gen_sobol <- function(x, ...) {
@@ -267,11 +266,12 @@ plot.gen_sobol <- function(x, ...) {
   data_plot$effect <- factor(data_plot$effect, levels = data_plot$effect)
   data_plot_long <- data.frame(
     effect = rep(data_plot$effect, 2),
-    component = rep(c("Own effect", "Through interactions"),
+    component = rep(c("Effect contribution",
+                      "Effect induced by other terms of the same order"),
                     each = nrow(data_plot)),
     value = c(data_plot$gen_sobol_index_1, data_plot$gen_sobol_index_2)
   )
-  ylab_val <- "Fraction of variance explained"
+  ylab_val <- "Generalized Sobol Index"
   if (attr(x, "target") == "binary") {
     ylab_val <- paste0(ylab_val, " (logit scale)")
   }

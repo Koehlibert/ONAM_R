@@ -17,18 +17,7 @@ evaluate_onam_single <- function(model,
     lapply(model$w_list_old,
            function(w)
              u_object$u %*% w)
-  model_names <- list()
-  for (idx_order in seq_along(model_info$theta)) {
-    for (idx_model in seq_along(model_info$theta[[idx_order]])) {
-      tmp_name <-
-        paste(unlist(model_info$theta[[idx_order]][[idx_model]]),
-              collapse = "_")
-      if (names(model_info$theta)[idx_order] == "Linear") {
-        tmp_name <- paste(tmp_name, "_Linear", sep = "")
-      }
-      model_names <- c(model_names, tmp_name)
-    }
-  }
+  model_names <- get_all_effect_names(model_info)
   names(predictions_submodel) <- model_names
   names(predictions_submodel_old) <- model_names
   list(predictions_submodel = predictions_submodel,

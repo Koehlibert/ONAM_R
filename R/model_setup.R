@@ -373,6 +373,36 @@ prepare_data <- function(data_original,
   newData <- c(deep_data, data_additive)
   unname(newData)
 }
+#Generate a display/column name for a single effect. Every effect is
+#named after its feature(s) directly (needed so
+#plot_main_effect()/plot_inter_effect() can reconstruct the name from the
+#feature names alone, and so lower-order interactions stay readable).
+#The single exception is the highest-order interaction (order ==
+#max_order): every onam model contains exactly one interaction spanning
+#all features, so instead of concatenating all of them (which would grow
+#with the data dimension) it is simply called "Interaction <order>".
+get_effect_name <- function(features, max_order) {
+  order <- length(features)
+  if (order == max_order) {
+    paste0("Interaction ", order)
+  } else {
+    paste(features, collapse = "_")
+  }
+}
+#Generate display names for every effect in one order group (an element
+#of model_info$theta).
+get_effect_names_for_order <- function(theta_order, max_order) {
+  vapply(theta_order, function(effect) {
+    get_effect_name(unlist(effect), max_order)
+  }, character(1))
+}
+#Generate display names for every fitted effect, in the same order
+#model_info$theta is iterated in evaluate_onam_single().
+get_all_effect_names <- function(model_info) {
+  max_order <- max(as.numeric(names(model_info$theta)))
+  unlist(lapply(model_info$theta, get_effect_names_for_order,
+                max_order = max_order))
+}
 #Create "dictionary" yielding data indices for nested model list
 get_data_dictionary <- function(model_info) {
   dictionary_list <- list()
