@@ -111,6 +111,39 @@ print.var_decomp <- function(x, ...) {
   # }
   invisible(x)
 }
+#' Plot variance decomposition
+#' @param x Object of class `var_decomp` as returned by [decompose]
+#' @param ... further arguments, currently unused
+#' @returns Returns a 'ggplot2' object showing the fraction of total
+#' variance explained by each interaction order
+#' @method plot var_decomp
+#' @export
+plot.var_decomp <- function(x, ...) {
+  orders <- names(x$var_decomp)
+  order_labels <- ifelse(orders == "1",
+                         "Main effects",
+                         paste0("Order ", orders, " interactions"))
+  data_plot <- data.frame(
+    order = factor(order_labels, levels = order_labels),
+    variance = as.numeric(x$var_decomp)
+  )
+  ylab_val <- "Fraction of variance explained"
+  if (attr(x, "target") == "binary") {
+    ylab_val <- paste0(ylab_val, " (logit scale)")
+  }
+  ggplot2::ggplot(data_plot,
+                  ggplot2::aes(x = .data$order, y = .data$variance)) +
+    ggplot2::geom_bar(stat = "identity") +
+    ggplot2::geom_text(
+      ggplot2::aes(label = scales::percent(.data$variance, accuracy = 0.1)),
+      vjust = -0.3
+    ) +
+    ggplot2::scale_y_continuous(labels = scales::percent,
+                                expand = ggplot2::expansion(mult = c(0, 0.1))) +
+    ggplot2::xlab(NULL) +
+    ggplot2::ylab(ylab_val) +
+    ggplot2::theme(panel.grid.major.x = ggplot2::element_blank())
+}
 #' Compute Generalized Sobol Indices for dependent features
 #' @param object Either model of class `onam` as returned from [onam] or
 #' evaluation outcome as returned from [predict.onam].
@@ -216,4 +249,42 @@ print.gen_sobol <- function(x, ...) {
     }
   }
   invisible(x)
+}
+#' Plot generalized Sobol indices
+#' @param x Object of class `gen_sobol` as returned by [gen_sobol]
+#' @param ... further arguments, currently unused
+#' @returns Returns a 'ggplot2' object showing, for each fitted effect, the
+#' generalized Sobol index split into the effect's own contribution
+#' (`gen_sobol_index_1`) and its contribution through interactions with
+#' other features (`gen_sobol_index_2`)
+#' @method plot gen_sobol
+#' @export
+plot.gen_sobol <- function(x, ...) {
+  data_plot <- x$out_df
+  data_plot$effect <- rownames(data_plot)
+  data_plot <-
+    data_plot[order(data_plot$effect_order, -data_plot$total_sobol_index), ]
+  data_plot$effect <- factor(data_plot$effect, levels = data_plot$effect)
+  data_plot_long <- data.frame(
+    effect = rep(data_plot$effect, 2),
+    component = rep(c("Own effect", "Through interactions"),
+                    each = nrow(data_plot)),
+    value = c(data_plot$gen_sobol_index_1, data_plot$gen_sobol_index_2)
+  )
+  ylab_val <- "Fraction of variance explained"
+  if (attr(x, "target") == "binary") {
+    ylab_val <- paste0(ylab_val, " (logit scale)")
+  }
+  ggplot2::ggplot(data_plot_long,
+                  ggplot2::aes(x = .data$effect, y = .data$value,
+                               fill = .data$component)) +
+    ggplot2::geom_bar(stat = "identity") +
+    ggplot2::scale_y_continuous(labels = scales::percent) +
+    ggplot2::xlab(NULL) +
+    ggplot2::ylab(ylab_val) +
+    ggplot2::labs(fill = NULL) +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+      legend.position = "top"
+    )
 }

@@ -145,8 +145,7 @@ onam <- function(formula,
     ensemble = ensemble,
     model_info = model_info,
     data = data,
-    categorical_features = categorical_features,
-    input = model_whole$input
+    categorical_features = categorical_features
   )
   data_model_eval <-
     evaluate_onam_pre(model_list_pho)
@@ -224,15 +223,6 @@ print.summary.onam <- function(x, ...) {
   print(x$call)
   cat("\nFormula:\n")
   print(x$formula)
-  # cat("\nInputs:")
-  # input_string_1 <- as.character(x$input[[1]])
-  # if (input_string_1 == "<pointer: 0x0>") {
-  #   cat(
-  #     "\nModel fitted in previous R session; Input information only available in
-  #     session in which model was built.\n")
-  # } else {
-  #   lapply(x$input, function(input) cat("\n", as.character(input)))
-  # }
   if (attr(x, "conv_met") == "cor") {
     cat(
       "\nCorrelation of model prediction with outcome variable: ",

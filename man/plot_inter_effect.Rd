@@ -9,6 +9,7 @@ plot_inter_effect(
   feature1,
   feature2,
   interpolate = FALSE,
+  labs = NULL,
   custom_colors = "spectral",
   n_interpolate = 200,
   include_main = FALSE
@@ -22,6 +23,9 @@ model evaluation outcome as returned from \link{predict.onam}}
 
 \item{interpolate}{If TRUE, values will be interpolated for a smooth plot.
 If FALSE (default), only observations in the data will be plotted.}
+
+\item{labs}{An optional named vector that can contain axis labels and the
+name of the effect. Expected vector names are 'xlab', 'ylab' and 'effect'.}
 
 \item{custom_colors}{color palette object for the interaction plot. Default
 is "spectral", returning a color palette based on the spectral theme.}

@@ -7,6 +7,9 @@ utils::globalVariables(c("x", "y", "prediction", "x1", "x2", "y1", "y2"))
 #' @param reference_level Reference level to be used when plotting categorical
 #' effects for better interpretability. Effect of the reference level will be
 #' set to zero and subtracted from all over factor levels.
+#' @param labs An optional named vector that can contain axis labels.
+#' Expected vector names are 'xlab', 'ylab' and 'effect'. If both 'ylab' and
+#' 'effect' are specified, 'effect' will be used as y-axis label.
 #' @returns Returns a ggplot2 object of the specified effect
 #' @examplesIf reticulate::py_module_available(tensorflow)
 #' # Basic example for a simple ONAM-model
@@ -37,20 +40,34 @@ utils::globalVariables(c("x", "y", "prediction", "x1", "x2", "y1", "y2"))
 #' plot_main_effect(mod, "x1")
 #' @export plot_main_effect
 plot_main_effect <-
-  function(object, feature, reference_level = NULL) {
-    check_inputs_plot(object, feature,
+  function(object, feature, reference_level = NULL, labs = NULL) {
+    check_inputs_plot(object,
+                      feature,
                       reference_level = reference_level)
     data_plot <-
-      data.frame(x = object$data[, feature],
-                 y = object$feature_effects[, feature])
+      data.frame(x = object$data[, feature], y = object$feature_effects[, feature])
     if (feature %in% object$model_info$categorical_features) {
       plt <- plot_main_categorical(data_plot, reference_level)
     } else {
       plt <- ggplot2::ggplot(data_plot, ggplot2::aes(x = x, y = y)) +
         ggplot2::geom_point()
     }
-    plt + ggplot2::ylab(eff_label_helper(object$model_info$target)) +
-      ggplot2::xlab(feature)
+    # Extract optional labels
+    xlab_val <- if (!is.null(labs) && "xlab" %in% names(labs)) {
+      labs[["xlab"]]
+    } else {
+      feature
+    }
+    ylab_val <- if (!is.null(labs) && "effect" %in% names(labs)) {
+      labs[["effect"]]
+    } else if (!is.null(labs) && "ylab" %in% names(labs)) {
+      labs[["ylab"]]
+    } else {
+      eff_label_helper(object$model_info$target)
+    }
+
+    plt + ggplot2::ylab(ylab_val) +
+      ggplot2::xlab(xlab_val)
   }
 #' Plot Interaction Effect
 #' @param object Either model of class `onam` as returned from [onam] or
@@ -58,6 +75,8 @@ plot_main_effect <-
 #' @param feature1,feature2 Effects to be plotted.
 #' @param interpolate If TRUE, values will be interpolated for a smooth plot.
 #' If FALSE (default), only observations in the data will be plotted.
+#' @param labs An optional named vector that can contain axis labels and the
+#' name of the effect. Expected vector names are 'xlab', 'ylab' and 'effect'.
 #' @param custom_colors color palette object for the interaction plot. Default
 #' is "spectral", returning a color palette based on the spectral theme.
 #' @param n_interpolate number of values per coordinate axis to interpolate.
@@ -98,6 +117,7 @@ plot_inter_effect <- function(object,
                               feature1,
                               feature2,
                               interpolate = FALSE,
+                              labs = NULL,
                               custom_colors = "spectral",
                               n_interpolate = 200,
                               include_main = FALSE) {
@@ -123,8 +143,27 @@ plot_inter_effect <- function(object,
     feature1 <- feature2
     feature2 <- tmp
   }
-  tmp_xlab <- ggplot2::xlab(feature1)
-  tmp_ylab <- ggplot2::ylab(feature2)
+
+  # Check for lab values, falling back to defaults
+  xlab_val <- if (!is.null(labs) && "xlab" %in% names(labs)) labs[["xlab"]] else feature1
+  ylab_val <- if (!is.null(labs) && "ylab" %in% names(labs)) labs[["ylab"]] else feature2
+  effect_val <- if (!is.null(labs) && "effect" %in% names(labs)) {
+    labs[["effect"]]
+  } else {
+    eff_label_helper(object$model_info$target)
+  }
+
+  legend_pos <- if (nchar(effect_val) > 10) "top" else "right"
+  legend_title <- if (nchar(effect_val) > 10) ggplot2::element_text(hjust = 0.5)
+    else ggplot2::element_text()
+  colorbar_guide <- if (nchar(effect_val) > 10) {
+    ggplot2::guide_colorbar(title.position = "top")
+  } else {
+    ggplot2::guide_colorbar(title.position = "top", title.vjust = 1)
+  }
+
+  tmp_xlab <- ggplot2::xlab(xlab_val)
+  tmp_ylab <- ggplot2::ylab(ylab_val)
   if (typeof(custom_colors) != "closure") {
     if (custom_colors == "spectral") {
       custom_colors <-
@@ -171,7 +210,7 @@ plot_inter_effect <- function(object,
         y = rep(tmp_interp$y, each = length(tmp_interp$x)),
         prediction = tmp_interp$z %>% c()
       )
-    data_plot <- data_plot[which(!is.na(data_plot$prediction)),]
+    data_plot <- data_plot[which(!is.na(data_plot$prediction)), ]
     aes_gradient <-
       ggplot2::scale_fill_gradientn(
         colors =
@@ -182,10 +221,9 @@ plot_inter_effect <- function(object,
             mean(data_plot$prediction),
             max(data_plot$prediction)
           )),
-        guide = "colorbar",
-        limits = c(min(data_plot$prediction),
-                   max(data_plot$prediction)),
-        name = eff_label_helper(object$model_info$target)
+        guide = colorbar_guide,
+        limits = c(min(data_plot$prediction), max(data_plot$prediction)),
+        name = effect_val
       )
     geom_param <- ggplot2::geom_tile()
     aes_param <- ggplot2::aes(x = x, y = y, fill = prediction)
@@ -204,10 +242,9 @@ plot_inter_effect <- function(object,
             mean(data_plot$prediction),
             max(data_plot$prediction)
           )),
-        guide = "colorbar",
-        limits = c(min(data_plot$prediction),
-                   max(data_plot$prediction)),
-        name = eff_label_helper(object$model_info$target)
+        guide = colorbar_guide,
+        limits = c(min(data_plot$prediction), max(data_plot$prediction)),
+        name = effect_val
       )
     geom_param <- ggplot2::geom_point()
     prediction <- NULL #remove cmd check note
@@ -216,7 +253,7 @@ plot_inter_effect <- function(object,
         dplyr::group_by(x, y) %>%
         dplyr::summarise(prediction = mean(prediction), .groups = "drop")
       tmp_ylab <-
-        ggplot2::ylab(eff_label_helper(object$model_info$target))
+        ggplot2::ylab(effect_val)
       if (feature1 %in% object$model_info$categorical_features) {
         aes_gradient <- ggplot2::scale_color_discrete(name = feature1)
         data_plot$x <- as.factor(data_plot$x)
@@ -241,7 +278,9 @@ plot_inter_effect <- function(object,
     # plot.margin = grid::unit(c(0,0,0,0), "mm"),
     panel.grid = ggplot2::element_blank(),
     panel.background = ggplot2::element_blank(),
-    legend.position = "right"
+    legend.position = legend_pos,
+    legend.title = legend_title,
+    legend.box.spacing = ggplot2::unit(0.5, "pt")
   )
   ggplot2::ggplot(data_plot, aes_param) +
     # geom_point(size = 0.75) +
@@ -265,8 +304,7 @@ plot_main_categorical <-
         min(which(data_plot$x == x_val)))
     y_uq <- data_plot$y[first_x]
     data_plot_categ <-
-      data.frame(x = x_uq,
-                 y = y_uq)
+      data.frame(x = x_uq, y = y_uq)
     if (!is.null(reference_level))
     {
       x_ref_idx <- which(data_plot_categ$x == reference_level)
