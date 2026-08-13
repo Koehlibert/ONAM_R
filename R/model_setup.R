@@ -373,14 +373,7 @@ prepare_data <- function(data_original,
   newData <- c(deep_data, data_additive)
   unname(newData)
 }
-#Generate a display/column name for a single effect. Every effect is
-#named after its feature(s) directly (needed so
-#plot_main_effect()/plot_inter_effect() can reconstruct the name from the
-#feature names alone, and so lower-order interactions stay readable).
-#The single exception is the highest-order interaction (order ==
-#max_order): every onam model contains exactly one interaction spanning
-#all features, so instead of concatenating all of them (which would grow
-#with the data dimension) it is simply called "Interaction <order>".
+#Generate a display/column name for a single effect.
 get_effect_name <- function(features, max_order) {
   order <- length(features)
   if (order == max_order) {

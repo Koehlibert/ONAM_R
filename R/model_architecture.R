@@ -44,8 +44,7 @@
 #'
 #' @examplesIf reticulate::py_module_available(tensorflow)
 #' mod_units <- build_dnn(units = c(16, 8, 1))
-#' mod_df <- build_dnn()
-#' mod4 <- build_dnn(layer_df = data.frame(
+#' mod_df <- build_dnn(layer_df = data.frame(
 #'   units = c(32, 16, 8, 1),
 #'   activation = c("relu", "relu", "relu", "linear"),
 #'   use_bias = c(FALSE, FALSE, FALSE, TRUE)
