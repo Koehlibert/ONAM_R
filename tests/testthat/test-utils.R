@@ -105,6 +105,7 @@ extract_dense_specs <- function(model) {
   })
 }
 test_that("build_dnn works", {
+  skip_if_no_conda_env()
   inputs <- layer_input(shape = c(10))
   mod1 <- function(inputs) {
     outputs <- inputs %>%
