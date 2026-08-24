@@ -256,6 +256,8 @@ print.gen_sobol <- function(x, ...) {
 #' generalized Sobol index split into the effect's own contribution
 #' (`gen_sobol_index_1`) and its contribution through interactions with
 #' other effects of the same order (`gen_sobol_index_2`)
+#' @details For details on generalized sobol indices, see
+#' Chastaing et al. (2012) \doi{10.1214/12-EJS749}.
 #' @method plot gen_sobol
 #' @export
 plot.gen_sobol <- function(x, ...) {

@@ -15,8 +15,12 @@
 Returns a 'ggplot2' object showing, for each fitted effect, the
 generalized Sobol index split into the effect's own contribution
 (\code{gen_sobol_index_1}) and its contribution through interactions with
-other features (\code{gen_sobol_index_2})
+other effects of the same order (\code{gen_sobol_index_2})
 }
 \description{
 Plot generalized Sobol indices
+}
+\details{
+For details on generalized sobol indices, see
+Chastaing et al. (2012) \doi{10.1214/12-EJS749}.
 }
