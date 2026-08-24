@@ -36,7 +36,7 @@ returned from \code{prediction_function(model)} will be used as model output. If
 
 \item{prediction_function}{Prediction function to be used to generate the
 outcome. Only used if \code{model} is specified. If \code{NULL}(default), S3-method
-based on the \code{model}argument is used.}
+based on the \code{model} argument is used.}
 
 \item{model_data}{Data used for generating predictions of \code{model}. Necessary
 for some models that require specific data formats, i.e. xgboost.
@@ -52,7 +52,7 @@ sigmoid activation in the last layer is fitted.}
 \item{n_ensemble}{Number of orthogonal neural additive model ensembles}
 
 \item{epochs}{Number of epochs to train the model. See
-\code{\link[keras3]{fit}} for details.#}
+\code{\link[keras3]{fit}} for details.}
 
 \item{learning_rate}{Learning rate for model fitting. See
 \code{\link[keras3]{compile}} for details.}
@@ -77,6 +77,10 @@ members, ensemble weights, and main and interaction effect outputs.
 \description{
 Fits an interpretable neural additive model with post hoc orthogonalization
 for a given network architecture and user-specified feature sets.
+}
+\details{
+For more details see
+Koehler et al. (2025) \url{doi:10.1038/s44387-025-00033-7}.
 }
 \examples{
 \dontshow{if (reticulate::py_module_available(tensorflow)) withAutoprint(\{ # examplesIf}

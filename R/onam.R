@@ -13,7 +13,7 @@
 #' `NULL`(default), the outcome has to be present in `data`.
 #' @param prediction_function Prediction function to be used to generate the
 #' outcome. Only used if `model` is specified. If `NULL`(default), S3-method
-#' based on the `model`argument is used.
+#' based on the `model` argument is used.
 #' @param model_data Data used for generating predictions of `model`. Necessary
 #' for some models that require specific data formats, i.e. xgboost.
 #' If `NULL`(default), `data` is used. Only used if `model` is specified.
@@ -23,7 +23,7 @@
 #' a continuous outcome is fitted. For "binary", a binary classification with
 #' sigmoid activation in the last layer is fitted.
 #' @param epochs Number of epochs to train the model. See
-#' \code{\link[keras3]{fit}} for details.#
+#' \code{\link[keras3]{fit}} for details.
 #' @param learning_rate Learning rate for model fitting. See
 #' \code{\link[keras3]{compile}} for details.
 #' @param n_ensemble Number of orthogonal neural additive model ensembles
@@ -66,6 +66,8 @@
 #' mod <- onam(model_formula, list_of_deep_models,
 #'             data_train, n_ensemble = 1, epochs = 10)
 #' summary(mod)
+#' @details For more details see
+#' Koehler et al. (2025) <doi:10.1038/s44387-025-00033-7>.
 #' @export onam
 onam <- function(formula,
                  list_of_deep_models,
