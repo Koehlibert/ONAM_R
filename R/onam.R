@@ -170,7 +170,7 @@ onam <- function(formula,
 #' @description
 #' generates a summary of a fitted `onam` object including
 #' information on ensembling strategy and performance metrics such as
-#' correlation and degree of interpretabiltity
+#' correlation and degree of interpretability
 #'
 #' @param object onam object of class `onam` as returned from
 #' \code{\link{onam}} to be summarized

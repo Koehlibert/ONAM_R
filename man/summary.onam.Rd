@@ -25,7 +25,7 @@ interpretability metrics i_1 and i_2
 \description{
 generates a summary of a fitted \code{onam} object including
 information on ensembling strategy and performance metrics such as
-correlation and degree of interpretabiltity
+correlation and degree of interpretability
 }
 \details{
 For examples see \code{\link[=onam]{example(onam)}}

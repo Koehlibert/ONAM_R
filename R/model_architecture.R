@@ -10,7 +10,8 @@
 #' activation, use_bias, initializers, regularizers, layer name, etc.
 #'
 #' @param units Optional integer vector of layer sizes. Ignored if
-#'   `layer_df` is supplied. Every layer gets `activation = "relu"` and
+#'   `layer_df` is supplied. Every layer uses `default_activation` as
+#'   activation function, with `activation = "gelu"` as the default.
 #'   `use_bias = TRUE`.
 #' @param layer_df Optional data frame / tibble with one row per layer.
 #'   Must contain a `units` column. May also contain any of:
@@ -61,7 +62,7 @@ build_dnn <- function(units = NULL,
   }
   if (is.null(default_activation))
   {
-    default_activation <- "relu"
+    default_activation <- "gelu"
   }
   # --- Mode 1: plain units vector --------------------------------------
   if (!is.null(units)) {
@@ -144,6 +145,8 @@ build_dnn <- function(units = NULL,
           args[[col]] <- val
         }
       }
+
+      args$dtype <- "float64"
 
       nm <- get_val(layer_df, "name", i)
       if (!is.null(nm) && !is.na(nm))

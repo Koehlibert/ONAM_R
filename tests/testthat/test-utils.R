@@ -110,10 +110,10 @@ test_that("build_dnn works", {
   mod1 <- function(inputs) {
     outputs <- inputs %>%
       layer_dense(units = 16,
-                  activation = "relu",
+                  activation = "gelu",
                   use_bias = TRUE) %>%
       layer_dense(units = 8,
-                  activation = "relu",
+                  activation = "gelu",
                   use_bias = TRUE) %>%
       layer_dense(units = 1,
                   activation = "linear",
@@ -136,13 +136,13 @@ test_that("build_dnn works", {
   mod3 <- function(inputs) {
     outputs <- inputs %>%
       layer_dense(units = 32,
-                  activation = "relu",
+                  activation = "gelu",
                   use_bias = FALSE) %>%
       layer_dense(units = 16,
-                  activation = "relu",
+                  activation = "gelu",
                   use_bias = FALSE) %>%
       layer_dense(units = 8,
-                  activation = "relu",
+                  activation = "gelu",
                   use_bias = FALSE) %>%
       layer_dense(units = 1,
                   activation = "linear",
@@ -152,7 +152,7 @@ test_that("build_dnn works", {
   built_mod3 <- mod3(inputs)
   mod4 <- build_dnn(layer_df = data.frame(
     units = c(32, 16, 8, 1),
-    activation = c("relu", "relu", "relu", "linear"),
+    activation = c("gelu", "gelu", "gelu", "linear"),
     use_bias = c(FALSE, FALSE, FALSE, TRUE)
   ))
   built_mod4 <- mod4(inputs)

@@ -8,7 +8,8 @@ build_dnn(units = NULL, layer_df = NULL, default_activation = NULL)
 }
 \arguments{
 \item{units}{Optional integer vector of layer sizes. Ignored if
-\code{layer_df} is supplied. Every layer gets \code{activation = "relu"} and
+\code{layer_df} is supplied. Every layer uses \code{default_activation} as
+activation function, with \code{activation = "gelu"} as the default.
 \code{use_bias = TRUE}.}
 
 \item{layer_df}{Optional data frame / tibble with one row per layer.

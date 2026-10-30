@@ -78,7 +78,7 @@ predict.onam <- function(object, newdata = NULL, ...) {
                              .data$effect == effect_name) %>%
                dplyr::group_by(.data$observation) %>%
                dplyr::summarise(totaleffect = mean(.data$y)) %>%
-               dplyr::select(.data$totaleffect) %>% unlist()
+               dplyr::select("totaleffect") %>% unlist()
            })
   names(predictions_features_ensemble) <-
     effect_names
@@ -93,7 +93,7 @@ predict.onam <- function(object, newdata = NULL, ...) {
     dplyr::filter(.data$onam == "after") %>%
     dplyr::group_by(.data$observation) %>%
     dplyr::summarise(prediction = sum(.data$y) / n_ensemble) %>%
-    dplyr::select(.data$prediction) %>% unlist()
+    dplyr::select("prediction") %>% unlist()
   out <- list(
     data = newdata,
     predictions = predictions_total,
@@ -140,7 +140,7 @@ evaluate_onam_pre <- function(model_list) {
                              .data$effect == effect_name) %>%
                dplyr::group_by(.data$observation) %>%
                dplyr::summarise(totaleffect = mean(.data$y)) %>%
-               dplyr::select(.data$totaleffect) %>% unlist()
+               dplyr::select("totaleffect") %>% unlist()
            })
   names(predictions_features_ensemble) <-
     effect_names
@@ -149,7 +149,7 @@ evaluate_onam_pre <- function(model_list) {
     dplyr::filter(.data$onam == "after") %>%
     dplyr::group_by(.data$observation) %>%
     dplyr::summarise(prediction = sum(.data$y) / n_ensemble) %>%
-    dplyr::select(.data$prediction) %>% unlist()
+    dplyr::select("prediction") %>% unlist()
   list(
     data = data,
     predictions_total = predictions_total,
