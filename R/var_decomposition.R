@@ -32,10 +32,10 @@
 #' # Fit model
 #' mod <- onam(model_formula, list_of_deep_models,
 #'             data_train, n_ensemble = 1, epochs = 10)
-#' decompose(mod)
+#' var_decomp(mod)
 #' }
-#' @export decompose
-decompose <- function(object, data = NULL) {
+#' @export var_decomp
+var_decomp <- function(object, data = NULL) {
   if (!require_keras()) {
     invisible(return(NULL))
   }
@@ -46,7 +46,7 @@ decompose <- function(object, data = NULL) {
       effects <- predict(object, data)$feature_effects
     } else {
       stop(
-        "When calling \`decompose\` with a non-default \`data\`
+        "When calling \`var_decomp\` with a non-default \`data\`
       argument, \`object\` has to be the \`onam\`-model.",
         call. = FALSE
       )
@@ -78,7 +78,7 @@ decompose <- function(object, data = NULL) {
   colnames(effect_order_matrix) <- orders
   tmp_var <- stats::var(effect_order_matrix)
   sens_info <- sens_info[length(sens_info):1]
-  out <- list(var_decomp = diag(tmp_var) / sum(diag(tmp_var)))
+  out <- list(decomp = diag(tmp_var) / sum(diag(tmp_var)))
   attr(out, "sens_info") <- sens_info
   attr(out, "target") <- object$model_info$target
   class(out) <- "var_decomp"
@@ -111,7 +111,7 @@ print.var_decomp <- function(x, ...) {
   invisible(x)
 }
 #' Plot variance decomposition
-#' @param x Object of class `var_decomp` as returned by [decompose]
+#' @param x Object of class `var_decomp` as returned by [var_decomp]
 #' @param ... further arguments, currently unused
 #' @returns Returns a 'ggplot2' object showing the fraction of total
 #' variance explained by each interaction order

@@ -184,7 +184,7 @@ onam <- function(formula,
 #' @method summary onam
 #' @export
 summary.onam <- function(object, ...) {
-  var_decomp <- decompose(object)$var_decomp
+  decomp <- var_decomp(object)$decomp
 
   if (object$model_info$target == "continuous") {
     convergence_metric <- stats::cor(object$predictions, object$y)
@@ -207,9 +207,9 @@ summary.onam <- function(object, ...) {
     formula = object$model_info$model_formula,
     n_ensemble = length(object$ensemble),
     conv_metric = convergence_metric,
-    i_1 = var_decomp["1"],
-    i_2 = var_decomp["2"],
-    degree_expl = sum(var_decomp[c("1", "2")])
+    i_1 = decomp["1"],
+    i_2 = decomp["2"],
+    degree_expl = sum(decomp[c("1", "2")])
   )
   class(res) <- "summary.onam"
   attr(res, "target") <- object$model_info$target

@@ -7,7 +7,7 @@
 \method{plot}{var_decomp}(x, ...)
 }
 \arguments{
-\item{x}{Object of class \code{var_decomp} as returned by \link{decompose}}
+\item{x}{Object of class \code{var_decomp} as returned by \link{var_decomp}}
 
 \item{...}{further arguments, currently unused}
 }
