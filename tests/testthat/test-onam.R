@@ -13,7 +13,8 @@ test_that("ONAM works", {
   f1 <- y ~ mod1(x1) + mod1(x2) + mod1(x3) +
     mod1(x1, x2) + mod1(x1, x2, x3)
   mod1 <- function(inputs) {
-    outputs <- inputs %>%
+    combined <- if (is.list(inputs)) layer_concatenate(inputs) else inputs
+    outputs <- combined %>%
       layer_dense(units = 16, activation = "relu") %>%
       layer_dense(units = 8,
                   activation = "linear",
@@ -53,7 +54,8 @@ test_that("ONAM predict works", {
   f1 <- y ~ mod1(x1) + mod1(x2) + mod1(x3) +
     mod1(x1, x2) + mod1(x1, x2, x3)
   mod1 <- function(inputs) {
-    outputs <- inputs %>%
+    combined <- if (is.list(inputs)) layer_concatenate(inputs) else inputs
+    outputs <- combined %>%
       layer_dense(units = 16, activation = "relu") %>%
       layer_dense(units = 8,
                   activation = "linear",
@@ -96,7 +98,8 @@ test_that("ONAM works with model", {
   f1 <- y ~ mod1(x1) + mod1(x2) + mod1(.)
   f2 <- outcome ~ mod1(x1) + mod1(.)
   mod1 <- function(inputs) {
-    outputs <- inputs %>%
+    combined <- if (is.list(inputs)) layer_concatenate(inputs) else inputs
+    outputs <- combined %>%
       layer_dense(units = 16, activation = "relu") %>%
       layer_dense(units = 8,
                   activation = "linear",
@@ -152,7 +155,8 @@ test_that("Binary Outcome Works", {
   f1 <- y ~ mod1(x1) + mod1(x2) + mod1(x3) +
     mod1(x1, x2) + mod1(.)
   mod1 <- function(inputs) {
-    outputs <- inputs %>%
+    combined <- if (is.list(inputs)) layer_concatenate(inputs) else inputs
+    outputs <- combined %>%
       layer_dense(units = 16, activation = "relu") %>%
       layer_dense(units = 8,
                   activation = "linear",

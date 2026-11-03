@@ -45,9 +45,11 @@ get_u <- function(model_list,
   u_list <-
     lapply(seq_along(model_idx_list),
            function(idx) {
+             term_data <-
+               get_term_data(data, data_dictionary[[model_idx_list[[idx]]]])
              input <- model_list[[model_idx_list[[idx]]]] %>%
                get_intermediate_model() %>%
-               stats::predict(data[[data_dictionary[[model_idx_list[[idx]]]]]],
+               stats::predict(term_data,
                               verbose = 0)
              if (get_bias_helper(model_list[[model_idx_list[[1]]]])) {
                input <- cbind(input, 1)

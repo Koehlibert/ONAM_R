@@ -1,9 +1,8 @@
 #' Build a stacked dense (DNN) model constructor
 #'
-#' Returns a *function* `function(inputs) {...}` — not a model itself —
-#' that builds a feed-forward stack of `layer_dense()` calls on top of
-#' whatever `inputs` tensor it is later called with, and returns the
-#' resulting `keras3::keras_model()`.
+#' Returns a *function* `function(inputs) {...}` that builds a feed-forward
+#' stack of `layer_dense()` calls on top of the `inputs` tensor it is
+#' later called with, and returns the resulting `keras3::keras_model()`.
 #'
 #' Layers can be specified either as a simple vector of unit counts, or
 #' as a data frame / tibble giving full per-layer control over
@@ -127,9 +126,19 @@ build_dnn <- function(units = NULL,
       v[i]
   }
 
-  # --- return the model constructor -------------------------------------
+  # --- return model constructor -------------------------------------
   function(inputs) {
-    outputs <- inputs
+    # `inputs` is a list of shared Input tensors for a term that spans
+    # several features (e.g. an interaction); combine them into a single
+    # tensor to build the dense stack on, but keep the original `inputs`
+    # (list or single tensor) for `keras_model()` below, so the submodel's
+    # own `$input` stays the real, shared, feedable Input tensor(s) rather
+    # than the (non-feedable) output of the concatenation.
+    outputs <- if (is.list(inputs)) {
+      keras3::layer_concatenate(inputs)
+    } else {
+      inputs
+    }
     for (i in seq_len(n)) {
       args <- list(
         object     = outputs,

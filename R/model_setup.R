@@ -1,17 +1,12 @@
 #Define DNN architecture for simulation
 get_submodel <- function(inputs, regularizer = NULL) {
   outputs <- inputs %>%
-    # layer_dense(
-    #   units = 256,
-    #   activation = "relu",
-    #   use_bias = TRUE,
-    #   kernel_regularizer = regularizer
-    # ) %>%
     keras3::layer_dense(
       units = 128,
       activation = "relu",
       use_bias = TRUE,
-      kernel_regularizer = regularizer
+      kernel_regularizer = regularizer,
+      dtype = "float64"
     ) %>%
     keras3::layer_dense(
       units = 64,
@@ -115,14 +110,6 @@ get_theta <-
         unlist())
     }) %>% unlist())
     parts_list[idx_sign] <- NULL
-    # idx_additive_comps <- which(lapply(parts_list, function(item) {
-    #   any(lapply(item, function(sub_item) {
-    #     sub_item == as.name("+")
-    #   }) %>%
-    #     unlist()) | length(item) == 1
-    # }) %>% unlist())
-    # additive_comps_long <- parts_list[idx_additive_comps]
-    # parts_list[idx_additive_comps] <- NULL
     check_inputs_formula(
       parts_list,
       list_of_deep_models,
@@ -130,16 +117,6 @@ get_theta <-
       categorical_features,
       outcome_var
     )
-    # additive_comps <- lapply(additive_comps_long, function(item) {
-    #   if (length(item) == 1) {
-    #     item
-    #   } else {
-    #     item[which(lapply(item,
-    #                       function(sub_item)
-    #                         sub_item != as.name("+")) %>%
-    #                  unlist())]
-    #   }
-    # }) %>% unlist() %>% unique()
     order_inter <-
       lapply(parts_list, function(item)
         length(item) - 1) %>%
@@ -192,7 +169,6 @@ get_theta <-
     }
     names(theta_deep) <- orders_unique
     names(model_list) <- orders_unique
-    # theta <- c(theta_deep, linear = list(additive_comps))
     theta <- theta_deep
     list(
       theta = theta,
@@ -221,70 +197,70 @@ create_model <- function(model_info,
                          cat_counts,
                          target = "continuous",
                          learning_rate) {
-  inputs_list <- create_inputs(model_info, categorical_features, cat_counts)
+  feature_inputs <-
+    create_feature_inputs(model_info, categorical_features, cat_counts)
   model_list <-
-    create_models(model_info, inputs_list, list_of_deep_models)
+    create_models(model_info, feature_inputs, list_of_deep_models)
   model_whole <-
-    compile_model(inputs_list,
+    compile_model(feature_inputs,
                   model_list,
                   target = target,
                   learning_rate = learning_rate)
   list(model = model_whole, model_list = model_list)
 }
-#create inputs for each submodel
-create_inputs <- function(model_info,
-                          categorical_features,
-                          cat_counts) {
-  # if (length(model_info$theta$linear) > 0) {
-  #   inputs_linear <- lapply(1:length(model_info$theta$linear),
-  #                           function(x)
-  #                             keras3::layer_input(shape = 1))
-  # } else {
-  #   inputs_linear <- NULL
-  # }
-  # inputs_deep <-
-  #   lapply(1:length(model_info$theta[setdiff(names(model_info$theta),
-  #                                            "linear")]),
-  #          function(idx_inter_count) {
-  #            lapply(model_info$theta[[idx_inter_count]],
-  #                   function(theta_sub) {
-  #                     n_inputs <- length(theta_sub)
-  #                     for (feature_name in theta_sub) {
-  #                       if (as.character(feature_name) %in% names(cat_counts)) {
-  #                         n_inputs <- n_inputs + cat_counts[[feature_name]] - 1
-  #                       }
-  #                     }
-  #                     keras3::layer_input(shape = n_inputs)
-  #                   })
-  #          })
-  inputs <-
-    lapply(1:length(model_info$theta), function(idx_inter_count) {
-      lapply(model_info$theta[[idx_inter_count]], function(theta_sub) {
-        n_inputs <- length(theta_sub)
-        for (feature_name in theta_sub) {
-          if (as.character(feature_name) %in% names(cat_counts)) {
-            n_inputs <- n_inputs + cat_counts[[feature_name]] - 1
-          }
-        }
-        keras3::layer_input(shape = n_inputs)
-      })
-    })
-  names(inputs) <-
-    names(model_info$theta)
+#extract the character feature names referenced by a single theta term
+get_term_feature_names <- function(theta_sub) {
+  vapply(theta_sub, function(feature)
+    as.character(unlist(feature)), character(1))
+}
+#nested list (same shape as model_info$theta) of character vectors holding
+#the feature names used by each fitted term
+get_all_term_feature_names <- function(model_info) {
+  lapply(model_info$theta, function(theta_order) {
+    lapply(theta_order, get_term_feature_names)
+  })
+}
+#create one keras Input per raw feature referenced in theb model formula, so
+#that features shared between several terms (e.g. main and interaction effects)
+#are fed into the model only once.
+create_feature_inputs <- function(model_info,
+                                  categorical_features,
+                                  cat_counts) {
+  feature_names <-
+    get_all_term_feature_names(model_info) %>% unlist() %>% unique()
+  inputs <- lapply(feature_names, function(feature_name) {
+    n_inputs <- if (feature_name %in% names(cat_counts)) {
+      cat_counts[[feature_name]]
+    } else {
+      1
+    }
+    keras3::layer_input(shape = n_inputs, name = feature_name)
+  })
+  names(inputs) <- feature_names
   inputs
 }
-#create all submodels
+#create all submodels, reusing shared per-feature inputs. Terms that reference
+#more than one feature receive a list of the relevant shared input tensors; the
+#deep model constructor combines them while still passing the original input
+#tensor(s) to `keras3::keras_model()`, so that the submodel's own `$input` stays
+#the feedable Input tensor(s).
 create_models <-
   function(model_info,
-           inputs_list,
+           feature_inputs,
            list_of_deep_models) {
+    term_feature_names <- get_all_term_feature_names(model_info)
     models <- list()
     for (idx_p in
          names(model_info$theta)) {
       models[[idx_p]] <-
         lapply(seq_along(model_info$name_models[[idx_p]]), function(idx_model) {
           name_model <- model_info$name_models[[idx_p]][[idx_model]]
-          return(list_of_deep_models[[name_model]](inputs_list[[idx_p]][[idx_model]]))
+          feature_names <- term_feature_names[[idx_p]][[idx_model]]
+          term_inputs <- unname(feature_inputs[feature_names])
+          if (length(term_inputs) == 1) {
+            term_inputs <- term_inputs[[1]]
+          }
+          return(list_of_deep_models[[name_model]](term_inputs))
         })
     }
     models
@@ -302,7 +278,8 @@ concatenate_model_list <-
         units = 1,
         use_bias = bias,
         trainable = FALSE,
-        activation = activation
+        activation = activation,
+        dtype = "float64"
       )
     output <- dense_layer(concatenated)
     tmp_weights <- dense_layer$get_weights()
@@ -315,13 +292,13 @@ concatenate_model_list <-
   }
 #compile created pho ensemble member
 compile_model <-
-  function(inputs_list,
+  function(feature_inputs,
            model_list,
            target = "continuous",
            learning_rate) {
     submodels <-
       unlist(model_list, use.names = FALSE) #Why does this matter?
-    all_inputs <- unlist(inputs_list, use.names = FALSE)
+    all_inputs <- unname(feature_inputs)
     target_activation <-
       if (target == "continuous") {
         "linear"
@@ -345,33 +322,35 @@ compile_model <-
       )
 
   }
-#prepare data for model fitting by bringing it into the right input dimensions
+#prepare data for model fitting: builds one array per raw feature referenced in
+#model formula. A feature used in several terms is only ever extracted/copied
+#once; `fit()`/`predict()` route the shared array to every submodel that needs
+#it based on this name.
 prepare_data <- function(data_original,
                          model_info,
                          categorical_features) {
-  data_additive <-
-    lapply(model_info$theta$linear, function(feature_name) {
-      data_original[, as.character(feature_name)]
-    })
-  deep_data <-
-    lapply(unlist(model_info$theta[setdiff(names(model_info$theta), "linear")], recursive = FALSE), function(theta_sub) {
-      ret_mat <- matrix(nrow = nrow(data_original), ncol = 0)
-      for (feature in theta_sub) {
-        feature <- as.character(unlist(feature))
-        ret_mat <-
-          cbind(ret_mat, if (feature %in% categorical_features) {
-            encode_dummy(data_original[, feature], feature)
-          } else {
-            data_original[, feature]
-          })
-        if (!feature %in% categorical_features) {
-          colnames(ret_mat)[ncol(ret_mat)] <- feature
-        }
-      }
-      return(ret_mat)
-    })
-  newData <- c(deep_data, data_additive)
-  unname(newData)
+  feature_names <-
+    get_all_term_feature_names(model_info) %>% unlist() %>% unique()
+  data_list <- lapply(feature_names, function(feature) {
+    if (feature %in% categorical_features) {
+      encode_dummy(data_original[, feature], feature)
+    } else {
+      matrix(data_original[, feature], ncol = 1)
+    }
+  })
+  names(data_list) <- feature_names
+  data_list
+}
+#extract the data needed to call `predict()`/`fit()` on a single term's
+#submodel: a single array when the term uses one feature (matching a
+#single Input tensor), or a named list of arrays (matching a list of
+#shared Input tensors) when the term uses several.
+get_term_data <- function(data, feature_names) {
+  if (length(feature_names) == 1) {
+    data[[feature_names]]
+  } else {
+    data[feature_names]
+  }
 }
 #Generate a display/column name for a single effect.
 get_effect_name <- function(features, max_order) {
@@ -397,18 +376,10 @@ get_all_effect_names <- function(model_info) {
                   max_order = max_order)),
     "Intercept")
 }
-#Create "dictionary" yielding data indices for nested model list
+#Create "dictionary" yielding, for each term in the nested model list, the
+#character vector of (shared) feature names its submodel was built from.
 get_data_dictionary <- function(model_info) {
-  dictionary_list <- list()
-  idx_tmp <- 0
-  for (i1 in seq_along(model_info$theta)) {
-    dictionary_list[[i1]] <- list()
-    for (i2 in seq_along(model_info$theta[[i1]])) {
-      idx_tmp <- idx_tmp + 1
-      dictionary_list[[i1]][[i2]] <- idx_tmp
-    }
-  }
-  dictionary_list
+  get_all_term_feature_names(model_info)
 }
 #create dummy variables for categorical data
 encode_dummy <- function(x, name) {

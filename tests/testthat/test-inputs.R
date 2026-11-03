@@ -19,7 +19,8 @@ test_that("Input checks work", {
   f4 <- y ~ mod1(x1) + mod1(x2) + mod1(x3) +
     mod1(x1, x2)
   mod1 <- function(inputs) {
-    outputs <- inputs %>%
+    combined <- if (is.list(inputs)) layer_concatenate(inputs) else inputs
+    outputs <- combined %>%
       layer_dense(units = 16, activation = "relu") %>%
       layer_dense(units = 8,
                   activation = "linear",

@@ -26,7 +26,10 @@ onam(
 \item{formula}{Formula for model fitting. Specify deep parts with the same
 name as \code{list_of_deep_models}.}
 
-\item{list_of_deep_models}{List of named models used in \code{model_formula}.}
+\item{list_of_deep_models}{List of named models used in \code{model_formula}.
+Simple fully connected model architectures can be created using
+\code{\link{build_dnn}}. When specifying a custom architecture, architectures
+must accept both single inputs and input lists (see example).}
 
 \item{data}{Data to be fitted}
 
@@ -97,7 +100,9 @@ data_train <- cbind(x1, x2, y)
 model_formula <- y ~ mod1(x1) + mod1(x2) +
   mod1(x1, x2)
 mod1 <- function(inputs) {
-  outputs <- inputs \%>\%
+  # `inputs` is a list of shared feature inputs for interaction terms
+  combined <- if (is.list(inputs)) layer_concatenate(inputs) else inputs
+  outputs <- combined \%>\%
     layer_dense(units = 16, activation = "relu") \%>\%
  layer_dense(units = 8, activation = "linear",
              use_bias = TRUE) \%>\%

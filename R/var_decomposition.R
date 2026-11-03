@@ -19,15 +19,7 @@
 #' # Define model
 #' model_formula <- y ~ mod1(x1) + mod1(x2) +
 #'   mod1(x1, x2)
-#' mod1 <- function(inputs) {
-#'   outputs <- inputs %>%
-#'     layer_dense(units = 16, activation = "relu") %>%
-#'     layer_dense(units = 8, activation = "linear",
-#'                 use_bias = TRUE) %>%
-#'     layer_dense(units = 1, activation = "linear",
-#'                 use_bias = TRUE)
-#'   keras_model(inputs, outputs)
-#' }
+#' mod1 <-  build_dnn(units = c(16, 8, 1))
 #' list_of_deep_models <- list(mod1 = mod1)
 #' # Fit model
 #' mod <- onam(model_formula, list_of_deep_models,
@@ -164,15 +156,7 @@ plot.var_decomp <- function(x, ...) {
 #' # Define model
 #' model_formula <- y ~ mod1(x1) + mod1(x2) +
 #'   mod1(x1, x2)
-#' mod1 <- function(inputs) {
-#'   outputs <- inputs %>%
-#'     layer_dense(units = 16, activation = "relu") %>%
-#'     layer_dense(units = 8, activation = "linear",
-#'                 use_bias = TRUE) %>%
-#'     layer_dense(units = 1, activation = "linear",
-#'                 use_bias = TRUE)
-#'   keras_model(inputs, outputs)
-#' }
+#' mod1 <-  build_dnn(units = c(16, 8, 1))
 #' list_of_deep_models <- list(mod1 = mod1)
 #' # Fit model
 #' mod <- onam(model_formula, list_of_deep_models,

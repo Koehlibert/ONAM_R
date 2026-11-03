@@ -45,10 +45,9 @@ A function of a single argument \code{inputs} (a keras input
 tensor) that returns a \code{keras3::keras_model()}.
 }
 \description{
-Returns a \emph{function} \code{function(inputs) {...}} — not a model itself —
-that builds a feed-forward stack of \code{layer_dense()} calls on top of
-whatever \code{inputs} tensor it is later called with, and returns the
-resulting \code{keras3::keras_model()}.
+Returns a \emph{function} \code{function(inputs) {...}} that builds a feed-forward
+stack of \code{layer_dense()} calls on top of the \code{inputs} tensor it is
+later called with, and returns the resulting \code{keras3::keras_model()}.
 }
 \details{
 Layers can be specified either as a simple vector of unit counts, or
