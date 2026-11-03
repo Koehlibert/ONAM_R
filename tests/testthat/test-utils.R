@@ -35,8 +35,9 @@ test_that("Orthogonalization works", {
     verbose = 0
   )
   eff_mat <- mod$feature_effects
-  #Mean Centering works
-  expect_all_equal(colMeans(eff_mat[, 2:ncol(eff_mat)]), 0)
+  #Mean Centering works: every effect is centered, intercept carries the mean
+  non_intercept <- setdiff(colnames(eff_mat), "Intercept")
+  expect_all_equal(colMeans(eff_mat[, non_intercept]), 0)
   #Effects are orthogonal
   var_mat <- var(eff_mat)
   expect_all_equal(c(var_mat[-1, 1], var_mat[3:nrow(var_mat), 2]), 0)

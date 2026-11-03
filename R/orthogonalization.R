@@ -168,16 +168,18 @@ pho <- function(model_list, model_info, data_fit) {
              u_object$u %*%
                w_list[[idx_model]] %>% mean()
            })
+  #Center every subfunction, move mean into separate intercept effect
   w_list <-
     lapply(seq_along(w_list),
            function(w_Idx) {
              tmp_w <- w_list[[w_Idx]]
-             tmp_w[length(tmp_w)] <- if (w_Idx == 1)
-               sum(unlist(allOutputMeans)[-1])
-             else
-               - allOutputMeans[[w_Idx]]
+             tmp_w[length(tmp_w)] <- -allOutputMeans[[w_Idx]]
              tmp_w
            })
+  w_intercept <- rep(0, length(w_list[[1]]))
+  w_intercept[length(w_intercept)] <- sum(unlist(allOutputMeans))
+  w_list <- c(w_list, list(w_intercept))
+  w_list_old <- c(w_list_old, list(rep(0, length(w_list_old[[1]]))))
   list(
     model_list = model_list,
     w_list = w_list,
@@ -198,8 +200,11 @@ pho_ensemble <- function(data_model_eval, model_info) {
   model_idx_list <- get_model_idx_list(model_info)
   model_order <- get_model_order(model_idx_list)
   n_models <- length(model_order)
-  u <- unlist(data_model_eval$predictions_features_ensemble) %>%
+  u_all <- unlist(data_model_eval$predictions_features_ensemble) %>%
     matrix(nrow = n)
+  #Last column holds the (constant) intercept effect
+  u <- u_all[, seq_len(n_models), drop = FALSE]
+  u_intercept <- u_all[, n_models + 1]
   w <- diag(1, nrow = n_models)
   #Iterate over interaction depth
   for (idx_ortho in 2:(length(model_info$theta))) {
@@ -244,10 +249,12 @@ pho_ensemble <- function(data_model_eval, model_info) {
     }
   }
   outputs_post_ensemble <-
-    u %*% w
+    cbind(u %*% w, u_intercept)
+  w_full <- rbind(cbind(w, rep(0, n_models)),
+                  c(rep(0, n_models), 1))
   colnames(outputs_post_ensemble) <-
     names(data_model_eval$predictions_features_ensemble)
-  list(w, outputs_post_ensemble)
+  list(w_full, outputs_post_ensemble)
 }
 #' @importFrom dplyr %>%
 #' @export

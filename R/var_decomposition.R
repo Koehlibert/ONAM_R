@@ -189,7 +189,9 @@ gen_sobol <- function(object, data = NULL) {
   if (inherits(object, "onam") |
       inherits(object, "onam_prediction"))
   {
-    tmp_var <- stats::var(object$feature_effects)
+    #Exclude intercept
+    non_intercept <- setdiff(colnames(object$feature_effects), "Intercept")
+    tmp_var <- stats::var(object$feature_effects[, non_intercept, drop = FALSE])
   } else
   {
     stop(

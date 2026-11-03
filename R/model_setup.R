@@ -393,8 +393,9 @@ get_effect_names_for_order <- function(theta_order, max_order) {
 #model_info$theta is iterated in evaluate_onam_single().
 get_all_effect_names <- function(model_info) {
   max_order <- max(as.numeric(names(model_info$theta)))
-  unlist(lapply(model_info$theta, get_effect_names_for_order,
-                max_order = max_order))
+  c(unlist(lapply(model_info$theta, get_effect_names_for_order,
+                  max_order = max_order)),
+    "Intercept")
 }
 #Create "dictionary" yielding data indices for nested model list
 get_data_dictionary <- function(model_info) {
