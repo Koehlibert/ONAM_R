@@ -32,7 +32,7 @@ so each row can carry a different object or NULL, e.g.:
 \preformatted{
 tibble::tibble(
   units = c(64, 32, 1),
-  activation = c("relu", "relu", "linear"),
+  activation = c("gelu", "gelu", "linear"),
   kernel_regularizer = list(keras3::regularizer_l2(0.001), NULL, NULL)
 )
 }}
@@ -59,7 +59,7 @@ activation, use_bias, initializers, regularizers, layer name, etc.
 mod_units <- build_dnn(units = c(16, 8, 1))
 mod_df <- build_dnn(layer_df = data.frame(
   units = c(32, 16, 8, 1),
-  activation = c("relu", "relu", "relu", "linear"),
+  activation = c("gelu", "gelu", "gelu", "linear"),
   use_bias = c(FALSE, FALSE, FALSE, TRUE)
 ))
 \dontshow{\}) # examplesIf}

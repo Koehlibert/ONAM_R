@@ -10,19 +10,22 @@ get_intermediate_model <-
     keras3::keras_model(model$input,
                         deep_part_in$output)
   }
-#Solve linear system after removing linear dependencies
-solve_singular_matrix <- function(tmp_u, pivot) {
-  tmp_u_reduced <- tmp_u[, pivot]
-  tryCatch(
-    tmp <- solve(t(tmp_u_reduced) %*% tmp_u_reduced),
-    error = function(error)
-    {
-      pivot <<-
-        solve_singular_matrix(tmp_u,
-                              pivot[1:(length(pivot) - 1)])
-    }
-  )
-  return(pivot)
+#Moore-Penrose pseudoinverse of (possibly rank-deficient) m.
+pinv <- function(m, tol = 1e-7) {
+  h <- crossprod(m)
+  qr_res <- qr(h, tol = tol)
+  rank <- qr_res$rank
+  if (rank == 0) {
+    return(matrix(0, ncol(m), nrow(m)))
+  }
+  pivot <- qr_res$pivot[seq_len(rank)]
+  s <- svd(m[, pivot, drop = FALSE])
+  keep <- s$d > max(s$d) * sqrt(.Machine$double.eps)
+  proj_reduced <-
+    s$v[, keep, drop = FALSE] %*% (t(s$u[, keep, drop = FALSE]) / s$d[keep])
+  proj <- matrix(0, ncol(m), nrow(m))
+  proj[pivot, ] <- proj_reduced
+  proj
 }
 #get list of all submodel indices in model_info$theta
 get_model_idx_list <- function(model_info) {
@@ -116,17 +119,10 @@ pho <- function(model_list, model_info, data_fit) {
       break
     }
     list_idx_order_lower <- which(model_order >= idx_ortho)
-    idx_rel <- u_object$u_idx_list[list_idx_order_lower] %>%
-      unlist()
-    tmp_u <- u_object$u
-    tmp_u[,-idx_rel] <- 0
-    tmp_u[, ncol(tmp_u)] <- 1
-    h <- crossprod(tmp_u)
-    qr_res <- qr(h)
-    h_order <- qr_res$pivot[1:qr_res$rank]
-    pivot <- solve_singular_matrix(tmp_u, h_order)
-    tmp_u_reduced <- tmp_u[, pivot]
-    tmp_inverse <- solve(t(tmp_u_reduced) %*% tmp_u_reduced)
+    idx_rel <- c(u_object$u_idx_list[list_idx_order_lower] %>%
+      unlist(), ncol(u_object$u))
+    tmp_u_reduced <- u_object$u[, idx_rel]
+    proj <- pinv(tmp_u_reduced)
     list_idx_order_higher <- which(model_order == (idx_ortho - 1))
     outputs_list <-
       lapply(list_idx_order_higher,
@@ -137,10 +133,8 @@ pho <- function(model_list, model_info, data_fit) {
     z_list <-
       lapply(outputs_list,
              function(outputs) {
-               tmp_z <- tmp_inverse %*% t(tmp_u_reduced) %*%
-                 outputs
-               z <- rep(0, ncol(tmp_u))
-               z[pivot] <- tmp_z
+               z <- rep(0, ncol(u_object$u))
+               z[idx_rel] <- as.vector(proj %*% outputs)
                z
              })
     for (idx_order_higher in seq_along(list_idx_order_higher)) {
@@ -157,7 +151,7 @@ pho <- function(model_list, model_info, data_fit) {
           tmp_weight_update +
           z_list[[idx_order_higher]][u_object$u_idx_list[[idx_order_lower]]]
       }
-      weight_update <- rep(0, ncol(tmp_u))
+      weight_update <- rep(0, ncol(u_object$u))
       weight_update[u_object$u_idx_list[[idx_order_lower]]] <-
         tmp_weight_update
       w_list[[idx_order_lower]] <-
@@ -211,14 +205,8 @@ pho_ensemble <- function(data_model_eval, model_info) {
   #Iterate over interaction depth
   for (idx_ortho in 2:(length(model_info$theta))) {
     list_idx_order_lower <- which(model_order >= idx_ortho)
-    tmp_u <- u
-    tmp_u[,-list_idx_order_lower] <- 0
-    h <- crossprod(tmp_u)
-    qr_res <- qr(h)
-    h_order <- qr_res$pivot[1:qr_res$rank]
-    pivot <- solve_singular_matrix(tmp_u, h_order)
-    tmp_u_reduced <- tmp_u[, pivot]
-    tmp_inverse <- solve(t(tmp_u_reduced) %*% tmp_u_reduced)
+    tmp_u_reduced <- u[, list_idx_order_lower, drop = FALSE]
+    proj <- pinv(tmp_u_reduced)
     list_idx_order_higher <- which(model_order == (idx_ortho - 1))
     outputs_list <-
       lapply(list_idx_order_higher,
@@ -228,10 +216,9 @@ pho_ensemble <- function(data_model_eval, model_info) {
     z_list <-
       lapply(outputs_list,
              function(outputs) {
-               tmp_z <- tmp_inverse %*% t(tmp_u_reduced) %*% outputs
                z <- rep(0, n_models)
-               z[pivot] <- tmp_z
-               return(z)
+               z[list_idx_order_lower] <- as.vector(proj %*% outputs)
+               z
              })
     for (idx_order_higher in seq_along(list_idx_order_higher)) {
       idx_model <- list_idx_order_higher[[idx_order_higher]]

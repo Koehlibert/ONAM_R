@@ -103,7 +103,7 @@ mod1 <- function(inputs) {
   # `inputs` is a list of shared feature inputs for interaction terms
   combined <- if (is.list(inputs)) layer_concatenate(inputs) else inputs
   outputs <- combined \%>\%
-    layer_dense(units = 16, activation = "relu") \%>\%
+    layer_dense(units = 16, activation = "gelu") \%>\%
  layer_dense(units = 8, activation = "linear",
              use_bias = TRUE) \%>\%
  layer_dense(units = 1, activation = "linear",
