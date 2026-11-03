@@ -125,7 +125,7 @@ test_that("ONAM works with model", {
     ),
     regexp = NA
   )
-  expect_warning(
+  expect_error(
     onam(
       f2,
       list_of_deep_models,

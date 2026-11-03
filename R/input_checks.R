@@ -152,26 +152,45 @@ check_inputs_onam <- function(inputs) {
     stop("Parameter `progresstext` must be `TRUE` or `FALSE`.",
          call. = FALSE)
 }
-check_y_features <- function(data, y, model_info, target) {
-  if (model_info$all_feature_indic & target == "continuous") {
-    data_no_outcome <-
-      data[, !(colnames(data) %in% as.character(model_info$outcome))]
-    f_y_cors <- apply(data_no_outcome, 2, function(x) {
+check_y_features <- function(data, y, model_info, target, model = NULL) {
+  if (model_info$all_feature_indic) {
+    # `get_theta()` already drops the LHS-named column from the `.`-expansion
+    # itself (see model_setup.R), so that column never reaches `submod(.)`'s
+    # inputs regardless of whether `model` is supplied. Exclude it here too,
+    # for the same reason, rather than scanning a column that was never
+    # actually fed into the submodel.
+    data_check <-
+      data[, !(colnames(data) %in% as.character(model_info$outcome)), drop = FALSE]
+    f_y_cors <- apply(data_check, 2, function(x) {
       if (!is.numeric(x)) {
         0
       } else {
-        stats::cor(x, y)
+        suppressWarnings(stats::cor(x, y))
       }
     })
+    f_y_cors[is.na(f_y_cors)] <- 0
     cor_orders <- order(f_y_cors, decreasing = TRUE)
-    if (f_y_cors[cor_orders[1]] > 0.99) {
+    top_col <- colnames(data_check)[cor_orders[1]]
+    top_cor <- f_y_cors[cor_orders[1]]
+    if (!is.null(model) & top_cor > 0.999) {
+      stop(
+        paste0(
+          "Model formula includes term of type `deep_model(.)`. Data contains column ",
+          top_col,
+          ", which has a correlation of ",
+          round(top_cor, 4),
+          " with the outcome. If using a term like `deep_model(.)` and supplying a `model` to generate the response, make sure that the original outcome is not contained in `data`."
+        ),
+        call. = FALSE
+      )
+    } else if (top_cor > 0.99) {
       warning(
         paste0(
           "Model formula includes term of type `deep_model(.)`. Data contains column ",
-          colnames(data_no_outcome)[cor_orders[1]],
+          top_col,
           ", which has a correlation of ",
-          round(f_y_cors[cor_orders[1]], 4),
-          " with the outcome. If using a term like `deep_model(.)` and supplying a `model` to generate the response, make sure that the original outcome is not contained in `data`."
+          round(top_cor, 4),
+          " with the outcome."
         ),
         call. = FALSE
       )
