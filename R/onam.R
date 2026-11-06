@@ -25,6 +25,15 @@
 #' "binary". For "continuous"(default), an additive model for the prediction of
 #' a continuous outcome is fitted. For "binary", a binary classification with
 #' sigmoid activation in the last layer is fitted.
+#' @param scale_inputs If `TRUE`(default), continuous (non-categorical)
+#' features are standardized (zero mean, unit variance) before training,
+#' since network training is sensitive to input scale. Scaling is reversible
+#' and only affects the internal representation used for fitting/prediction;
+#' `object$data`, predictions, and plots are always on the original scale.
+#' @param scale_outputs If `TRUE`(default) and `target = "continuous"`, the
+#' outcome is standardized (zero mean, unit variance) before training.
+#' Predictions and feature effects are transformed back to the original
+#' outcome scale afterwards. Ignored for `target = "binary"`.
 #' @param epochs Number of epochs to train the model. See
 #' \code{\link[keras3]{fit}} for details.
 #' @param learning_rate Learning rate for model fitting. See
@@ -82,6 +91,8 @@ onam <- function(formula,
                  model_data = NULL,
                  categorical_features = NULL,
                  target = "continuous",
+                 scale_inputs = TRUE,
+                 scale_outputs = TRUE,
                  n_ensemble = 10,
                  epochs = 500,
                  learning_rate = 0.001,
@@ -114,8 +125,21 @@ onam <- function(formula,
                target,
                model_info)
   check_y_features(data, y, model_info, target, model)
+  term_feature_names <-
+    get_all_term_feature_names(model_info) %>% unlist() %>% unique()
+  feature_scaling <- if (scale_inputs) {
+    compute_feature_scaling(data, term_feature_names, categorical_features)
+  } else {
+    NULL
+  }
+  output_scaling <- if (scale_outputs && target == "continuous") {
+    compute_output_scaling(y)
+  } else {
+    NULL
+  }
+  y_fit <- scale_output(y, output_scaling)
   data_fit <-
-    prepare_data(data, model_info, categorical_features)
+    prepare_data(data, model_info, categorical_features, feature_scaling)
   ensemble <- list()
   for (i in 1:n_ensemble) {
     if (progresstext) {
@@ -139,7 +163,7 @@ onam <- function(formula,
     history <- model_whole %>%
       keras3::fit(
         data_fit,
-        y,
+        y_fit,
         epochs = epochs,
         callbacks = callback,
         verbose = verbose
@@ -152,13 +176,16 @@ onam <- function(formula,
     ensemble = ensemble,
     model_info = model_info,
     data = data,
-    categorical_features = categorical_features
+    categorical_features = categorical_features,
+    feature_scaling = feature_scaling,
+    output_scaling = output_scaling
   )
   data_model_eval <-
     evaluate_onam_pre(model_list_pho)
   pho_ensemble_list <- pho_ensemble(data_model_eval, model_info)
   w_post_ensemble <- pho_ensemble_list[[1]]
-  outputs_post_ensemble <- pho_ensemble_list[[2]]
+  outputs_post_ensemble <-
+    backtransform_effects(pho_ensemble_list[[2]], output_scaling)
   out <- c(
     model_list_pho,
     call = match.call(),
