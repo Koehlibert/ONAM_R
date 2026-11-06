@@ -212,7 +212,9 @@ onam <- function(formula,
     y = list(y)
   )
   class(out) <- "onam"
+  time_total <- as.numeric(difftime(Sys.time(), time_call, units = "secs"))
   attr(out, "computation_time") <- list(
+    total = time_total,
     setup = time_setup,
     training = time_training,
     orthogonalization = list(
