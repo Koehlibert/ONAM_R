@@ -177,7 +177,7 @@ get_all_term_feature_names <- function(model_info) {
     lapply(theta_order, get_term_feature_names)
   })
 }
-#create one keras Input per raw feature referenced in theb model formula, so
+#create one keras Input per raw feature referenced in the model formula, so
 #that features shared between several terms (e.g. main and interaction effects)
 #are fed into the model only once.
 create_feature_inputs <- function(model_info,
@@ -370,7 +370,8 @@ get_output <-
            target,
            model_info) {
     if (!is.null(model)) {
-      if (is.null(prediction_function)) {
+      auto_detected <- is.null(prediction_function)
+      if (auto_detected) {
         for (tmp_class in class(model)) {
           prediction_function <-
             utils::getS3method("predict", tmp_class, optional = TRUE)
@@ -393,7 +394,14 @@ get_output <-
       if (is.null(model_data)) {
         model_data <- data
       }
-      y <- prediction_function(model, model_data)
+      y <- if (auto_detected && target == "binary" &&
+               "type" %in% names(formals(prediction_function))) {
+        #auto-detected predict methods (e.g. predict.glm) default to the
+        #link scale; request probabilities explicitly for binary targets
+        prediction_function(model, model_data, type = "response")
+      } else {
+        prediction_function(model, model_data)
+      }
       if (inherits(y, "factor")) {
         if (is.null(target)) {
           warning("Prediction function supplied factor. Binary outcome is assumed.")

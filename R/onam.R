@@ -186,31 +186,41 @@ onam <- function(formula,
   w_post_ensemble <- pho_ensemble_list[[1]]
   outputs_post_ensemble <-
     backtransform_effects(pho_ensemble_list[[2]], output_scaling)
+  predictions <- rowSums(outputs_post_ensemble)
   out <- c(
     model_list_pho,
     call = match.call(),
     w_post_ensemble = list(w_post_ensemble),
     feature_effects = list(outputs_post_ensemble),
-    predictions = list(rowSums(outputs_post_ensemble)),
+    predictions = list(predictions),
+    predictions_prob = if (target == "binary") {
+      list(1 / (1 + exp(-predictions)))
+    } else {
+      list(NULL)
+    },
     y = list(y)
   )
   class(out) <- "onam"
   out
+}
+#R-squared (coefficient of determination) of predictions against y
+r_squared <- function(y, predictions) {
+  1 - sum((y - predictions) ^ 2) / sum((y - mean(y)) ^ 2)
 }
 #' Get summary of an onam object
 #'
 #' @description
 #' generates a summary of a fitted `onam` object including
 #' information on ensembling strategy and performance metrics such as
-#' correlation and degree of interpretability
+#' R-squared (or AUC for binary outcomes) and degree of interpretability
 #'
 #' @param object onam object of class `onam` as returned from
 #' \code{\link{onam}} to be summarized
 #' @param x object of class \code{\link{summary.onam}}.
 #' @param ... further arguments passed to or from other methods.
 #' @returns Gives summary of the `onam` object, including model inputs, number
-#' of ensembles, correlation of model output and original outcome variable, and
-#' interpretability metrics i_1 and i_2
+#' of ensembles, R-squared (or AUC for binary outcomes) of model output and
+#' original outcome variable, and interpretability metrics i_1 and i_2
 #' @details
 #' For examples see \code{\link[=onam]{example(onam)}}
 #' @method summary onam
@@ -219,20 +229,18 @@ summary.onam <- function(object, ...) {
   decomp <- var_decomp(object)$decomp
 
   if (object$model_info$target == "continuous") {
-    convergence_metric <- stats::cor(object$predictions, object$y)
-    conv_met_attr <- "cor"
+    convergence_metric <- r_squared(object$y, object$predictions)
+    conv_met_attr <- "r2"
   } else {
     if (is.numeric(object$y) && !is.integer(object$y))
     {
-      convergence_metric <- stats::cor(object$predictions, object$y)
-      conv_met_attr <- "cor_p"
+      convergence_metric <- r_squared(object$y, object$predictions_prob)
+      conv_met_attr <- "r2_p"
     } else
     {
-      convergence_metric <- pROC::auc(object$y, object$predictions)
+      convergence_metric <- pROC::auc(object$y, object$predictions_prob)
       conv_met_attr <- "auc"
     }
-    # stats::cor(object$predictions,
-    #            object$y, method = "spearman")
   }
   res <- list(
     call = object$call,
@@ -257,15 +265,15 @@ print.summary.onam <- function(x, ...) {
   print(x$call)
   cat("\nFormula:\n")
   print(x$formula)
-  if (attr(x, "conv_met") == "cor") {
+  if (attr(x, "conv_met") == "r2") {
     cat(
-      "\nCorrelation of model prediction with outcome variable: ",
+      "\nR-squared of model prediction with outcome variable: ",
       round(x$conv_metric, 4),
       sep = ""
     )
-  } else if (attr(x, "conv_met") == "cor_p") {
+  } else if (attr(x, "conv_met") == "r2_p") {
     cat(
-      "\nCorrelation of onam probabilities with original model predicted probabilities: ",
+      "\nR-squared of onam probabilities with original model predicted probabilities: ",
       round(x$conv_metric, 4),
       sep = ""
     )

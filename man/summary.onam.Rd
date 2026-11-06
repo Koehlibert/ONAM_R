@@ -19,13 +19,13 @@
 }
 \value{
 Gives summary of the \code{onam} object, including model inputs, number
-of ensembles, correlation of model output and original outcome variable, and
-interpretability metrics i_1 and i_2
+of ensembles, R-squared (or AUC for binary outcomes) of model output and
+original outcome variable, and interpretability metrics i_1 and i_2
 }
 \description{
 generates a summary of a fitted \code{onam} object including
 information on ensembling strategy and performance metrics such as
-correlation and degree of interpretability
+R-squared (or AUC for binary outcomes) and degree of interpretability
 }
 \details{
 For examples see \code{\link[=onam]{example(onam)}}
