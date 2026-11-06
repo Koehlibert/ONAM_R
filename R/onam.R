@@ -100,10 +100,12 @@ onam <- function(formula,
                  seed = NULL,
                  progresstext = FALSE,
                  verbose = 0) {
+  time_call <- Sys.time()
   if (!require_keras()) {
     invisible(return(NULL))
   }
   inputs <- as.list(environment())
+  inputs$time_call <- NULL
   check_inputs_onam(inputs)
   if (!is.null(seed))
   {
@@ -140,11 +142,15 @@ onam <- function(formula,
   y_fit <- scale_output(y, output_scaling)
   data_fit <-
     prepare_data(data, model_info, categorical_features, feature_scaling)
+  time_setup <- as.numeric(difftime(Sys.time(), time_call, units = "secs"))
   ensemble <- list()
+  time_training <- numeric(n_ensemble)
+  time_orthogonalization_members <- numeric(n_ensemble)
   for (i in 1:n_ensemble) {
     if (progresstext) {
       show_progress(i, n_ensemble)
     }
+    time_member_start <- Sys.time()
     model_object <-
       create_model(
         model_info,
@@ -157,9 +163,6 @@ onam <- function(formula,
     model_whole <- model_object$model
     model_list <- model_object$model_list
     #Fit model####
-    # callback <-
-    #   keras3::keras$callbacks$EarlyStopping(monitor = "loss",
-    #                                        patience = 10)
     history <- model_whole %>%
       keras3::fit(
         data_fit,
@@ -168,9 +171,14 @@ onam <- function(formula,
         callbacks = callback,
         verbose = verbose
       )
+    time_training[i] <-
+      as.numeric(difftime(Sys.time(), time_member_start, units = "secs"))
     #Orthogonalize####
+    time_ortho_member_start <- Sys.time()
     ensemble[[i]] <-
       pho(model_list, model_info, data_fit)
+    time_orthogonalization_members[i] <-
+      as.numeric(difftime(Sys.time(), time_ortho_member_start, units = "secs"))
   }
   model_list_pho <- list(
     ensemble = ensemble,
@@ -182,7 +190,10 @@ onam <- function(formula,
   )
   data_model_eval <-
     evaluate_onam_pre(model_list_pho)
+  time_ortho_ensemble_start <- Sys.time()
   pho_ensemble_list <- pho_ensemble(data_model_eval, model_info)
+  time_orthogonalization_ensemble <-
+    as.numeric(difftime(Sys.time(), time_ortho_ensemble_start, units = "secs"))
   w_post_ensemble <- pho_ensemble_list[[1]]
   outputs_post_ensemble <-
     backtransform_effects(pho_ensemble_list[[2]], output_scaling)
@@ -201,6 +212,14 @@ onam <- function(formula,
     y = list(y)
   )
   class(out) <- "onam"
+  attr(out, "computation_time") <- list(
+    setup = time_setup,
+    training = time_training,
+    orthogonalization = list(
+      members = time_orthogonalization_members,
+      ensemble = time_orthogonalization_ensemble
+    )
+  )
   out
 }
 #R-squared (coefficient of determination) of predictions against y
