@@ -273,6 +273,77 @@ plot_inter_effect <- function(object,
     inter_theme +
     tmp_xlab + tmp_ylab
 }
+#' Plot computation time breakdown
+#'
+#' @description
+#' Plots the elapsed computation time of a fitted \code{onam} object (see
+#' \code{\link{onam}}), split into three bars: Model setup, model training
+#' (stacked by ensemble member), and orthogonalization (stacked by ensemble
+#' member plus the final ensemble orthogonalization).
+#'
+#' @param object Model of class \code{onam} as returned from \code{\link{onam}}.
+#' @returns Returns a 'ggplot2' object showing the computation time breakdown.
+#' @examplesIf reticulate::py_module_available(tensorflow)
+#' # Basic example for a simple ONAM-model
+#' # Create training data
+#' n <- 1000
+#' x1 <- runif(n, -2, 2)
+#' x2 <- runif(n, -2, 2)
+#' y <- sin(x1) + ifelse(x2 > 0, pweibull(x2, shape = 3),
+#'   pweibull(-x2, shape = 0.5)) +
+#'   x1 * x2
+#' data_train <- cbind(x1, x2, y)
+#' # Define model
+#' model_formula <- y ~ mod1(x1) + mod1(x2) +
+#'   mod1(x1, x2)
+#' mod1 <-  build_dnn(units = c(16, 8, 1))
+#' list_of_deep_models <- list(mod1 = mod1)
+#' # Fit model
+#' mod <- onam(model_formula, list_of_deep_models,
+#'             data_train, n_ensemble = 2, epochs = 10)
+#' plot_onam_timing(mod)
+#' @export plot_onam_timing
+plot_onam_timing <- function(object) {
+  comp_time <- attr(object, "computation_time")
+  if (is.null(comp_time)) {
+    stop("`object` has no `computation_time` attribute.", call. = FALSE)
+  }
+
+  n_ensemble <- length(comp_time$training)
+  member_labels <- paste("Member", seq_len(n_ensemble))
+
+  data_plot <- rbind(
+    data.frame(stage = "Setup",
+               component = "Setup",
+               time = comp_time$setup),
+    data.frame(stage = "Training",
+               component = member_labels,
+               time = comp_time$training),
+    data.frame(stage = "Orthogonalization",
+               component = member_labels,
+               time = comp_time$orthogonalization$members),
+    data.frame(stage = "Orthogonalization",
+               component = "Ensemble step",
+               time = comp_time$orthogonalization$ensemble)
+  )
+
+  stage_levels <- c("Setup", "Training", "Orthogonalization")
+  data_plot$stage <- factor(data_plot$stage, levels = stage_levels)
+
+  component_levels <- c("Setup", member_labels, "Ensemble step")
+  data_plot$component <- factor(data_plot$component, levels = component_levels)
+
+  stage <- component <- time <- NULL #remove cmd check note
+  ggplot2::ggplot(data_plot, ggplot2::aes(x = stage, y = time, fill = component)) +
+    ggplot2::geom_col(color = "white", linewidth = 0.2) +
+    ggplot2::labs(
+      x = NULL,
+      y = "Elapsed time (s)",
+      fill = NULL,
+      title = "Computation time"
+    ) +
+    ggplot2::theme_minimal()
+}
 eff_label_helper <- function(target) {
   if (target == "continuous") {
     "Effect"
