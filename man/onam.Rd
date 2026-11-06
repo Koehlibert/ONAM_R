@@ -13,6 +13,8 @@ onam(
   model_data = NULL,
   categorical_features = NULL,
   target = "continuous",
+  scale_inputs = TRUE,
+  scale_outputs = TRUE,
   n_ensemble = 10,
   epochs = 500,
   learning_rate = 0.001,
@@ -51,6 +53,17 @@ If \code{NULL}(default), \code{data} is used. Only used if \code{model} is speci
 "binary". For "continuous"(default), an additive model for the prediction of
 a continuous outcome is fitted. For "binary", a binary classification with
 sigmoid activation in the last layer is fitted.}
+
+\item{scale_inputs}{If \code{TRUE}(default), continuous (non-categorical)
+features are standardized (zero mean, unit variance) before training,
+since network training is sensitive to input scale. Scaling is reversible
+and only affects the internal representation used for fitting/prediction;
+\code{object$data}, predictions, and plots are always on the original scale.}
+
+\item{scale_outputs}{If \code{TRUE}(default) and \code{target = "continuous"}, the
+outcome is standardized (zero mean, unit variance) before training.
+Predictions and feature effects are transformed back to the original
+outcome scale afterwards. Ignored for \code{target = "binary"}.}
 
 \item{n_ensemble}{Number of orthogonal neural additive model ensembles}
 

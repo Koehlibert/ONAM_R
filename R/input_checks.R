@@ -140,6 +140,12 @@ check_inputs_onam <- function(inputs) {
     stop("Parameter `target` must be either `continuous` or `binary`.",
          call. = FALSE)
   }
+  if (is.na(as.logical(inputs$scale_inputs)))
+    stop("Parameter `scale_inputs` must be `TRUE` or `FALSE`.",
+         call. = FALSE)
+  if (is.na(as.logical(inputs$scale_outputs)))
+    stop("Parameter `scale_outputs` must be `TRUE` or `FALSE`.",
+         call. = FALSE)
   if (!(inputs$n_ensemble %% 1 == 0) | inputs$n_ensemble < 0) {
     stop("Parameter `n_ensemble` must be a positive integer.",
          call. = FALSE)

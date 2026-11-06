@@ -3,9 +3,10 @@
 evaluate_onam_single <- function(model,
                                  data,
                                  model_info,
-                                 categorical_features) {
+                                 categorical_features,
+                                 feature_scaling = NULL) {
   data_fit <- prepare_data(data, model_info,
-                           categorical_features)
+                           categorical_features, feature_scaling)
   model_idx_list <- get_model_idx_list(model_info)
   u_object <-
     get_u(model$model_list, model_idx_list, model_info, data_fit)
@@ -47,13 +48,16 @@ predict.onam <- function(object, newdata = NULL, ...) {
   n <- nrow(newdata)
   n_ensemble <- length(object$ensemble)
   categorical_features <- object$categorical_features
+  feature_scaling <- object$feature_scaling
+  output_scaling <- object$output_scaling
   predictions_separate <-
     lapply(
       object$ensemble,
       evaluate_onam_single,
       data = newdata,
       model_info = model_info,
-      categorical_features = categorical_features
+      categorical_features = categorical_features,
+      feature_scaling = feature_scaling
     )
   effect_names <- names(predictions_separate[[1]][[1]])
   n_effects <- length(effect_names)
@@ -88,12 +92,16 @@ predict.onam <- function(object, newdata = NULL, ...) {
     object$w_post_ensemble
   colnames(predictions_features) <-
     effect_names
+  predictions_features <-
+    backtransform_effects(predictions_features, output_scaling)
   predictions_total <-
     data_predictions %>%
     dplyr::filter(.data$onam == "after") %>%
     dplyr::group_by(.data$observation) %>%
     dplyr::summarise(prediction = sum(.data$y) / n_ensemble) %>%
     dplyr::select("prediction") %>% unlist()
+  predictions_total <-
+    backtransform_predictions(predictions_total, output_scaling)
   out <- list(
     data = newdata,
     predictions = predictions_total,
@@ -107,6 +115,7 @@ evaluate_onam_pre <- function(model_list) {
   data <- model_list$data
   model_info <- model_list$model_info
   categorical_features <- model_list$categorical_features
+  feature_scaling <- model_list$feature_scaling
   n <- nrow(data)
   n_ensemble <- length(model_list$ensemble)
   predictions_separate <-
@@ -115,7 +124,8 @@ evaluate_onam_pre <- function(model_list) {
       evaluate_onam_single,
       data = data,
       model_info = model_info,
-      categorical_features = categorical_features
+      categorical_features = categorical_features,
+      feature_scaling = feature_scaling
     )
   effect_names <- names(predictions_separate[[1]][[1]])
   n_effects <- length(effect_names)

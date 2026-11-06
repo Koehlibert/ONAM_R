@@ -282,17 +282,22 @@ compile_model <-
 #prepare data for model fitting: builds one array per raw feature referenced in
 #model formula. A feature used in several terms is only ever extracted/copied
 #once; `fit()`/`predict()` route the shared array to every submodel that needs
-#it based on this name.
+#it based on this name. Continuous features are standardized using
+#`feature_scaling` (as computed by `compute_feature_scaling()`) if supplied,
+#so the network always trains/predicts on the scaled inputs while
+#`object$data` keeps the original, unscaled values for plotting.
 prepare_data <- function(data_original,
                          model_info,
-                         categorical_features) {
+                         categorical_features,
+                         feature_scaling = NULL) {
   feature_names <-
     get_all_term_feature_names(model_info) %>% unlist() %>% unique()
   data_list <- lapply(feature_names, function(feature) {
     if (feature %in% categorical_features) {
       encode_dummy(data_original[, feature], feature)
     } else {
-      matrix(data_original[, feature], ncol = 1)
+      matrix(scale_feature(data_original[, feature], feature, feature_scaling),
+             ncol = 1)
     }
   })
   names(data_list) <- feature_names
