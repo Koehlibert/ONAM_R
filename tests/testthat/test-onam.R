@@ -39,6 +39,53 @@ test_that("ONAM works", {
     regexp = NA
   )
 })
+test_that("ONAM independent_columns attribute works", {
+  skip_if_no_conda_env()
+  n <- 100
+  x1 <- runif(n, -2, 2)
+  x2 <- runif(n, -2, 2)
+  x3 <- runif(n, -2, 2)
+  y <- sin(x1) + x2 + x1 * x2
+  data_train <- cbind(x1, x2, x3, y)
+  f1 <- y ~ mod1(x1) + mod1(x2) + mod1(x3) + mod1(x1, x2)
+  mod1 <- function(inputs) {
+    combined <- if (is.list(inputs)) layer_concatenate(inputs) else inputs
+    outputs <- combined %>%
+      layer_dense(units = 16, activation = "gelu") %>%
+      layer_dense(units = 8,
+                  activation = "linear",
+                  use_bias = TRUE) %>%
+      layer_dense(units = 1,
+                  activation = "linear",
+                  use_bias = TRUE)
+    keras_model(inputs, outputs)
+  }
+  list_of_deep_models <- list(mod1 = mod1)
+  n_ensemble <- 2
+  mod <- onam(
+    f1,
+    list_of_deep_models,
+    data_train,
+    n_ensemble = n_ensemble,
+    epochs = 5,
+    progresstext = FALSE,
+    verbose = 0
+  )
+  ic <- attr(mod, "independent_columns")
+  expect_false(is.null(ic))
+  expect_length(ic$members, n_ensemble)
+  effect_names <- names(ic$members[[1]])
+  expect_true(all(c("x1", "x2", "x3", "Interaction 2") %in% effect_names))
+  expect_true(all(sapply(ic$members, function(m) is.na(m[["Interaction 2"]]))))
+  expect_true(all(sapply(ic$members, function(m) {
+    counts <- m[c("x1", "x2", "x3")]
+    all(counts >= 0) && all(counts <= 8)
+  })))
+  expect_identical(names(ic$ensemble), effect_names)
+  expect_true(is.na(ic$ensemble[["Interaction 2"]]))
+  expect_true(all(ic$ensemble[c("x1", "x2", "x3")] %in% c(0, 1)))
+  expect_false("independent_columns" %in% names(mod$ensemble[[1]]))
+})
 test_that("ONAM predict works", {
   skip_if_no_conda_env()
   n <- 100

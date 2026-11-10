@@ -10,13 +10,15 @@ get_intermediate_model <-
     keras3::keras_model(model$input,
                         deep_part_in$output)
   }
-#Moore-Penrose pseudoinverse of (possibly rank-deficient) m.
+#Moore-Penrose pseudoinverse of (possibly rank-deficient) m. Returns projection
+#matrix along with its rank and `kept` (indices of columns that QR pivoting
+#selected as basis for that rank
 pinv <- function(m, tol = 1e-7) {
   h <- crossprod(m)
   qr_res <- qr(h, tol = tol)
   rank <- qr_res$rank
   if (rank == 0) {
-    return(matrix(0, ncol(m), nrow(m)))
+    return(list(proj = matrix(0, ncol(m), nrow(m)), rank = rank, kept = integer(0)))
   }
   pivot <- qr_res$pivot[seq_len(rank)]
   s <- svd(m[, pivot, drop = FALSE])
@@ -25,7 +27,7 @@ pinv <- function(m, tol = 1e-7) {
     s$v[, keep, drop = FALSE] %*% (t(s$u[, keep, drop = FALSE]) / s$d[keep])
   proj <- matrix(0, ncol(m), nrow(m))
   proj[pivot, ] <- proj_reduced
-  proj
+  list(proj = proj, rank = rank, kept = pivot)
 }
 #get list of all submodel indices in model_info$theta
 get_model_idx_list <- function(model_info) {
@@ -103,6 +105,13 @@ get_model_order <- function(model_idx_list) {
          function(idx_model)
            idx_model[1]) %>% unlist()
 }
+#Count how many columns of effect are kept after qr pivoting.
+count_kept_per_effect <- function(kept, local_effect, effect_positions) {
+  kept_effect <- local_effect[kept]
+  vapply(effect_positions,
+         function(pos) sum(kept_effect == pos, na.rm = TRUE),
+         integer(1))
+}
 #post hoc orthogonalization of fitted submodels
 pho <- function(model_list, model_info, data_fit) {
   model_idx_list <- get_model_idx_list(model_info)
@@ -113,6 +122,9 @@ pho <- function(model_list, model_info, data_fit) {
                u_object$u_idx_list)
   w_list_old <- w_list
   model_order <- get_model_order(model_idx_list)
+  effect_names <- get_all_effect_names(model_info)[seq_along(model_idx_list)]
+  independent_columns <-
+    stats::setNames(rep(NA_integer_, length(effect_names)), effect_names)
   #Iterate over interaction depth
   for (idx_ortho in 2:(length(model_info$theta))) {
     if (length(model_info$theta) == 1) {
@@ -122,7 +134,17 @@ pho <- function(model_list, model_info, data_fit) {
     idx_rel <- c(u_object$u_idx_list[list_idx_order_lower] %>%
       unlist(), ncol(u_object$u))
     tmp_u_reduced <- u_object$u[, idx_rel]
-    proj <- pinv(tmp_u_reduced)
+    pinv_res <- pinv(tmp_u_reduced)
+    proj <- pinv_res$proj
+    local_dims <- unlist(u_object$u_dims[list_idx_order_lower])
+    local_effect <- c(rep(list_idx_order_lower, times = local_dims), NA)
+    kept_counts <-
+      count_kept_per_effect(pinv_res$kept, local_effect, list_idx_order_lower)
+    nm <- effect_names[list_idx_order_lower]
+    independent_columns[nm] <-
+      ifelse(is.na(independent_columns[nm]),
+             kept_counts,
+             pmin(independent_columns[nm], kept_counts))
     list_idx_order_higher <- which(model_order == (idx_ortho - 1))
     outputs_list <-
       lapply(list_idx_order_higher,
@@ -164,7 +186,7 @@ pho <- function(model_list, model_info, data_fit) {
              u_object$u %*%
                w_list[[idx_model]] %>% mean()
            })
-  #Center every subfunction, move mean into separate intercept effect
+  #Center every subfunction, move mean into intercept effect
   w_list <-
     lapply(seq_along(w_list),
            function(w_Idx) {
@@ -180,7 +202,8 @@ pho <- function(model_list, model_info, data_fit) {
     model_list = model_list,
     w_list = w_list,
     u_dims = u_object$u_dims,
-    w_list_old = w_list_old
+    w_list_old = w_list_old,
+    independent_columns = independent_columns
   )
 }
 show_progress <- function(i, n_ensemble) {
@@ -202,11 +225,24 @@ pho_ensemble <- function(data_model_eval, model_info) {
   u <- u_all[, seq_len(n_models), drop = FALSE]
   u_intercept <- u_all[, n_models + 1]
   w <- diag(1, nrow = n_models)
+  effect_names <-
+    names(data_model_eval$predictions_features_ensemble)[seq_len(n_models)]
+  independent_columns <-
+    stats::setNames(rep(NA_integer_, n_models), effect_names)
   #Iterate over interaction depth
   for (idx_ortho in 2:(length(model_info$theta))) {
     list_idx_order_lower <- which(model_order >= idx_ortho)
     tmp_u_reduced <- u[, list_idx_order_lower, drop = FALSE]
-    proj <- pinv(tmp_u_reduced)
+    pinv_res <- pinv(tmp_u_reduced)
+    proj <- pinv_res$proj
+    kept_counts <-
+      count_kept_per_effect(pinv_res$kept, list_idx_order_lower,
+                            list_idx_order_lower)
+    nm <- effect_names[list_idx_order_lower]
+    independent_columns[nm] <-
+      ifelse(is.na(independent_columns[nm]),
+             kept_counts,
+             pmin(independent_columns[nm], kept_counts))
     list_idx_order_higher <- which(model_order == (idx_ortho - 1))
     outputs_list <-
       lapply(list_idx_order_higher,
@@ -243,7 +279,7 @@ pho_ensemble <- function(data_model_eval, model_info) {
                   c(rep(0, n_models), 1))
   colnames(outputs_post_ensemble) <-
     names(data_model_eval$predictions_features_ensemble)
-  list(w_full, outputs_post_ensemble)
+  list(w_full, outputs_post_ensemble, independent_columns)
 }
 #' @importFrom dplyr %>%
 #' @export

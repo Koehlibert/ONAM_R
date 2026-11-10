@@ -146,6 +146,7 @@ onam <- function(formula,
   ensemble <- list()
   time_training <- numeric(n_ensemble)
   time_orthogonalization_members <- numeric(n_ensemble)
+  independent_columns_members <- vector("list", n_ensemble)
   for (i in 1:n_ensemble) {
     if (progresstext) {
       show_progress(i, n_ensemble)
@@ -175,10 +176,13 @@ onam <- function(formula,
       as.numeric(difftime(Sys.time(), time_member_start, units = "secs"))
     #Orthogonalize####
     time_ortho_member_start <- Sys.time()
-    ensemble[[i]] <-
+    pho_result <-
       pho(model_list, model_info, data_fit)
     time_orthogonalization_members[i] <-
       as.numeric(difftime(Sys.time(), time_ortho_member_start, units = "secs"))
+    independent_columns_members[[i]] <- pho_result$independent_columns
+    pho_result$independent_columns <- NULL
+    ensemble[[i]] <- pho_result
   }
   model_list_pho <- list(
     ensemble = ensemble,
@@ -197,6 +201,7 @@ onam <- function(formula,
   w_post_ensemble <- pho_ensemble_list[[1]]
   outputs_post_ensemble <-
     backtransform_effects(pho_ensemble_list[[2]], output_scaling)
+  independent_columns_ensemble <- pho_ensemble_list[[3]]
   predictions <- rowSums(outputs_post_ensemble)
   out <- c(
     model_list_pho,
@@ -221,6 +226,10 @@ onam <- function(formula,
       members = time_orthogonalization_members,
       ensemble = time_orthogonalization_ensemble
     )
+  )
+  attr(out, "independent_columns") <- list(
+    members = independent_columns_members,
+    ensemble = independent_columns_ensemble
   )
   out
 }
