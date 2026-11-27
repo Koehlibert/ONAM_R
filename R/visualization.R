@@ -288,13 +288,14 @@ plot_main_categorical <-
         min(which(data_plot$x == x_val)))
     y_uq <- data_plot$y[first_x]
     data_plot_categ <-
-      data.frame(x = x_uq, y = y_uq)
+      data.frame(x = factor(as.character(x_uq), levels = as.character(x_uq)),
+                 y = y_uq)
     if (!is.null(reference_level))
     {
       x_ref_idx <- which(data_plot_categ$x == reference_level)
       data_plot_categ$y <- data_plot_categ$y -
         data_plot_categ$y[x_ref_idx]
-      data_plot_categ$x[x_ref_idx] <-
+      levels(data_plot_categ$x)[x_ref_idx] <-
         paste0(reference_level, " (Reference)")
     }
     ggplot2::ggplot(data_plot_categ, ggplot2::aes(x = x, y = y)) +
