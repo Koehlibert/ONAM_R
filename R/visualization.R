@@ -303,7 +303,7 @@ plot_main_categorical <-
       ggplot2::geom_text(ggplot2::aes(
         y = 0,
         label = x,
-        vjust = 0.5 + 0.75 * sign(y)
+        vjust = if (y != 0) 0.5 + 0.75 * sign(y) else -0.25
       )) +
       ggplot2::theme(
         axis.text.x = ggplot2::element_blank(),
