@@ -111,4 +111,30 @@ test_that("Input checks work", {
     plot_main_effect(mod, "x1", "1"),
     "Reference level given, but x1 is not modeled as categorical."
   )
+  expect_error(
+    onam(
+      f1,
+      list_of_deep_models,
+      data_train,
+      n_ensemble = 1,
+      n_cores = 0,
+      epochs = 10,
+      progresstext = FALSE,
+      verbose = 0
+    ),
+    regexp = "Parameter `n_cores` must be a positive integer."
+  )
+  expect_error(
+    onam(
+      f1,
+      list_of_deep_models,
+      data_train,
+      n_ensemble = 1,
+      n_cores = 1.5,
+      epochs = 10,
+      progresstext = FALSE,
+      verbose = 0
+    ),
+    regexp = "Parameter `n_cores` must be a positive integer."
+  )
 })

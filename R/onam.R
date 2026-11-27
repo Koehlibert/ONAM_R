@@ -39,10 +39,16 @@
 #' @param learning_rate Learning rate for model fitting. See
 #' \code{\link[keras3]{compile}} for details.
 #' @param n_ensemble Number of orthogonal neural additive model ensembles
+#' @param n_cores Number of parallel worker processes used to fit ensemble
+#' members. If `1`(default), ensemble members are fitted sequentially. If
+#' greater than `1`, up to `n_cores` ensemble members are fitted concurrently
+#' in separate worker processes (via \code{\link[parallel]{makeCluster}}).
 #' @param callback Callback to be called during training. See
 #' \code{\link[keras3]{fit}} for details.
 #' @param seed Random seed used by R, python, numpy, and backend framework.
-#' See \code{\link[keras3]{set_random_seed}} for details.
+#' Each ensemble member `i` uses `seed + i` (via
+#' \code{\link[keras3]{set_random_seed}}) to ensure reproducibility regardless of
+#' sequential or parallel fitting of ensemble members.
 #' @param progresstext Show model fitting progress. If `TRUE`, shows current
 #' number of ensemble being fitted
 #' @param verbose Verbose argument for internal model fitting. Used for
@@ -94,6 +100,7 @@ onam <- function(formula,
                  scale_inputs = TRUE,
                  scale_outputs = TRUE,
                  n_ensemble = 10,
+                 n_cores = 1,
                  epochs = 500,
                  learning_rate = 0.001,
                  callback = NULL,
@@ -107,10 +114,6 @@ onam <- function(formula,
   inputs <- as.list(environment())
   inputs$time_call <- NULL
   check_inputs_onam(inputs)
-  if (!is.null(seed))
-  {
-    keras3::set_random_seed(seed)
-  }
   feature_names <- colnames(data)
   model_info <-
     get_theta(formula,
@@ -143,46 +146,58 @@ onam <- function(formula,
   data_fit <-
     prepare_data(data, model_info, categorical_features, feature_scaling)
   time_setup <- as.numeric(difftime(Sys.time(), time_call, units = "secs"))
-  ensemble <- list()
-  time_training <- numeric(n_ensemble)
-  time_orthogonalization_members <- numeric(n_ensemble)
-  independent_columns_members <- vector("list", n_ensemble)
-  for (i in 1:n_ensemble) {
-    if (progresstext) {
-      show_progress(i, n_ensemble)
-    }
-    time_member_start <- Sys.time()
-    model_object <-
-      create_model(
+  if (n_cores > 1 && n_ensemble > 1) {
+    parallel_result <- fit_ensemble_parallel(
+      n_ensemble = n_ensemble,
+      n_cores = n_cores,
+      model_info = model_info,
+      list_of_deep_models = list_of_deep_models,
+      categorical_features = categorical_features,
+      cat_counts = cat_counts,
+      target = target,
+      learning_rate = learning_rate,
+      data_fit = data_fit,
+      y_fit = y_fit,
+      epochs = epochs,
+      callback = callback,
+      verbose = verbose,
+      seed = seed,
+      progresstext = progresstext
+    )
+    ensemble <- parallel_result$ensemble
+    time_training <- parallel_result$time_training
+    time_orthogonalization_members <-
+      parallel_result$time_orthogonalization_members
+    independent_columns_members <- parallel_result$independent_columns_members
+  } else {
+    ensemble <- list()
+    time_training <- numeric(n_ensemble)
+    time_orthogonalization_members <- numeric(n_ensemble)
+    independent_columns_members <- vector("list", n_ensemble)
+    for (i in 1:n_ensemble) {
+      if (progresstext) {
+        show_progress(i, n_ensemble)
+      }
+      member_result <- fit_ensemble_member(
+        i,
         model_info,
         list_of_deep_models,
         categorical_features,
         cat_counts,
         target,
-        learning_rate
-      )
-    model_whole <- model_object$model
-    model_list <- model_object$model_list
-    #Fit model####
-    history <- model_whole %>%
-      keras3::fit(
+        learning_rate,
         data_fit,
         y_fit,
-        epochs = epochs,
-        callbacks = callback,
-        verbose = verbose
+        epochs,
+        callback,
+        verbose,
+        seed = seed
       )
-    time_training[i] <-
-      as.numeric(difftime(Sys.time(), time_member_start, units = "secs"))
-    #Orthogonalize####
-    time_ortho_member_start <- Sys.time()
-    pho_result <-
-      pho(model_list, model_info, data_fit)
-    time_orthogonalization_members[i] <-
-      as.numeric(difftime(Sys.time(), time_ortho_member_start, units = "secs"))
-    independent_columns_members[[i]] <- pho_result$independent_columns
-    pho_result$independent_columns <- NULL
-    ensemble[[i]] <- pho_result
+      time_training[i] <- member_result$time_training
+      time_orthogonalization_members[i] <- member_result$time_orthogonalization
+      independent_columns_members[[i]] <- member_result$independent_columns
+      ensemble[[i]] <- member_result$pho_result
+    }
   }
   model_list_pho <- list(
     ensemble = ensemble,

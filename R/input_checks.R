@@ -150,6 +150,10 @@ check_inputs_onam <- function(inputs) {
     stop("Parameter `n_ensemble` must be a positive integer.",
          call. = FALSE)
   }
+  if (!(inputs$n_cores %% 1 == 0) | inputs$n_cores < 1) {
+    stop("Parameter `n_cores` must be a positive integer.",
+         call. = FALSE)
+  }
   if (!(inputs$epochs %% 1 == 0) | inputs$epochs < 0) {
     stop("Parameter `epochs` must be a positive integer.",
          call. = FALSE)
