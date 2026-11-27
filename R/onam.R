@@ -46,7 +46,9 @@
 #' @param callback Callback to be called during training. See
 #' \code{\link[keras3]{fit}} for details.
 #' @param seed Random seed used by R, python, numpy, and backend framework.
-#' See \code{\link[keras3]{set_random_seed}} for details.
+#' Each ensemble member `i` uses `seed + i` (via
+#' \code{\link[keras3]{set_random_seed}}) to ensure reproducibility regardless of
+#' sequential or parallel fitting of ensemble members.
 #' @param progresstext Show model fitting progress. If `TRUE`, shows current
 #' number of ensemble being fitted
 #' @param verbose Verbose argument for internal model fitting. Used for
@@ -112,10 +114,6 @@ onam <- function(formula,
   inputs <- as.list(environment())
   inputs$time_call <- NULL
   check_inputs_onam(inputs)
-  if (!is.null(seed))
-  {
-    keras3::set_random_seed(seed)
-  }
   feature_names <- colnames(data)
   model_info <-
     get_theta(formula,
@@ -192,7 +190,8 @@ onam <- function(formula,
         y_fit,
         epochs,
         callback,
-        verbose
+        verbose,
+        seed = seed
       )
       time_training[i] <- member_result$time_training
       time_orthogonalization_members[i] <- member_result$time_orthogonalization
