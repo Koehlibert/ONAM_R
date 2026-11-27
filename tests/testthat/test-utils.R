@@ -93,6 +93,40 @@ test_that("Seed works", {
   )
   expect_equal(mod2$feature_effects[, "x1"], tmp_eff)
 })
+test_that("Seed gives identical ensembles regardless of n_cores", {
+  skip_if_no_conda_env()
+  n <- 100
+  x1 <- runif(n, -2, 2)
+  x2 <- runif(n, -2, 2)
+  y <- 2 * x1 - 2 * x2
+  data_train <- cbind(x1, x2, y)
+  f1 <- y ~ mod1(x1) + mod1(x2) + mod1(.)
+  mod1 <- build_dnn(c(16, 8, 1))
+  list_of_deep_models <- list(mod1 = mod1)
+  mod_seq <- onam(
+    f1,
+    list_of_deep_models,
+    data_train,
+    n_ensemble = 3,
+    n_cores = 1,
+    epochs = 5,
+    progresstext = FALSE,
+    seed = 1,
+    verbose = 0
+  )
+  mod_par <- onam(
+    f1,
+    list_of_deep_models,
+    data_train,
+    n_ensemble = 3,
+    n_cores = 2,
+    epochs = 5,
+    progresstext = FALSE,
+    seed = 1,
+    verbose = 0
+  )
+  expect_equal(mod_par$feature_effects, mod_seq$feature_effects)
+})
 extract_dense_specs <- function(model) {
   dense_layers <- Filter(
     function(l) grepl("Dense", class(l)[1], ignore.case = TRUE),

@@ -16,6 +16,7 @@ onam(
   scale_inputs = TRUE,
   scale_outputs = TRUE,
   n_ensemble = 10,
+  n_cores = 1,
   epochs = 500,
   learning_rate = 0.001,
   callback = NULL,
@@ -67,6 +68,11 @@ outcome scale afterwards. Ignored for \code{target = "binary"}.}
 
 \item{n_ensemble}{Number of orthogonal neural additive model ensembles}
 
+\item{n_cores}{Number of parallel worker processes used to fit ensemble
+members. If \code{1}(default), ensemble members are fitted sequentially. If
+greater than \code{1}, up to \code{n_cores} ensemble members are fitted concurrently
+in separate worker processes (via \code{\link[parallel]{makeCluster}}).}
+
 \item{epochs}{Number of epochs to train the model. See
 \code{\link[keras3]{fit}} for details.}
 
@@ -77,7 +83,9 @@ outcome scale afterwards. Ignored for \code{target = "binary"}.}
 \code{\link[keras3]{fit}} for details.}
 
 \item{seed}{Random seed used by R, python, numpy, and backend framework.
-See \code{\link[keras3]{set_random_seed}} for details.}
+Each ensemble member \code{i} uses \code{seed + i} (via
+\code{\link[keras3]{set_random_seed}}) to ensure reproducibity regardless of
+sequential or parallel fitting of ensemble members.}
 
 \item{progresstext}{Show model fitting progress. If \code{TRUE}, shows current
 number of ensemble being fitted}
