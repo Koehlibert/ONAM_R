@@ -23,6 +23,7 @@ Imports:
     scales,
     rlang,
     ggplot2,
+    parallel,
     pROC
 Suggests:
     akima,

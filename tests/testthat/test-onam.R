@@ -86,6 +86,39 @@ test_that("ONAM independent_columns attribute works", {
   expect_true(all(ic$ensemble[c("x1", "x2", "x3")] %in% c(0, 1)))
   expect_false("independent_columns" %in% names(mod$ensemble[[1]]))
 })
+test_that("ONAM parallel ensemble fitting works", {
+  skip_if_no_conda_env()
+  n <- 100
+  x1 <- runif(n, -2, 2)
+  x2 <- runif(n, -2, 2)
+  x3 <- runif(n, -2, 2)
+  y <- sin(x1) + x2 + x1 * x2
+  data_train <- cbind(x1, x2, x3, y)
+  f1 <- y ~ mod1(x1) + mod1(x2) + mod1(x3) + mod1(x1, x2)
+  mod1 <- build_dnn(c(16,8,1))
+  list_of_deep_models <- list(mod1 = mod1)
+  n_ensemble <- 3
+  expect_error(
+    mod <- onam(
+      f1,
+      list_of_deep_models,
+      data_train,
+      n_ensemble = n_ensemble,
+      n_cores = 2,
+      epochs = 1000,
+      progresstext = FALSE,
+      verbose = 0
+    ),
+    regexp = NA
+  )
+  expect_length(mod$ensemble, n_ensemble)
+  expect_length(attr(mod, "computation_time")$training, n_ensemble)
+  expect_length(attr(mod, "independent_columns")$members, n_ensemble)
+  newdat <- cbind(x1 = runif(20, -2, 2),
+                  x2 = runif(20, -2, 2),
+                  x3 = runif(20, -2, 2))
+  expect_error(predict(mod, newdat), regexp = NA)
+})
 test_that("ONAM predict works", {
   skip_if_no_conda_env()
   n <- 100
