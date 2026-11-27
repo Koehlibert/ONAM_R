@@ -84,7 +84,7 @@ in separate worker processes (via \code{\link[parallel]{makeCluster}}).}
 
 \item{seed}{Random seed used by R, python, numpy, and backend framework.
 Each ensemble member \code{i} uses \code{seed + i} (via
-\code{\link[keras3]{set_random_seed}}) to ensure reproducibity regardless of
+\code{\link[keras3]{set_random_seed}}) to ensure reproducibility regardless of
 sequential or parallel fitting of ensemble members.}
 
 \item{progresstext}{Show model fitting progress. If \code{TRUE}, shows current
