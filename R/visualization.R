@@ -240,13 +240,13 @@ plot_inter_effect <- function(object,
         ggplot2::ylab(effect_val)
       if (feature1 %in% object$model_info$categorical_features) {
         aes_gradient <- ggplot2::scale_color_discrete(name = feature1)
-        data_plot$x <- as.factor(data_plot$x)
+        data_plot$x <- factor(data_plot$x, levels = order_levels(data_plot$x))
         aes_param <- ggplot2::aes(x = y,
                                   y = prediction,
                                   color = x)
       } else {
         aes_gradient <- ggplot2::scale_color_discrete(name = feature2)
-        data_plot$y <- as.factor(data_plot$y)
+        data_plot$y <- factor(data_plot$y, levels = order_levels(data_plot$y))
         tmp_xlab <- ggplot2::xlab(feature1)
         aes_param <- ggplot2::aes(x = x,
                                   y = prediction,
@@ -282,7 +282,7 @@ eff_label_helper <- function(target) {
 }
 plot_main_categorical <-
   function(data_plot, reference_level = NULL) {
-    x_uq <- unique(data_plot$x)
+    x_uq <- order_levels(data_plot$x)
     first_x <-
       sapply(x_uq, function(x_val)
         min(which(data_plot$x == x_val)))

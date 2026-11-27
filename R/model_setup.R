@@ -343,9 +343,20 @@ get_all_effect_names <- function(model_info) {
 get_data_dictionary <- function(model_info) {
   get_all_term_feature_names(model_info)
 }
+#Determine sensible order for unique values of categorical features
+#(if factor levels are numeric)
+order_levels <- function(x) {
+  uq_vals <- unique(x)
+  numeric_vals <- suppressWarnings(as.numeric(as.character(uq_vals)))
+  if (!anyNA(numeric_vals)) {
+    uq_vals[order(numeric_vals)]
+  } else {
+    uq_vals[order(as.character(uq_vals))]
+  }
+}
 #create dummy variables for categorical data
 encode_dummy <- function(x, name) {
-  uq_vals <- unique(x)
+  uq_vals <- order_levels(x)
   ret_mat <- matrix(sapply(uq_vals[-1], function(val) {
     x == val
   }), nrow = length(x))
